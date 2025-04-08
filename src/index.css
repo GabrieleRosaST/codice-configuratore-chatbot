@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@400;500;700&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  font-family: 'Jost', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #F9FAFC;
+}
+
+
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  color: #495057;
+  /* Cambia il colore dell'icona */
+  opacity: 1;
+  /* Assicurati che l'icona sia visibile */
+}
+
+input[type="date"] {
+  color-scheme: light;
+  /* Assicura che il tema sia coerente */
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #a6a6a6;
+  box-shadow: 0 0 4px 2px rgba(184, 184, 184, 0.1);
+}
