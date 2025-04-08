@@ -4,7 +4,7 @@ import domandaIcon from '../img/domandaIcon.svg'
 function ArgomentiRiferimenti() {
     return (
 
-        <div className="w-full bg-red-200 flex-justify-center ">
+        <div className="w-full bg-red-100 flex-justify-center ">
             <div className="w-[1580px] mx-auto h-15 flex justify-center items-center relative bg-red-200">
 
 
