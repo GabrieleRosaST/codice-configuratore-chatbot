@@ -374,7 +374,7 @@ function Configurazione() {
                 <div className="w-1/2 h-full py-14 pl-8 ">
 
                     {/* Contenitore principale */}
-                    <div className="w-[697px] h-[920px] relative flex flex-col items-stretch rounded-[40px] bg-white  border-4 border-[#a2b7d8]/[0.27] shadow-[0px_0px_26px_13px_rgba(22,64,108,0.03)]">
+                    <div className="w-[697px] h-[920px] relative flex flex-col items-stretch rounded-[40px] bg-white  border-3 border-[#a2b7d8]/[0.3] shadow-[0px_0px_26px_13px_rgba(22,64,108,0.03)]">
 
                         {/* Titolo Anteprima */}
                         <div className="w-full h-16  flex items-center justify-center">

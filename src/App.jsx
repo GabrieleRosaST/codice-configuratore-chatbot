@@ -22,7 +22,7 @@ function App() {
 
 
   return (
-    <div className="flex flex-col w-full min-h-screen mb-12 overflow-x-hidden">
+    <div className="flex flex-col w-full min-h-screen mb-12 overflow-x-hidden ">
 
       <div className="h-20">
         <img src={header} />

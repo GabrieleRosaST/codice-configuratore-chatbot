@@ -14,6 +14,36 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.scroll-container {
+  direction: rtl;
+  padding: 10px;
+  overflow-y: scroll;
+  /* Sposta la barra di scorrimento a sinistra */
+}
+
+.scroll-container>* {
+  direction: ltr;
+  /* Mantiene il contenuto nella direzione normale */
+}
+
+/* Aggiungi questo codice al tuo file CSS */
+.scroll-container::-webkit-scrollbar {
+  width: 5px;
+  margin-right: 5px;
+  /* Larghezza della barra */
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: #D9D9DD;
+  /* Colore della barra */
+  border-radius: 8px;
+  /* Arrotondamento */
+}
+
+.scroll-container::-webkit-scrollbar-track {
+  background-color: FCF9ED;
+  /* Colore dello sfondo della barra */
+}
 
 
 

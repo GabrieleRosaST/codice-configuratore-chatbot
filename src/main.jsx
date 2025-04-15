@@ -8,7 +8,7 @@ import { store } from './store';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Provider store={store}> {/* Rende lo stato globale disponibile */}
+    <Provider store={store}>
       <BrowserRouter>
         <App />
       </BrowserRouter>
