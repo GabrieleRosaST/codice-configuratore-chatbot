@@ -4,6 +4,7 @@ import dragIcon from '../img/dragIcon.svg'; // Importa l'icona del drag
 
 export default function Argomento({ argomento, giornoOrigine }) {
 
+    // provaaaaaaaaaa
     const [isHovered, setIsHovered] = useState(false); // Stato per tracciare l'hover
 
     const [{ isDragging }, drag] = useDrag(() => ({
@@ -25,7 +26,7 @@ export default function Argomento({ argomento, giornoOrigine }) {
             className="mt-[7px] mb-1 mx-auto w-[178px] h-[31px] text-[#1D2125] rounded-[7px] bg-white relative cursor-pointer"
             style={{
                 border: `1px solid ${argomento.colore}`,
-                boxShadow: '0px 2px 8.5px rgba(0,0,0,0.08)',
+                boxShadow: '0px 0px 12.5px rgba(0,0,0,0.06)',
                 opacity: isDragging ? 0.5 : 1,
             }}
             onMouseEnter={() => setIsHovered(true)} // Mostra l'icona quando il mouse entra

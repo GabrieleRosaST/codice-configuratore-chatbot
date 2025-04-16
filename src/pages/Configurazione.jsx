@@ -377,7 +377,8 @@ function Configurazione() {
                     <div className="w-[697px] h-[920px] relative flex flex-col items-stretch rounded-[40px] bg-white  border-3 border-[#a2b7d8]/[0.3] shadow-[0px_0px_26px_13px_rgba(22,64,108,0.03)]">
 
                         {/* Titolo Anteprima */}
-                        <div className="w-full h-16  flex items-center justify-center">
+                        <div className="w-full h-16  flex items-center justify-center"
+                            style={{ pointerEvents: "none" }}>
                             <p className="text-xl font-bold text-center text-[#21225f]">
                                 Anteprima
                             </p>
@@ -413,7 +414,8 @@ function Configurazione() {
                         <div className="w-172 h-40 flex flex-wrap justify-center gap-x-6 mt-2">
 
                             {/* Suggerimento 1 */}
-                            <div className="w-[255px] h-[55px] relative">
+                            <div className="w-[255px] h-[55px] relative"
+                                style={{ pointerEvents: "none" }}>
                                 <div className="w-[255px] h-[55px] rounded-[15px] border-[2.3px] border-[#6982ab]/[0.12]"></div>
                                 <p className="w-[187px] h-7 absolute left-[51px] top-[14px] text-lg text-left text-[#495057]">
                                     Ripassa le ultime lezioni
@@ -426,7 +428,8 @@ function Configurazione() {
                             </div>
 
                             {/* Suggerimento 2 */}
-                            <div className="w-[255px] h-[55px] relative">
+                            <div className="w-[255px] h-[55px] relative"
+                                style={{ pointerEvents: "none" }}>
                                 <div className="w-[255px] h-[55px] rounded-[15px] bg-[#ECEFF4] /[0.12]"></div>
                                 <p className="w-[187px] h-7 absolute left-[51px] top-[14px] text-lg text-left text-[#495057]">
                                     Studia la lezione di oggi
@@ -440,7 +443,8 @@ function Configurazione() {
 
                             {/* Suggerimento 3 */}
                             {formState.newSuggerimento.trim() && (
-                                <div className="w-[255px] h-[55px] relative">
+                                <div className="w-[255px] h-[55px] relative"
+                                    style={{ pointerEvents: "none" }}>
                                     <div className="w-[255px] h-[55px] rounded-[15px] border-[2.3px] border-[#6982ab]/[0.12]"></div>
                                     <p className="w-[187px] h-7 absolute left-[51px] top-[14px] text-lg text-left text-[#495057]">
                                         {formState.newSuggerimento}
@@ -460,7 +464,8 @@ function Configurazione() {
                         <div className="absolute bottom-5  w-full h-[60px]  flex items-center justify-center">
                             <div className="relative w-[610px] flex justify-between p-2  h-[47px] rounded-[25px] bg-white border-2 border-[#6982ab]/[0.24] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]">
 
-                                <p className=" w-[523px] h-7 ml-2 top-4 opacity-[0.51] text-lg text-left text-[#495057]">
+                                <p className=" w-[523px] h-7 ml-2 top-4 opacity-[0.51] text-lg text-left text-[#495057] "
+                                    style={{ pointerEvents: "none" }}>
                                     Scrivi un messaggio...
                                 </p>
 

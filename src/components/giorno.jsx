@@ -20,7 +20,7 @@ export default function Giorno({ giorno, dataInizio, dataFine, isInCorso, isAltr
 
             return (
 
-                giorno.argomenti.length < 2 &&
+
                 dataGiorno >= dataInizioCorso &&
                 dataGiorno <= dataFineCorso
             );
