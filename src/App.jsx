@@ -5,6 +5,8 @@ import Configurazione from './pages/Configurazione'
 import ArgomentiRiferimenti from './pages/ArgomentiRiferimenti'
 import PianoLavoro from './pages/PianoLavoro'
 import header from './img/header.svg'
+import { StepProvider } from './context/StepContext';
+import Riepilogo from './pages/Riepilogo'
 
 function App() {
 
@@ -28,22 +30,22 @@ function App() {
         <img src={header} />
       </div>
 
-      <div >
-        <Navbar></Navbar>
-      </div>
 
       <div className="flex-grow">
-        <Routes>
+        <StepProvider>
+          <Navbar>
+          </Navbar>
+          <Routes>
+            <Route path="/configurazione" element={<Configurazione />} />
+            <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
+            <Route path="/pianoLavoro" element={<PianoLavoro />} />
+            <Route path="/riepilogo" element={<Riepilogo />} />
+            <Route path="*" element={<Configurazione />} />
+          </Routes>
+        </StepProvider>
 
-
-          <Route path="/configurazione" element={<Configurazione />} />
-          <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
-          <Route path="/pianoLavoro" element={<PianoLavoro />} />
-
-          <Route path="*" element={<Configurazione />} />
-        </Routes>
       </div>
-    </div>
+    </div >
   )
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { rimuoviArgomento, aggiornaArgomento } from '../store/argomentiSlice';
 import dragDrop from '../img/dragDrop.svg';
 import caricaIcon from '../img/caricaIcon.svg';
@@ -11,6 +11,8 @@ import '../index.css';
 function CardArgomento({ id, titolo, colore, file }) {
     const dispatch = useDispatch();
     const [isHovered, setIsHovered] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
 
     const handleDelete = () => {
         if (id) {
@@ -26,38 +28,75 @@ function CardArgomento({ id, titolo, colore, file }) {
     };
 
     const handleFileUpload = (e) => {
-        const selectedFiles = Array.from(e.target.files).slice(0, 5);
-        const fileNames = selectedFiles.map(file => file.name);
-        dispatch(aggiornaArgomento({ id, file: [...file, ...fileNames] }));
+        const selectedFiles = Array.from(e.target.files);
+        const validFiles = selectedFiles.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
+        const invalidFiles = selectedFiles.filter((file) => file.type !== 'application/pdf'); // File non validi
+
+        if (invalidFiles.length > 0) {
+            setErrorMessage('Puoi caricare solo file PDF!'); // Mostra il messaggio di errore
+            setTimeout(() => setErrorMessage(''), 4000); // Rimuove il messaggio dopo 5 secondi
+        }
+
+        if (validFiles.length > 0) {
+            // Filtra i file già caricati
+            const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
+
+            if (newFiles.length > 0) {
+                const fileNames = newFiles.map((file) => file.name);
+                dispatch(aggiornaArgomento({ id, file: [...file, ...fileNames] }));
+            } else {
+                setErrorMessage('Alcuni file sono già stati caricati!');
+                setTimeout(() => setErrorMessage(''), 4000);
+            }
+        }
+
+        // Resetta il valore del file input
+        e.target.value = '';
     };
 
     const openFileSelector = () => {
         document.getElementById(`file-input-${id}`).click();
     };
 
-
-
-
     const handleDrop = (event) => {
         event.preventDefault();
         const files = Array.from(event.dataTransfer.files);
-        const fileNames = files.map((file) => file.name);
-        if (fileNames.length > 0) {
-            dispatch(aggiornaArgomento({ id, file: [...file, ...fileNames] }));
-        } else {
-            console.error('Nessun file rilevato durante il drop');
+        const validFiles = files.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
+        const invalidFiles = files.filter((file) => file.type !== 'application/pdf'); // File non validi
+
+        if (invalidFiles.length > 0) {
+            setErrorMessage('Puoi caricare solo file PDF!'); // Mostra il messaggio di errore
+            setTimeout(() => setErrorMessage(''), 4000); // Rimuove il messaggio dopo 5 secondi
         }
+
+        if (validFiles.length > 0) {
+            // Filtra i file già caricati
+            const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
+
+            if (newFiles.length > 0) {
+                const fileNames = newFiles.map((file) => file.name);
+                dispatch(aggiornaArgomento({ id, file: [...file, ...fileNames] }));
+            } else {
+                setErrorMessage('Alcuni file sono già stati caricati!');
+                setTimeout(() => setErrorMessage(''), 4000);
+            }
+        }
+    };
+
+    // Funzione per verificare se un file è già stato caricato
+    const fileAlreadyExists = (fileName) => {
+        return file.includes(fileName);
     };
 
 
 
     return (
-        <div className="relative w-[460px] h-[417px] rounded-[5px] border border-gray-300 flex flex-col justify-start bg-[#F2F3F7]">
+        <div className="relative w-[460px] h-[417px] rounded-[5px] border-[1px] border-[#DEDEDE] flex flex-col justify-start bg-[#F2F3F7]">
 
 
 
             {/* Header della card */}
-            <div className="w-full h-[59px] bg-white border-b-[1px] border-gray-300 rounded-t-[5px] flex justify-between items-center">
+            <div className="w-full h-[59px] bg-white border-b-[1px] border-[#DEDEDE] rounded-t-[5px] flex justify-between items-center">
                 <div className="w-13 h-full flex items-center justify-center">
                     <div
                         className="w-7 h-[39px] absolute left-3 rounded"
@@ -76,7 +115,7 @@ function CardArgomento({ id, titolo, colore, file }) {
                 </div>
 
                 <button
-                    className="z-10 w-12 h-full cursor-pointer flex items-center justify-center transform transition-transform duration-200 hover:scale-108"
+                    className="z-10 w-12 h-full cursor-pointer flex opacity-70 hover:opacity-100 items-center justify-center transform transition-transform duration-200 hover:scale-105"
                     onClick={handleDelete}
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
@@ -84,6 +123,7 @@ function CardArgomento({ id, titolo, colore, file }) {
                     <img
                         src={isHovered ? cestinoIconRed : cestinoIcon}
                         alt="Elimina"
+                        className="w-[22px] h-[23px] "
                     />
                 </button>
             </div>
@@ -100,24 +140,38 @@ function CardArgomento({ id, titolo, colore, file }) {
                     onDragOver={(e) => e.preventDefault()} // Necessario per consentire il drop
 
                 >
+                    {errorMessage && file.length > 0 && (
+                        <div className="absolute h-18 w-full bottom-18 bg-[#F2F3F7] flex items-center justify-center z-20">
+                            <p className="text-[#D22525]">{errorMessage}</p>
+                        </div>
+                    )}
+
                     <div className="w-full h-full flex justify-start">
                         <div className="w-full h-[265px] max-h-[700px] overflow-y-auto p-4 mt-3  scroll-container">
                             <div className="w-full flex flex-col items-center gap-3">
                                 {file.length === 0 ? (
-                                    <div className="w-full h-[240px] flex flex-col justify-center gap-4 opacity-60">
+                                    <div className="w-full h-[240px] flex flex-col justify-center gap-4 opacity-55">
                                         <div className="w-full flex justify-center">
-                                            <img src={dragDrop} alt="" />
+                                            <img src={dragDrop} className="w-[60px] h-[60px]" />
                                         </div>
-                                        <div className="w-full flex justify-center items-center">
-                                            <p className="text-xl text-gray-600">
+                                        <div className="w-full flex flex-col justify-center items-center">
+                                            <p className="text-[18px] text-gray-600">
                                                 Carica qui i materiali di riferimento
                                             </p>
+                                            {errorMessage && (
+                                                <p className="text-[#D22525] mt-1">
+                                                    {errorMessage}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
                                     file.map((fileName, index) => (
                                         <FileCaricato key={index} titolo={fileName} id={id} file={file} />
                                     ))
+
+
+
                                 )}
                             </div>
                         </div>
@@ -127,7 +181,7 @@ function CardArgomento({ id, titolo, colore, file }) {
                 {/* Pulsante Carica */}
                 <div className="w-full h-21 absolute bottom-0 left-0 flex justify-center items-center">
                     <div
-                        className="w-[130px] h-[48px] pr-2 flex items-center justify-center bg-white border border-gray-300 rounded-[25px] cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                        className="w-[117px] h-[45px] pr-2 flex items-center justify-center bg-white border border-gray-300 rounded-[25px] cursor-pointer transform transition-transform duration-200 hover:scale-103"
                         style={{ boxShadow: '0px 2px 8.5px 3px rgba(0,0,0,0.03)' }}
                         onClick={openFileSelector}
                     >
@@ -135,10 +189,10 @@ function CardArgomento({ id, titolo, colore, file }) {
                             <img
                                 src={caricaIcon}
                                 alt="Drag and Drop"
-                                className="w-[50px] h-[20px]"
+                                className="w-[47px] h-[19px]"
                             />
                         </div>
-                        <p className="text-[19px] h-full flex items-center text-center text-gray-800">
+                        <p className="text-[18px] h-full flex items-center text-center text-gray-800">
                             Carica
                         </p>
                     </div>

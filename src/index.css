@@ -37,6 +37,8 @@
   background-color: #D9D9DD;
   /* Colore della barra */
   border-radius: 8px;
+  cursor: pointer;
+
   /* Arrotondamento */
 }
 

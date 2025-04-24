@@ -15,93 +15,79 @@ const calendarioSlice = createSlice({
             mese: today.getMonth(),
             anno: today.getFullYear()
         },
-        giorni: []
-
+        giorniCorrenti: [],
+        giorniCorso: [],
     },
     reducers: {
-
-        inizializzaCalendario: (state, action) => {
-            state.giorni = action.payload.giorni;
-        },
 
         aggiornaSelezionato: (state, action) => {
             const { giorno, mese, anno } = action.payload;
             state.selezionato = { giorno, mese, anno };
         },
 
-        aggiornaGiorni: (state, action) => {
-            const { giorni, argomenti, dataInizio, dataFine } = action.payload;
+        distribuisciArgomentiGiorniCorso: (state, action) => {
+            const { argomenti, dataInizio, dataFine } = action.payload;
 
-            // Filtra i giorni validi (escludendo sabato e domenica)
-            const giorniValidi = giorni.filter((giorno) => {
-                const dataGiorno = new Date(giorno.anno, giorno.mese, giorno.giorno);
-                dataGiorno.setHours(0, 0, 0, 0);
 
-                const dataInizioCorso = new Date(dataInizio);
-                const dataFineCorso = new Date(dataFine);
+            // Filtra i giorni del corso 
+            const giorniCorso = [];
+            const dataInizioCorso = new Date(dataInizio);
+            const dataFineCorso = new Date(dataFine);
 
-                dataInizioCorso.setHours(0, 0, 0, 0);
-                dataFineCorso.setHours(0, 0, 0, 0);
+            for (let d = new Date(dataInizioCorso); d <= dataFineCorso; d.setDate(d.getDate() + 1)) {
+                giorniCorso.push({
+                    giorno: d.getDate(),
+                    mese: d.getMonth(),
+                    anno: d.getFullYear(),
+                    argomenti: [], // Array vuoto per gli argomenti
+                });
+            }
 
-                const giornoSettimana = dataGiorno.getDay();
+            // Salva i giorni del corso nello stato Redux
+            state.giorniCorso = giorniCorso;
 
-                return (
-                    dataGiorno >= dataInizioCorso &&
-                    dataGiorno <= dataFineCorso
-                );
-            });
 
-            const giorniTotali = giorniValidi.length;
-
-            // Log per verificare i giorni totali
-            console.log("Giorni totali del corso:", giorniTotali);
-
-            // Log per verificare il numero di argomenti
-            console.log("Numero di argomenti:", argomenti.length);
+            const lunghezzaCorso = state.giorniCorso.length;
 
             // Calcola lo step per distribuire gli argomenti
-            const step = Math.max(Math.ceil(giorniTotali / argomenti.length));
-
-            // Log per verificare lo step calcolato
-            console.log("Step calcolato per la distribuzione:", step);
+            const step = Math.max(Math.ceil(lunghezzaCorso / argomenti.length));
 
             // Distribuisci gli argomenti
             let posizione = 0; // Variabile per tracciare la posizione corrente
             for (let argomentoIndex = 0; argomentoIndex < argomenti.length; argomentoIndex++) {
                 // Assegna l'argomento al giorno corrente
-                giorniValidi[posizione] = {
-                    ...giorniValidi[posizione], // Crea una copia immutabile del giorno
-                    argomenti: [argomenti[argomentoIndex]], // Assegna l'argomento
+                giorniCorso[posizione] = {
+                    ...giorniCorso[posizione], // Crea una copia immutabile del giorno
+                    argomenti: [...(giorniCorso[posizione].argomenti || []), argomenti[argomentoIndex]], // Aggiungi l'argomento
                 };
 
-                // Incrementa la posizione di "step" e riparti da 0 se supera i giorni totali
-                posizione = (posizione + step) % giorniTotali;
+                // Incrementa la posizione di "step" e riparti dalla differenza se supera i giorni totali
+                posizione = posizione + step;
+                if (posizione >= lunghezzaCorso) {
+                    posizione = posizione - lunghezzaCorso; // Riparti dalla differenza
+
+                    // Se la differenza è zero, aggiungi un piccolo offset per sfasare la distribuzione
+                    if (posizione === 0) {
+                        posizione += 1; // Aggiungi un offset di 1 (o un altro valore piccolo)
+                    }
+                }
             }
 
-            // Aggiorna lo stato Redux con i giorni calcolati
-            state.giorni = giorni.map((giorno) => {
-                const giornoValido = giorniValidi.find(
-                    (g) =>
-                        g.giorno === giorno.giorno &&
-                        g.mese === giorno.mese &&
-                        g.anno === giorno.anno
-                );
+            // Aggiorna lo stato Redux con la copia aggiornata
+            state.giorniCorso = giorniCorso;
 
-                return {
-                    ...giorno,
-                    argomenti: giornoValido ? giornoValido.argomenti || [] : [],
-                };
-            });
 
+        },
+
+        inizializzaCalendario: (state, action) => {
+            state.giorniCorrenti = action.payload.giorniCorrenti;
         },
 
         spostaArgomento: (state, action) => {
             const { argomento, giornoOrigine, giornoDestinazione } = action.payload;
 
-
-
-            // TROVA il giorno di ORIGINE 
-            const giornoOrigineIndex = state.giorni.findIndex(
+            // TROVA il giorno di ORIGINE nel corso
+            const giornoOrigineIndex = state.giorniCorso.findIndex(
                 (g) =>
                     g.giorno === giornoOrigine.giorno &&
                     g.mese === giornoOrigine.mese &&
@@ -110,16 +96,13 @@ const calendarioSlice = createSlice({
 
             // RIMUOVI l'argomento dal giorno di origine
             if (giornoOrigineIndex !== -1) {
-                state.giorni[giornoOrigineIndex].argomenti = state.giorni[giornoOrigineIndex].argomenti.filter(
+                state.giorniCorso[giornoOrigineIndex].argomenti = state.giorniCorso[giornoOrigineIndex].argomenti.filter(
                     (a) => a.id !== argomento.id
                 );
             }
 
-
-
-
-            // TROVA il giorno di DESTINAZIONE e aggiungi l'argomento
-            const giornoDestinazioneIndex = state.giorni.findIndex(
+            // TROVA il giorno di DESTINAZIONE nel corso
+            const giornoDestinazioneIndex = state.giorniCorso.findIndex(
                 (g) =>
                     g.giorno === giornoDestinazione.giorno &&
                     g.mese === giornoDestinazione.mese &&
@@ -128,12 +111,12 @@ const calendarioSlice = createSlice({
 
             // AGGIUNGI l'argomento al giorno di destinazione
             if (giornoDestinazioneIndex !== -1) {
-                state.giorni[giornoDestinazioneIndex].argomenti.push({ ...argomento });
+                state.giorniCorso[giornoDestinazioneIndex].argomenti.unshift({ ...argomento });
             }
         }
 
     }
 });
 
-export const { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, aggiornaGiorni } = calendarioSlice.actions;
+export const { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso } = calendarioSlice.actions;
 export default calendarioSlice.reducer;

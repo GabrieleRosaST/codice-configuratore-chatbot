@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 import { aggiungiArgomento } from '../store/argomentiSlice'; // Usa il slice corretto
@@ -7,62 +7,63 @@ import domandaIcon from '../img/domandaIcon.svg';
 import plusArgomentoCard from '../img/plusArgomentoCard.svg';
 import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import frecciaDestraButton from '../img/frecciaDestraButton.svg';
+import { useStepContext } from '../context/StepContext';
+
 
 function ArgomentiRiferimenti() {
     const dispatch = useDispatch();
     const argomenti = useSelector((state) => state.argomenti.argomenti); // Usa il slice corretto
     const navigate = useNavigate();
-    const { dataInizio, dataFine } = useSelector((state) => state.form);
+    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2 } = useStepContext(); // Usa il contesto
 
 
     const handleAggiungiArgomento = () => {
-        const giorniValidi = calculateGiorniValidi(); // Calcola i giorni validi del corso
-        const maxArgomenti = giorniValidi.length * 2; // Ogni giorno può avere massimo 2 argomenti
-
-        if (argomenti.length >= maxArgomenti) {
-            alert('Hai raggiunto il numero massimo di argomenti consentiti.');
-            return;
-        }
 
         const nuovoArgomento = {
             id: argomenti.length + 1, // ID univoco per l'argomento
             titolo: '', // Titolo vuoto iniziale
-            colore: '#F3A6A7', // Colore predefinito
+            colore: '', // Colore predefinito
             file: [] // Nessun file iniziale
         };
         dispatch(aggiungiArgomento(nuovoArgomento));
     };
 
-    // Funzione per calcolare i giorni validi del corso
-    const calculateGiorniValidi = () => {
-        const giorniValidi = [];
-        let currentDate = new Date(dataInizio);
-        const fineDate = new Date(dataFine);
 
-        while (currentDate <= fineDate) {
-            const dayOfWeek = currentDate.getDay();
-            if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Escludi sabato e domenica
-                giorniValidi.push(new Date(currentDate));
-            }
-            currentDate.setDate(currentDate.getDate() + 1);
+    useEffect(() => {
+        const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
+
+        // Aggiorna lo stato step2 solo se non è la prima visita
+        if (!primaVisitaStep2) {
+            setCompletedSteps((prev) => ({ ...prev, step2: tuttiArgomentiValidi }));
         }
+    }, [argomenti, primaVisitaStep2, setCompletedSteps]);
 
-        return giorniValidi;
+
+    const handleStepSuccessivo = () => {
+        const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
+
+        if (tuttiArgomentiValidi) {
+            setCompletedSteps((prev) => ({ ...prev, step2: true }));
+            setPrimaVisitaStep2(false); // Aggiorna lo stato nel contesto
+            navigate('/pianoLavoro');
+        } else {
+            alert('Assicurati di aver aggiunto almeno un argomento e che tutti gli argomenti abbiano un titolo.');
+        }
     };
 
 
     return (
         <div className="w-full">
-            <div className="w-[1500px] mx-auto h-15 flex pl-4 justify-center items-center relative m-1 ">
+            <div className="w-[1500px]  mx-auto h-15 flex pl-4 justify-center items-center relative m-1 ">
                 <div
-                    className="w-[98px] h-10 absolute left-0 rounded-[25px] bg-white border border-[#4a4d50]/[0.29] flex items-center justify-center"
-                    style={{ boxShadow: '0px 2px 8.5px 3px rgba(0,0,0,0.05)' }}
+                    className="w-[98px] h-10 absolute left-0 rounded-[25px] bg-white  flex items-center justify-center"
+                    style={{ boxShadow: '0px 2px 8.5px 3px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7' }}
                 >
                     <img src={domandaIcon} alt="Icona domanda" className="w-4 h-4 mr-1" />
-                    <p className="text-lg text-center text-[#4f5255]">Aiuto</p>
+                    <p className="text-[18px] text-center text-[#4f5255]">Aiuto</p>
                 </div>
 
-                <p className="w-[1077px] text-2xl font-bold text-center text-[#21225f]">
+                <p className="w-[1077px] text-[22px] font-bold text-center text-[#21225f]">
                     Aggiungi gli argomenti e carica i materiali di riferimento
                 </p>
             </div>
@@ -108,10 +109,10 @@ function ArgomentiRiferimenti() {
             <div className="w-[1500px] h-30  mx-auto mt-10  flex justify-between items-center ">
                 <button
                     type="button"
-                    className="w-[218px] h-12 "
+                    className="w-[196px] h-[46px] "
                 >
                     <div
-                        className="w-[218px] h-12  left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
+                        className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
                         style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                     >
 
@@ -120,7 +121,7 @@ function ArgomentiRiferimenti() {
                         </div>
 
                         <div className="h-full flex items-center w-full">
-                            <p className="text-[19px] text-left text-[#1d2125]">
+                            <p className="text-[17px] text-left text-[#1d2125]">
                                 Esci e salva bozza
                             </p>
                         </div>
@@ -131,27 +132,23 @@ function ArgomentiRiferimenti() {
 
                 {/* Pulsante Step Successivo */}
                 <button
-                    className="w-[185px] h-12 right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
-                    onClick={() => {
-                        if (argomenti.length > 0) {
-                            navigate('/pianoLavoro'); // Usa navigate per cambiare pagina
-                        }
-                    }}
-                    disabled={argomenti.length === 0} // Disabilita il pulsante se non ci sono argomenti
+                    className={`w-[172px] h-[46px] right-0   ${argomenti.length === 0 ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer transform transition-transform duration-200 hover:scale-103'
+                        }`}
+                    onClick={handleStepSuccessivo} // Usa la funzione per verificare le condizioni
                 >
 
                     <div
                         className="w-full h-full rounded-[10px] bg-[#fcc63d] flex justify-stretch"
-                        style={{ boxShadow: "0px 2px 8.5px 3px rgba(0,0,0,0.05)" }}>
+                        style={{ boxShadow: "0px 0x 8.5px 3px rgba(0,0,0,0.02)" }}>
 
                         <div className="h-full flex items-center w-full pl-5">
-                            <p className="text-[19px] text-left text-[#1d2125]">
+                            <p className="text-[17px] text-left text-[#1d2125]">
                                 Step successivo
                             </p>
                         </div>
 
                         <div className=" h-full w-12 flex pr-1 justify-center pt-4">
-                            <img src={frecciaDestraButton} alt="" className="w-[16px] h-[16px]" />
+                            <img src={frecciaDestraButton} alt="" className="w-[15px] h-[15px]" />
                         </div>
 
                     </div>

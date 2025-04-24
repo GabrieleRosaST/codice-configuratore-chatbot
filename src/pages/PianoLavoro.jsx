@@ -2,20 +2,24 @@ import React from 'react';
 import domandaIcon from '../img/domandaIcon.svg';
 import frecciaDestra from '../img/frecciaDestra.svg';
 import { useSelector, useDispatch } from 'react-redux';
-import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, aggiornaGiorni } from '../store/calendarioSlice';
+import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso } from '../store/calendarioSlice';
 import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import terminaConfigIcon from '../img/terminaConfigIcon.svg';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Giorno from '../components/giorno.jsx';
 import { useEffect } from 'react';
-
+import { useNavigate } from 'react-router-dom';
+import { useGenerateJson } from '../utils/generateJson';
+import axios from 'axios';
 
 
 
 function PianoLavoro() {
     const dispatch = useDispatch();
-    const { selezionato, giorni } = useSelector((state) => state.calendario);
+    const navigate = useNavigate();
+    const generateJson = useGenerateJson(); // Usa il custom hook
+    const { selezionato, giorniCorrenti, giorniCorso } = useSelector((state) => state.calendario);
     const { dataInizio, dataFine } = useSelector((state) => state.form);
     const { argomenti } = useSelector((state) => state.argomenti);
 
@@ -95,23 +99,44 @@ function PianoLavoro() {
     };
 
 
-    // Inizializza i giorni del calendario in Redux
     useEffect(() => {
-        const giorniCalendario = costruisciCalendario();
-
-        dispatch(inizializzaCalendario({ giorni: giorniCalendario }));
-
-        // Aggiorna i giorni con gli argomenti
-        dispatch(aggiornaGiorni({
-            giorni: giorniCalendario,
+        // Distribuisci gli argomenti solo al primo caricamento della pagina
+        dispatch(distribuisciArgomentiGiorniCorso({
             argomenti,
             dataInizio,
             dataFine,
         }));
-    }, [dispatch, selezionato, argomenti, dataInizio, dataFine]);
+    }, []); // Dipendenza vuota: viene eseguito solo al primo rendering
 
 
-    // restituisce tutti i giorni del calendario con gli argomenti associati
+    // Inizializza i giorni del calendario in Redux
+    useEffect(() => {
+        const giorniCorrenti = costruisciCalendario();
+
+        dispatch(inizializzaCalendario({ giorniCorrenti }));
+
+    }, [dispatch, selezionato]);
+
+
+    {/* Funzione per inviare i dati al backend 
+    const inviaDatiAlBackend = (jsonData) => {
+        axios.post('https://api.tuodominio.com/endpoint', JSON.parse(jsonData))
+            .then((response) => {
+                console.log('Dati inviati con successo:', response.data);
+            })
+            .catch((error) => {
+                console.error('Errore durante l\'invio dei dati:', error);
+            });
+    };
+    */}
+
+
+    const handleTerminaConfigurazione = () => {
+        const jsonData = generateJson(); // Genera il JSON
+        localStorage.setItem('riepilogoDati', jsonData); // Salva i dati nel localStorage
+        //inviaDatiAlBackend(jsonData);
+        navigate('/riepilogo'); // Reindirizza alla pagina di riepilogo
+    };
 
 
 
@@ -194,26 +219,27 @@ function PianoLavoro() {
 
 
                         {/* Giorni del mese */}
-                        {giorni.map((giorno, index) => {
+                        {giorniCorrenti.map((giornoCorrente, index) => {
+                            // Trova il giorno corrispondente nei giorni del corso
+                            const giornoCorso = giorniCorso.find(
+                                (g) =>
+                                    g.giorno === giornoCorrente.giorno &&
+                                    g.mese === giornoCorrente.mese &&
+                                    g.anno === giornoCorrente.anno
+                            );
 
-                            // Calcola se il giorno è nel corso
-                            const isInCorso =
-                                new Date(giorno.anno, giorno.mese, giorno.giorno).setHours(0, 0, 0, 0) >= new Date(dataInizio).setHours(0, 0, 0, 0) &&
-                                new Date(giorno.anno, giorno.mese, giorno.giorno).setHours(0, 0, 0, 0) <= new Date(dataFine).setHours(0, 0, 0, 0);
+                            // Determina se il giorno è nel corso
+                            const isInCorso = !!giornoCorso;
 
-                            // Determina se il giorno appartiene a un altro mese
-                            const isAltroMese = giorno.tipo !== "corrente";
+
 
                             return (
                                 <Giorno
                                     key={index}
-                                    giorno={giorno}
-                                    dataInizio={dataInizio}
-                                    dataFine={dataFine}
+                                    giorno={isInCorso ? giornoCorso : giornoCorrente} // Passa il giorno del corso se esiste, altrimenti il giorno normale
                                     isInCorso={isInCorso}
-                                    isAltroMese={isAltroMese}
+                                    isAltroMese={giornoCorrente.tipo !== "corrente"} // Determina se il giorno appartiene a un altro mese
                                     spostaArgomento={(argomento, giornoOrigine, giornoDestinazione) => {
-
                                         // Dispatch per spostare l'argomento
                                         dispatch(spostaArgomento({
                                             argomento,
@@ -229,13 +255,13 @@ function PianoLavoro() {
 
 
                 {/* PULSANTI FINALI */}
-                <div className="w-[1500px] h-30  mx-auto mt-7  flex justify-between items-center ">
+                <div className="w-[1500px] h-20  mx-auto mt-7  flex justify-between items-center ">
                     <button
-                        type="button"
-                        className="w-[218px] h-12 "
+                        type="submit"
+                        className="w-[196px] h-[46px]"
                     >
                         <div
-                            className="w-[218px] h-12  left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
+                            className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
                             style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                         >
 
@@ -244,7 +270,7 @@ function PianoLavoro() {
                             </div>
 
                             <div className="h-full flex items-center w-full">
-                                <p className="text-[19px] text-left text-[#1d2125]">
+                                <p className="text-[17px] text-left text-[#1d2125]">
                                     Esci e salva bozza
                                 </p>
                             </div>
@@ -253,23 +279,24 @@ function PianoLavoro() {
 
                     </button>
 
-                    {/* Pulsante Step Successivo */}
+                    {/* Pulsante Termina configurazione */}
                     <button
-                        className="w-[250px] h-12 right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                        className="w-[232px] h-[46px] right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                        onClick={handleTerminaConfigurazione}
                     >
 
                         <div
                             className="w-full h-full rounded-[10px] bg-[#fcc63d] flex justify-stretch"
-                            style={{ boxShadow: "0px 2px 8.5px 3px rgba(0,0,0,0.05)" }}>
+                            style={{ boxShadow: "0px 0px 8.5px 3px rgba(0,0,0,0.02)" }}>
 
                             <div className="h-full flex items-center w-full pl-5">
-                                <p className="text-[19px] text-left text-[#1d2125]">
+                                <p className="text-[17px] text-left text-[#1d2125]">
                                     Termina configurazione
                                 </p>
                             </div>
 
                             <div className=" h-full w-12 flex pr-1 justify-center pt-4">
-                                <img src={terminaConfigIcon} alt="" className="w-[16px] h-[16px]" />
+                                <img src={terminaConfigIcon} alt="" className="w-[15px] h-[15px]" />
                             </div>
 
                         </div>

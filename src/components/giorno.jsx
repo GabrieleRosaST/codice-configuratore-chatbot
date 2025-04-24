@@ -3,48 +3,39 @@ import { useDrop } from 'react-dnd';
 import Argomento from "./argomentoDrag";
 
 
-export default function Giorno({ giorno, dataInizio, dataFine, isInCorso, isAltroMese, spostaArgomento }) {
-    const [, drop] = useDrop({
-        accept: 'ARGOMENTO', // Tipo di elemento accettato
+export default function Giorno({ giorno, isInCorso, isAltroMese, spostaArgomento }) {
+    const [{ isOver }, drop] = useDrop({
+        accept: 'ARGOMENTO',
         canDrop: () => {
-            // Permetti il drop solo se il giorno è "corrente", ha meno di 2 argomenti e fa parte del corso
-            const dataGiorno = new Date(giorno.anno, giorno.mese, giorno.giorno);
-            dataGiorno.setHours(0, 0, 0, 0);
-
-            const dataInizioCorso = new Date(dataInizio); // Passa `dataInizio` come prop
-            const dataFineCorso = new Date(dataFine); // Passa `dataFine` come prop
-            dataInizioCorso.setHours(0, 0, 0, 0);
-            dataFineCorso.setHours(0, 0, 0, 0);
-
-            const giornoSettimana = dataGiorno.getDay();
-
-            return (
-
-
-                dataGiorno >= dataInizioCorso &&
-                dataGiorno <= dataFineCorso
-            );
+            return isInCorso;
         },
         drop: (item) => {
             spostaArgomento(item.argomento, item.giornoOrigine, giorno);
         },
+        collect: (monitor) => ({
+            isOver: monitor.isOver(), // Rileva se l'elemento è sopra il giorno
+        }),
     });
 
-    // Determina la classe CSS in base a isInCorso e isAltroMese
+    // Determina la classe CSS in base a isInCorso, isAltroMese e isOver
     const giornoClasse = isInCorso
-        ? isAltroMese
-            ? "bg-[#FFFAE6] opacity-75 " // Giallo per giorni del corso di altri mesi
-            : "bg-[#FFFAE6]" // Giallo per giorni del mese corrente e del corso
+        ? isOver
+            ? isAltroMese
+                ? "bg-[#FAF4DB] opacity-64" // Colore più scuro per giorni del corso di altri mesi quando isOver
+                : "bg-[#FAF4DB] opacity-98" // Colore più scuro per giorni del corso del mese corrente quando isOver
+            : isAltroMese
+                ? "bg-[#FFFAE6] opacity-75" // Giallo per giorni del corso di altri mesi
+                : "bg-[#FFFAE6]" // Giallo per giorni del mese corrente e del corso
         : giorno.tipo === "corrente"
             ? "bg-[#FFFFFF]" // Bianco per giorni del mese corrente non nel corso
             : "bg-[#F9FAFC]"; // Grigio chiaro per giorni di altri mesi non nel corso
 
     return (
         <div
-            ref={drop} // Collegamento al drop
+            ref={drop}
             className={`text-center h-[120px] p-1 ${giornoClasse}`}
         >
-            <p className={`text-[14px] mt-[3px] text-[#1D2125] ${giorno.tipo !== "corrente" ? "opacity-30" : ""}`}>
+            <p className={`text-[14px] mt-[3px] text-[#1D2125] ${!isInCorso && giorno.tipo !== "corrente" ? "opacity-30" : "opacity-90"}`}>
                 {giorno.giorno}
             </p>
             <div

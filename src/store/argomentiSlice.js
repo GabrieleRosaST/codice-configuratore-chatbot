@@ -3,16 +3,27 @@ import { createSlice } from '@reduxjs/toolkit';
 const colors = [
     '#F3A6A7',
     '#F6D987',
-    '#A3CFF8',
+    '#CAE3FE',
     '#CBB2FA',
-    '#9CDA9B',
-    '#FFD3B6',
-    '#FFABAB',
-    '#D4A5A5',
-    '#B5EAD7',
-    '#E2F0CB',
-    '#FFDAC1',
-    '#C7CEEA'
+    '#8EC398',
+    '#A3B5DE',
+    '#B6EEF5',
+    '#E7B090',
+    '#E8A7BE',
+    '#B8E4B5',
+    '#F0C87E',
+    '#8DB3DA',
+    '#D591AD',
+    '#E3A8A3',
+    '#A3B5DE',
+    '#FFB6C1',
+    '#A8D8B9',
+    '#F2C94C',
+    '#C1C3EC',
+
+
+
+
 ];
 let nextId = 1; // Contatore globale per ID univoci
 let colorIndex = 0; // Indice globale per il colore
@@ -20,13 +31,7 @@ let colorIndex = 0; // Indice globale per il colore
 const argomentiSlice = createSlice({
     name: 'argomenti',
     initialState: {
-        argomenti: [
-            //{ id: 1, titolo: 'Introduzione', colore: colors[0], file: [] },
-
-
-
-
-        ] // Array per memorizzare gli argomenti predefiniti
+        argomenti: [] // Array per memorizzare gli argomenti predefiniti
     },
     reducers: {
         aggiungiArgomento: (state, action) => {
@@ -42,8 +47,6 @@ const argomentiSlice = createSlice({
             colorIndex = (colorIndex + 1) % colors.length;
         },
 
-
-
         aggiornaArgomento: (state, action) => {
             const { id, titolo, colore, file } = action.payload;
             const argomento = state.argomenti.find(arg => arg.id === id);
@@ -53,6 +56,7 @@ const argomentiSlice = createSlice({
                 if (file !== undefined) argomento.file = file; // Aggiorna solo se i file sono passati
             }
         },
+
         rimuoviArgomento: (state, action) => {
             state.argomenti = state.argomenti.filter(argomento => argomento.id !== action.payload);
         }
