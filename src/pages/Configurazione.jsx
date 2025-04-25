@@ -14,7 +14,6 @@ import { updateForm } from '../store/formSlice';
 
 import { useStepContext } from '../context/StepContext.jsx';
 
-import config1 from '../img/config1.svg';
 
 
 
@@ -25,7 +24,7 @@ function Configurazione() {
     const formState = useSelector((state) => state.form);
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-    const { setCompletedSteps } = useStepContext(); // Usa il contesto per aggiornare lo stato
+    const { setCompletedSteps, primaVisitaStep1, setPrimaVisitaStep1 } = useStepContext(); // Usa il contesto per aggiornare lo stato
 
 
     // Stato per tracciare gli errori
@@ -51,9 +50,12 @@ function Configurazione() {
 
         const isStep1Valid = isNomeChatbotValid && isCorsoChatbotValid && isDataInizioValid && isDataFineValid;
 
+        if (!primaVisitaStep1) {
+            setCompletedSteps((prev) => ({ ...prev, step1: isStep1Valid }));
+        }
         // Aggiorna lo stato step1
-        setCompletedSteps((prev) => ({ ...prev, step1: isStep1Valid }));
-    }, [formState, setCompletedSteps]);
+
+    }, [formState, setCompletedSteps, primaVisitaStep1]);
 
 
     // Funzione per gestire il submit del form
@@ -109,6 +111,7 @@ function Configurazione() {
 
         // Aggiorna lo stato del contesto per indicare che lo step 1 è completato
         setCompletedSteps((prev) => ({ ...prev, step1: true }));
+        setPrimaVisitaStep1(false); // Aggiorna lo stato nel contesto
 
         // Passa alla parte successiva del configuratore
         navigate("/argomentiRiferimenti");
@@ -234,7 +237,7 @@ function Configurazione() {
                                         type="date"
                                         value={formState.dataInizio}
                                         onChange={(e) => dispatch(updateForm({ dataInizio: e.target.value }))}
-                                        className={`w-65 h-11 p-2 pl-3 rounded-[10px] bg-white ${errors.dataInizio ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
+                                        className={`w-65 h-11 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataInizio ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
                                             } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
                                     />
                                 </div>

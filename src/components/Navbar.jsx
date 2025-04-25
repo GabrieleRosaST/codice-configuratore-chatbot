@@ -75,8 +75,8 @@ function Navbar() {
                     <Link
                         key={item.id}
                         to={item.link}
-                        className={`w-[350px]  h-[51px] absolute  ${item.disabled ? ' cursor-not-allowed' : ''
-                            }`}
+                        className={`w-[350px]  h-[51px] absolute  ${item.disabled ? 'pointer-events-none ' : ''
+                            }  `}
                         style={item.background.style}
                         onClick={(e) => {
                             if (item.disabled) {
@@ -87,7 +87,7 @@ function Navbar() {
                     >
                         <img
                             src={item.background.src}
-                            className=" object-cover p-0 m-0 inset-0 "
+                            className=" object-cover p-0 m-0 inset-0  "
                         />
                         <div className={`flex items-center justify-center space-x-2 absolute left-1/2 w-[200px] transform -translate-x-1/2 top-[21px] ${item.disabled ? 'opacity-30' : ''
                             }`}>

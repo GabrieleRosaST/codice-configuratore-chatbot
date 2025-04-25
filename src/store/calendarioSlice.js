@@ -1,28 +1,28 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+
+
 const today = new Date();
+
 
 const calendarioSlice = createSlice({
     name: 'calendario',
     initialState: {
-        corrente: {
-            giorno: today.getDate(),
-            mese: today.getMonth(),
-            anno: today.getFullYear()
-        },
+
         selezionato: {
-            giorno: today.getDate(),
             mese: today.getMonth(),
-            anno: today.getFullYear()
+            anno: today.getFullYear(),
         },
         giorniCorrenti: [],
         giorniCorso: [],
+
     },
     reducers: {
 
         aggiornaSelezionato: (state, action) => {
-            const { giorno, mese, anno } = action.payload;
-            state.selezionato = { giorno, mese, anno };
+            const { mese, anno } = action.payload;
+            console.log('Mese:', mese, 'Anno:', anno);
+            state.selezionato = { mese, anno };
         },
 
         distribuisciArgomentiGiorniCorso: (state, action) => {
@@ -35,6 +35,7 @@ const calendarioSlice = createSlice({
             const dataFineCorso = new Date(dataFine);
 
             for (let d = new Date(dataInizioCorso); d <= dataFineCorso; d.setDate(d.getDate() + 1)) {
+                console.log(d.getDate(), d.getMonth(), d.getFullYear());
                 giorniCorso.push({
                     giorno: d.getDate(),
                     mese: d.getMonth(),
@@ -81,6 +82,7 @@ const calendarioSlice = createSlice({
 
         inizializzaCalendario: (state, action) => {
             state.giorniCorrenti = action.payload.giorniCorrenti;
+            console.log('Giorni correnti:', state.giorniCorrenti);
         },
 
         spostaArgomento: (state, action) => {

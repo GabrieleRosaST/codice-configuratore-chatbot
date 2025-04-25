@@ -11,9 +11,11 @@ export const StepProvider = ({ children }) => {
     });
 
     const [primaVisitaStep2, setPrimaVisitaStep2] = useState(true); // Stato per tracciare la prima visita allo step 2
+    const [primaVisitaStep1, setPrimaVisitaStep1] = useState(true); // Stato per tracciare la prima visita allo step 2
+
 
     return (
-        <StepContext.Provider value={{ completedSteps, setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2 }}>
+        <StepContext.Provider value={{ completedSteps, setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2, primaVisitaStep1, setPrimaVisitaStep1 }}>
             {children}
         </StepContext.Provider>
     );
