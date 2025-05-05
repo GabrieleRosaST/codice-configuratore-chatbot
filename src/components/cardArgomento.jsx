@@ -27,31 +27,51 @@ function CardArgomento({ id, titolo, colore, file }) {
         dispatch(aggiornaArgomento({ id, titolo: newTitle }));
     };
 
-    const handleFileUpload = (e) => {
+    const handleFileUpload = async (e) => {
         const selectedFiles = Array.from(e.target.files);
         const validFiles = selectedFiles.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
         const invalidFiles = selectedFiles.filter((file) => file.type !== 'application/pdf'); // File non validi
 
         if (invalidFiles.length > 0) {
-            setErrorMessage('Puoi caricare solo file PDF!'); // Mostra il messaggio di errore
-            setTimeout(() => setErrorMessage(''), 4000); // Rimuove il messaggio dopo 5 secondi
+            setErrorMessage('Puoi caricare solo file PDF!');
+            setTimeout(() => setErrorMessage(''), 4000);
         }
 
         if (validFiles.length > 0) {
-            // Filtra i file già caricati
-            const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
+            const uploadedFiles = [];
 
-            if (newFiles.length > 0) {
-                const fileNames = newFiles.map((file) => file.name);
-                dispatch(aggiornaArgomento({ id, file: [...file, ...fileNames] }));
-            } else {
-                setErrorMessage('Alcuni file sono già stati caricati!');
-                setTimeout(() => setErrorMessage(''), 4000);
+            for (const file of validFiles) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('http://localhost/backend/api/uploadFile.php', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        uploadedFiles.push({
+                            nome: file.name,
+                            percorso: result.filePath, // Percorso reale restituito dal backend
+                            tipo: file.type,
+                        });
+                    } else {
+                        console.error('Errore nel caricamento del file:', result.error);
+                    }
+                } catch (error) {
+                    console.error('Errore nella richiesta al backend:', error);
+                }
+            }
+
+            if (uploadedFiles.length > 0) {
+                dispatch(aggiornaArgomento({ id, file: [...file, ...uploadedFiles] }));
             }
         }
 
-        // Resetta il valore del file input
-        e.target.value = '';
+        e.target.value = ''; // Resetta il valore del file input
     };
 
     const openFileSelector = () => {
@@ -74,8 +94,14 @@ function CardArgomento({ id, titolo, colore, file }) {
             const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
 
             if (newFiles.length > 0) {
-                const fileNames = newFiles.map((file) => file.name);
-                dispatch(aggiornaArgomento({ id, file: [...file, ...fileNames] }));
+                const fileDetails = newFiles.map((file) => ({
+                    name: file.name, // Nome del file
+                    path: URL.createObjectURL(file), // Percorso temporaneo del file
+                    type: file.type, // Tipo MIME del file
+                }));
+
+                // Aggiorna lo stato Redux con i nuovi file
+                dispatch(aggiornaArgomento({ id, file: [...file, ...fileDetails] }));
             } else {
                 setErrorMessage('Alcuni file sono già stati caricati!');
                 setTimeout(() => setErrorMessage(''), 4000);
@@ -166,8 +192,8 @@ function CardArgomento({ id, titolo, colore, file }) {
                                         </div>
                                     </div>
                                 ) : (
-                                    file.map((fileName, index) => (
-                                        <FileCaricato key={index} titolo={fileName} id={id} file={file} />
+                                    file.map((fileObj, index) => (
+                                        <FileCaricato key={index} titolo={fileObj.name} id={id} file={file} />
                                     ))
 
 

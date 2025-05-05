@@ -7,6 +7,7 @@ import PianoLavoro from './pages/PianoLavoro'
 import header from './img/header.svg'
 import { StepProvider } from './context/StepContext';
 import Riepilogo from './pages/Riepilogo'
+import CorsoCreato from './pages/CorsoCreato'
 
 function App() {
 
@@ -40,6 +41,7 @@ function App() {
             <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
             <Route path="/pianoLavoro" element={<PianoLavoro />} />
             <Route path="/riepilogo" element={<Riepilogo />} />
+            <Route path="/corso-creato/:courseId" element={<CorsoCreato />} />
             <Route path="*" element={<Configurazione />} />
           </Routes>
         </StepProvider>

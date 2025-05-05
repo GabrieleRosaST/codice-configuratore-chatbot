@@ -5,12 +5,12 @@ const formSlice = createSlice({
     name: 'form', // Nome della fetta di stato
     initialState: { // Stato iniziale
         fotoChatbot: '',
-        nomeChatbot: '',
-        corsoChatbot: '',
+        nomeChatbot: 'Testt',
+        corsoChatbot: 'Testt',
         descrizioneChatbot: '',
         istruzioniChatbot: '',
-        dataInizio: '',
-        dataFine: '',
+        dataInizio: '2025-05-06',
+        dataFine: '2025-05-11',
         newSuggerimento: '',
     },
     reducers: { // Funzioni per aggiornare lo stato

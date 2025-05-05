@@ -15,7 +15,6 @@ import { useState } from 'react';
 import closeAiutoIcon from '../img/closeAiutoIcon.svg';
 import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
-//import axios from 'axios';
 
 
 
@@ -134,24 +133,39 @@ function PianoLavoro() {
     }, [dispatch, selezionato]);
 
 
-    {/* Funzione per inviare i dati al backend 
-    const inviaDatiAlBackend = (jsonData) => {
-        axios.post('https://api.tuodominio.com/endpoint', JSON.parse(jsonData))
-            .then((response) => {
-                console.log('Dati inviati con successo:', response.data);
-            })
-            .catch((error) => {
-                console.error('Errore durante l\'invio dei dati:', error);
+    //Funzione per inviare i dati al backend 
+    const handleTerminaConfigurazione = async (event) => {
+        event.preventDefault(); // Previeni il comportamento predefinito del modulo
+
+        try {
+            // Genera il JSON
+            const jsonData = generateJson();
+            console.log('Dati inviati al backend:', jsonData); // Log per verificare i dati
+
+            // Invia i dati al backend
+            const response = await fetch('http://localhost/progetto-1/backend/api/index.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: jsonData, // Invia il JSON generato
             });
-    };
-    */}
 
 
-    const handleTerminaConfigurazione = () => {
-        const jsonData = generateJson(); // Genera il JSON
-        localStorage.setItem('riepilogoDati', jsonData); // Salva i dati nel localStorage
-        //inviaDatiAlBackend(jsonData);
-        navigate('/riepilogo'); // Reindirizza alla pagina di riepilogo
+            const data = await response.json();
+            console.log('Risposta dal backend:', data); // Log per verificare la risposta
+
+            // Gestisci la risposta
+            if (data.success) {
+                alert('Corso creato con successo!');
+                window.location.href = data.courseUrl; // Reindirizza alla pagina del corso di Moodle
+            } else {
+                alert(`Errore: ${data.error}`);
+            }
+        } catch (error) {
+            console.error('Errore durante la creazione del corso:', error);
+            alert('Errore durante la creazione del corso.');
+        }
     };
 
 

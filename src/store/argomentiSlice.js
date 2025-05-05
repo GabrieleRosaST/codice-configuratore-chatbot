@@ -31,7 +31,9 @@ let colorIndex = 0; // Indice globale per il colore
 const argomentiSlice = createSlice({
     name: 'argomenti',
     initialState: {
-        argomenti: [] // Array per memorizzare gli argomenti predefiniti
+        argomenti: [
+            // Esempio di argomento predefinito
+        ] // Array per memorizzare gli argomenti predefiniti
     },
     reducers: {
         aggiungiArgomento: (state, action) => {

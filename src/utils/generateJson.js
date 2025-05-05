@@ -30,8 +30,12 @@ export function useGenerateJson() {
 
                 return {
                     titolo: argomento.titolo,
-                    materiali: argomento.file,
-                    giorno: giorniAssociati, // Aggiungi i giorni associati
+                    materiali: argomento.file.map((file) => ({
+                        nome: file.name,
+                        percorso: file.path.replace(/\s+/g, '_'), // Sostituisci spazi con underscore
+                        tipo: file.type,
+                    })),
+                    giorno: giorniAssociati,
                 };
             }),
         };
