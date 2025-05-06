@@ -60,8 +60,6 @@ $result = creaCorsoMoodle(
     $argomenti // Array degli argomenti
 );
 
-// Log del risultato della creazione del corso
-file_put_contents(__DIR__ . '/debug.log', "Risultato creazione corso: " . print_r($result, true) . "\n", FILE_APPEND);
 
 // Verifica se il corso è stato creato con successo
 if (!$result['success']) {
@@ -83,8 +81,6 @@ if (!$courseId) {
 // URL del corso in Moodle
 $courseUrl = "http://localhost/moodle/moodle/course/view.php?id=" . $courseId;
 
-// Log dell'URL del corso
-file_put_contents(__DIR__ . '/debug.log', "URL del corso: $courseUrl\n", FILE_APPEND);
 
 // Rispondi al frontend
 $response = [
@@ -92,5 +88,4 @@ $response = [
     "courseId" => $courseId,
     "courseUrl" => $courseUrl,
 ];
-file_put_contents(__DIR__ . '/debug.log', "Risposta al frontend: " . print_r($response, true) . "\n", FILE_APPEND);
 echo json_encode($response);

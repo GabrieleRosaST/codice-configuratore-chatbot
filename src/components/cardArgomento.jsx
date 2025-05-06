@@ -33,60 +33,9 @@ function CardArgomento({ id, titolo, colore, file }) {
         const invalidFiles = selectedFiles.filter((file) => file.type !== 'application/pdf'); // File non validi
 
         if (invalidFiles.length > 0) {
-            setErrorMessage('Puoi caricare solo file PDF!');
-            setTimeout(() => setErrorMessage(''), 4000);
-        }
-
-        if (validFiles.length > 0) {
-            const uploadedFiles = [];
-
-            for (const file of validFiles) {
-                const formData = new FormData();
-                formData.append('file', file);
-
-                try {
-                    const response = await fetch('http://localhost/backend/api/uploadFile.php', {
-                        method: 'POST',
-                        body: formData,
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success) {
-                        uploadedFiles.push({
-                            nome: file.name,
-                            percorso: result.filePath, // Percorso reale restituito dal backend
-                            tipo: file.type,
-                        });
-                    } else {
-                        console.error('Errore nel caricamento del file:', result.error);
-                    }
-                } catch (error) {
-                    console.error('Errore nella richiesta al backend:', error);
-                }
-            }
-
-            if (uploadedFiles.length > 0) {
-                dispatch(aggiornaArgomento({ id, file: [...file, ...uploadedFiles] }));
-            }
-        }
-
-        e.target.value = ''; // Resetta il valore del file input
-    };
-
-    const openFileSelector = () => {
-        document.getElementById(`file-input-${id}`).click();
-    };
-
-    const handleDrop = (event) => {
-        event.preventDefault();
-        const files = Array.from(event.dataTransfer.files);
-        const validFiles = files.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
-        const invalidFiles = files.filter((file) => file.type !== 'application/pdf'); // File non validi
-
-        if (invalidFiles.length > 0) {
             setErrorMessage('Puoi caricare solo file PDF!'); // Mostra il messaggio di errore
             setTimeout(() => setErrorMessage(''), 4000); // Rimuove il messaggio dopo 5 secondi
+            return;
         }
 
         if (validFiles.length > 0) {
@@ -100,8 +49,102 @@ function CardArgomento({ id, titolo, colore, file }) {
                     type: file.type, // Tipo MIME del file
                 }));
 
-                // Aggiorna lo stato Redux con i nuovi file
                 dispatch(aggiornaArgomento({ id, file: [...file, ...fileDetails] }));
+
+                // Esegui il POST al backend per ogni file
+                for (const file of newFiles) {
+                    const formData = new FormData();
+                    const sanitizedFileName = file.name.replace(/ /g, '_'); // Sostituisci gli spazi con "_"
+                    formData.append('file', file, sanitizedFileName);
+
+                    try {
+                        const response = await fetch('http://localhost/progetto-1/backend/api/uploadFile.php', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            console.log(`File caricato con successo: ${result.fileUrl}`);
+                        } else {
+                            console.error(`Errore nel caricamento del file: ${result.error}`);
+                            setErrorMessage('Errore nel caricamento del file!');
+                            setTimeout(() => setErrorMessage(''), 4000);
+                        }
+                    } catch (error) {
+                        console.error('Errore nella richiesta al backend:', error);
+                        setErrorMessage('Errore nella connessione al server!');
+                        setTimeout(() => setErrorMessage(''), 4000);
+                    }
+                }
+            } else {
+                setErrorMessage('Alcuni file sono già stati caricati!');
+                setTimeout(() => setErrorMessage(''), 4000);
+            }
+        }
+
+        // Resetta il valore del file input
+        e.target.value = '';
+    };
+
+    const openFileSelector = () => {
+        document.getElementById(`file-input-${id}`).click();
+    };
+
+    const handleDrop = async (event) => {
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer.files);
+        const validFiles = files.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
+        const invalidFiles = files.filter((file) => file.type !== 'application/pdf'); // File non validi
+
+        if (invalidFiles.length > 0) {
+            setErrorMessage('Puoi caricare solo file PDF!'); // Mostra il messaggio di errore
+            setTimeout(() => setErrorMessage(''), 4000); // Rimuove il messaggio dopo 5 secondi
+            return;
+        }
+
+        if (validFiles.length > 0) {
+            // Filtra i file già caricati
+            const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
+
+            if (newFiles.length > 0) {
+                // Aggiorna lo stato Redux con i nuovi file
+                const fileDetails = newFiles.map((file) => ({
+                    name: file.name, // Nome del file
+                    path: URL.createObjectURL(file), // Percorso temporaneo del file
+                    type: file.type, // Tipo MIME del file
+                }));
+
+                dispatch(aggiornaArgomento({ id, file: [...file, ...fileDetails] }));
+
+                // Esegui il POST al backend per ogni file
+                for (const file of newFiles) {
+                    const formData = new FormData();
+                    const sanitizedFileName = file.name.replace(/ /g, '_'); // Sostituisci gli spazi con "_"
+                    formData.append('file', file, sanitizedFileName);
+
+                    try {
+                        const response = await fetch('http://localhost/backend/api/uploadFile.php', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            console.log(`File caricato con successo: ${result.fileUrl}`);
+                        } else {
+                            console.error(`Errore nel caricamento del file: ${result.error}`);
+                            setErrorMessage('Errore nel caricamento del file!');
+                            setTimeout(() => setErrorMessage(''), 4000);
+                        }
+                    } catch (error) {
+                        console.error('Errore nella richiesta al backend:', error);
+                        setErrorMessage('Errore nella connessione al server!');
+                        setTimeout(() => setErrorMessage(''), 4000);
+                    }
+                }
             } else {
                 setErrorMessage('Alcuni file sono già stati caricati!');
                 setTimeout(() => setErrorMessage(''), 4000);
@@ -111,7 +154,7 @@ function CardArgomento({ id, titolo, colore, file }) {
 
     // Funzione per verificare se un file è già stato caricato
     const fileAlreadyExists = (fileName) => {
-        return file.includes(fileName);
+        return file.some((fileObj) => fileObj.name === fileName);
     };
 
 

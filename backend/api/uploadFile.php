@@ -23,7 +23,7 @@ if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
-$fileName = basename($_FILES['file']['name']);
+$fileName = str_replace(' ', '_', basename($_FILES['file']['name']));
 $uploadPath = $uploadDir . $fileName;
 
 if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadPath)) {
@@ -32,5 +32,9 @@ if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadPath)) {
     exit;
 }
 
-// Restituisci il percorso del file salvato
-echo json_encode(['success' => true, 'filePath' => $uploadPath]);
+
+// Restituisci l'URL del file salvato e l'ID su Moodle
+echo json_encode([
+    'success' => true,
+    'fileUrl' => 'http://localhost/progetto-1/backend/uploads/' . $fileName,
+]);

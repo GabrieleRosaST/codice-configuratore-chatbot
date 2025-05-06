@@ -8,7 +8,7 @@ function FileCaricato({ titolo, id, file }) {
     const dispatch = useDispatch();
 
     const handleDeleteFile = () => {
-        const updatedFiles = file.filter(f => f !== titolo); // Rimuove il file selezionato
+        const updatedFiles = file.filter(f => f.name !== titolo); // Confronta il nome del file
         dispatch(aggiornaArgomento({ id, file: updatedFiles })); // Aggiorna la lista dei file nello store Redux
     };
 
