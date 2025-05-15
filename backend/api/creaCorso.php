@@ -48,7 +48,7 @@ function creaCorsoMoodle($fullname, $shortname, $categoryid, $summary = '', $for
 
             foreach ($argomento['materiali'] as $materiale) {
 
-                $fileName = str_replace(' ', '_', $materiale['nome']);
+                //$fileName = str_replace(' ', '_', $materiale['nome']);
                 $filePath = __DIR__ . '/../uploads/' . $fileName;
                 $userId = 2;
 

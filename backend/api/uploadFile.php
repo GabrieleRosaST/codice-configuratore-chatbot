@@ -23,7 +23,7 @@ if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }
 
-$fileName = str_replace(' ', '_', basename($_FILES['file']['name']));
+//$fileName = str_replace(' ', '_', basename($_FILES['file']['name']));
 $uploadPath = $uploadDir . $fileName;
 
 if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadPath)) {

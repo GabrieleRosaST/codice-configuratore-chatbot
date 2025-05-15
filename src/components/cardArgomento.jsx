@@ -45,7 +45,7 @@ function CardArgomento({ id, titolo, colore, file }) {
             const existingFileNames = new Set(file.map((fileObj) => fileObj.fileName));
 
             // Filtra i nuovi file
-            const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name.replace(/ /g, '_')));
+            const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name));
 
 
             if (newFiles.length > 0) {
@@ -63,7 +63,7 @@ function CardArgomento({ id, titolo, colore, file }) {
 
                 // Salva i metadati dei file in Redux
                 const fileDetails = newFiles.map((file) => ({
-                    fileName: file.name.replace(/ /g, '_'), // Sostituisci gli spazi con "_"
+                    fileName: file.name,
                 }));
 
 
@@ -90,59 +90,41 @@ function CardArgomento({ id, titolo, colore, file }) {
 
     const handleDrop = async (event) => {
         event.preventDefault();
-        const files = Array.from(event.dataTransfer.files);
-        const validFiles = files.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
-        const invalidFiles = files.filter((file) => file.type !== 'application/pdf'); // File non validi
+        const droppedFiles = Array.from(event.dataTransfer.files);
+        const validFiles = droppedFiles.filter((file) => file.type === 'application/pdf');
+        const invalidFiles = droppedFiles.filter((file) => file.type !== 'application/pdf');
 
         if (invalidFiles.length > 0) {
-            setErrorMessage('Puoi caricare solo file PDF!'); // Mostra il messaggio di errore
-            setTimeout(() => setErrorMessage(''), 4000); // Rimuove il messaggio dopo 5 secondi
+            setErrorMessage('Puoi caricare solo file PDF!');
+            setTimeout(() => setErrorMessage(''), 4000);
             return;
         }
 
         if (validFiles.length > 0) {
-
-            // Crea un Set con i nomi dei file già presenti
             const existingFileNames = new Set(file.map((fileObj) => fileObj.fileName));
-
-            // Filtra i nuovi file
-            const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name.replace(/ /g, '_')));
+            const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name));
 
             if (newFiles.length > 0) {
-                // Aggiorna lo stato Redux con i nuovi file
+                // Salva i file veri e propri nella memoria temporanea
+                if (!fileStorage[id]) {
+                    fileStorage[id] = [];
+                }
+                fileStorage[id].push(...newFiles);
+
+                console.log('fileStorage:', fileStorage);
+
+                // Recupera i file esistenti dallo stato Redux
+                const existingFiles = file || [];
+
+                // Salva i metadati dei file in Redux
                 const fileDetails = newFiles.map((file) => ({
-                    name: file.name, // Nome del file
-                    path: URL.createObjectURL(file), // Percorso temporaneo del file
-                    type: file.type, // Tipo MIME del file
+                    fileName: file.name,
                 }));
 
-                dispatch(aggiornaArgomento({ id, file: [...file, ...fileDetails] }));
+                // Combina i file esistenti con i nuovi file
+                const updatedFiles = [...existingFiles, ...fileDetails];
 
-                // Esegui il POST al backend per ogni file
-                for (const file of newFiles) {
-                    const formData = new FormData();
-                    const sanitizedFileName = file.name.replace(/ /g, '_'); // Sostituisci gli spazi con "_"
-                    formData.append('file', file, sanitizedFileName);
-
-                    try {
-                        const response = await fetch('http://localhost/backend/api/uploadFile.php', {
-                            method: 'POST',
-                            body: formData,
-                        });
-
-                        const result = await response.json();
-
-                        if (!result.success) {
-                            console.error(`Errore nel caricamento del file: ${result.error}`);
-                            setErrorMessage('Errore nel caricamento del file!');
-                            setTimeout(() => setErrorMessage(''), 4000);
-                        }
-                    } catch (error) {
-                        console.error('Errore nella richiesta al backend:', error);
-                        setErrorMessage('Errore nella connessione al server!');
-                        setTimeout(() => setErrorMessage(''), 4000);
-                    }
-                }
+                dispatch(aggiornaFileArgomento({ id: id, file: updatedFiles }));
             } else {
                 setErrorMessage('Alcuni file sono già stati caricati!');
                 setTimeout(() => setErrorMessage(''), 4000);
@@ -150,7 +132,6 @@ function CardArgomento({ id, titolo, colore, file }) {
         }
     };
 
-    // Funzione per verificare se un file è già stato caricato
 
 
 

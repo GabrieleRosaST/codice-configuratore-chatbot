@@ -14,7 +14,7 @@ function FileCaricato({ fileCaricato, id, files }) {
         // Rimuovi il file dalla memoria temporanea
         if (fileStorage[id]) {
             fileStorage[id] = fileStorage[id].filter(
-                (file) => file.name.replace(/ /g, '_') !== fileCaricato.fileName
+                (file) => file.name !== fileCaricato.fileName
             );
         }
 

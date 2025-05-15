@@ -178,9 +178,10 @@ function PianoLavoro() {
         console.log(formDataArray);
 
 
+
         try {
 
-            // Invia i dati al backend con axios
+            // Invia i dati al backend 
             const response = await axios.post(
                 'http://localhost/progetto-1/backend/api/index.php',
                 formData,
