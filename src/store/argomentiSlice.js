@@ -49,14 +49,21 @@ const argomentiSlice = createSlice({
             colorIndex = (colorIndex + 1) % colors.length;
         },
 
-        aggiornaArgomento: (state, action) => {
-            const { id, titolo, colore, file } = action.payload;
-            const argomento = state.argomenti.find(arg => arg.id === id);
+        aggiornaFileArgomento: (state, action) => {
+            const { id, file } = action.payload;
+            const argomento = state.argomenti.find(argomento => argomento.id === id);
             if (argomento) {
-                if (titolo !== undefined) argomento.titolo = titolo; // Aggiorna solo se il titolo è passato
-                if (colore !== undefined) argomento.colore = colore; // Mantieni il colore se non è passato
-                if (file !== undefined) argomento.file = file; // Aggiorna solo se i file sono passati
+                argomento.file = file;
             }
+        },
+
+        aggiornaTitoloArgomento: (state, action) => {
+            const { id, titolo } = action.payload;
+            const argomento = state.argomenti.find(argomento => argomento.id === id);
+            if (argomento) {
+                argomento.titolo = titolo;
+            }
+
         },
 
         rimuoviArgomento: (state, action) => {
@@ -65,5 +72,5 @@ const argomentiSlice = createSlice({
     }
 });
 
-export const { aggiungiArgomento, aggiornaArgomento, rimuoviArgomento } = argomentiSlice.actions;
+export const { aggiungiArgomento, aggiornaFileArgomento, aggiornaTitoloArgomento, rimuoviArgomento } = argomentiSlice.actions;
 export default argomentiSlice.reducer;

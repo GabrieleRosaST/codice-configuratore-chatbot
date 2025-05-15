@@ -8,6 +8,7 @@ import header from './img/header.svg'
 import { StepProvider } from './context/StepContext';
 import Riepilogo from './pages/Riepilogo'
 import CorsoCreato from './pages/CorsoCreato'
+import CorsoChatbot from './pages/CorsoChatbot'
 
 function App() {
 
@@ -24,6 +25,11 @@ function App() {
   }, [isFirstLoad, navigate]);
 
 
+  if (window.location.pathname === '/corsoChatbot') {
+    return <CorsoChatbot />;
+  }
+
+
   return (
     <div className="flex flex-col w-full min-h-screen mb-12 overflow-x-hidden ">
 
@@ -34,9 +40,9 @@ function App() {
 
       <div className="flex-grow">
         <StepProvider>
-          <Navbar>
-          </Navbar>
+          <Navbar> </Navbar>
           <Routes>
+            <Route path="/corsoChatbot" element={<corsoChatbot />} />
             <Route path="/configurazione" element={<Configurazione />} />
             <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
             <Route path="/pianoLavoro" element={<PianoLavoro />} />
@@ -52,3 +58,5 @@ function App() {
 }
 
 export default App
+
+

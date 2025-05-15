@@ -21,71 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Leggi i dati JSON inviati dal frontend
-$rawInput = file_get_contents('php://input');
-
-// Decodifica il JSON
-$input = json_decode($rawInput, true);
-
-// Log dei dati ricevuti
-file_put_contents(__DIR__ . '/debug.log', "Dati ricevutiiii: " . print_r($input, true) . "\n", FILE_APPEND);
-
-// Se il JSON non è valido, restituisci un errore
-if ($input === null) {
-    file_put_contents(__DIR__ . '/debug.log', "Errore: JSON non valido. Errore JSON: " . json_last_error_msg() . "\n", FILE_APPEND);
-    http_response_code(400); // Richiesta non valida
-    echo json_encode(["error" => "JSON non valido"]);
-    exit;
-}
+// Logga tutto ciò che arriva dal frontend
+file_put_contents(__DIR__ . '/debug.log', "\n--- Inizio richiesta ---\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/debug.log', "\nContenuto di \$_POST:\n" . print_r($_POST, true) . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/debug.log', "\nContenuto di \$_FILES:\n" . print_r($_FILES, true) . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/debug.log', "--- Fine richiesta ---\n", FILE_APPEND);
 
 
 
-// Estrai i dati dal JSON
-$datiIniziali = $input['DatiIniziali'];
-$argomenti = $input['argomenti'];
-
-
-
-// Includi lo script di Moodle
-require_once '../config/config.php';
-require_once 'creaCorso.php';
-
-// Crea il corso in Moodle
-$result = creaCorsoMoodle(
-    $datiIniziali['nomeChatbot'], // Nome completo del corso
-    $datiIniziali['corsoChatbot'], // Nome breve del corso
-    1, // ID della categoria
-    $datiIniziali['descrizioneChatbot'], // Descrizione del corso
-    'topics', // Formato del corso
-    $argomenti // Array degli argomenti
-);
-
-
-// Verifica se il corso è stato creato con successo
-if (!$result['success']) {
-    file_put_contents(__DIR__ . '/debug.log', "Errore creazione corso: " . $result['error'] . "\n", FILE_APPEND);
-    http_response_code(500); // Errore interno del server
-    echo json_encode(["error" => $result['error']]);
-    exit;
-}
-
-// ID del corso creato
-$courseId = $result['course']['id'] ?? null;
-if (!$courseId) {
-    file_put_contents(__DIR__ . '/debug.log', "Errore: ID del corso non generato\n", FILE_APPEND);
-    http_response_code(500); // Errore interno del server
-    echo json_encode(["error" => "ID del corso non generato"]);
-    exit;
-}
-
-// URL del corso in Moodle
-$courseUrl = "http://localhost/moodle/moodle/course/view.php?id=" . $courseId;
-
-
-// Rispondi al frontend
-$response = [
-    "success" => true,
-    "courseId" => $courseId,
-    "courseUrl" => $courseUrl,
-];
-echo json_encode($response);
+// Rispondi con l'elenco dei file salvati
+echo json_encode(['success' => true, ]);

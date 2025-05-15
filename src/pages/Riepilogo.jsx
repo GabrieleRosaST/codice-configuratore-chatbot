@@ -1,14 +1,48 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 function Riepilogo() {
-    // Recupera i dati dal localStorage
-    const jsonData = localStorage.getItem('riepilogoDati');
-    const dati = JSON.parse(jsonData); // Converte la stringa JSON in un oggetto
+    const [files, setFiles] = useState([]);
+
+    useEffect(() => {
+        // Effettua una richiesta al backend per recuperare i file salvati
+        fetch('http://localhost/progetto-1/backend/api/index.php')
+            .then((response) => {
+                if (!response.success) {
+                    throw new Error('Errore durante il recupero dei file');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if (data.files) {
+                    setFiles(data.files); // Imposta i file ricevuti
+                }
+            })
+            .catch((error) => {
+                console.error('Errore:', error);
+            });
+    }, []);
 
     return (
         <div>
             <h1>Riepilogo Configurazione</h1>
-            <pre className="text-black p-4 rounded border">{JSON.stringify(dati, null, 2)}</pre>
+            <h2>File ricevuti:</h2>
+            <ul>
+                {files.length > 0 ? (
+                    files.map((file, index) => (
+                        <li key={index}>
+                            <a
+                                href={`http://localhost/progetto-1/backend/uploads/${file}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {file}
+                            </a>
+                        </li>
+                    ))
+                ) : (
+                    <p>Nessun file ricevuto.</p>
+                )}
+            </ul>
         </div>
     );
 }

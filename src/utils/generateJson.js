@@ -11,7 +11,6 @@ export function useGenerateJson() {
     const generateJson = () => {
         const datiFinali = {
             DatiIniziali: {
-                fotoChatbot: formData.fotoChatbot,
                 nomeChatbot: formData.nomeChatbot,
                 corsoChatbot: formData.corsoChatbot,
                 descrizioneChatbot: formData.descrizioneChatbot,
@@ -30,11 +29,7 @@ export function useGenerateJson() {
 
                 return {
                     titolo: argomento.titolo,
-                    materiali: argomento.file.map((file) => ({
-                        nome: file.name,
-                        percorso: file.path.replace(/\s+/g, '_'), // Sostituisci spazi con underscore
-                        tipo: file.type,
-                    })),
+                    materiali: argomento.file,
                     giorno: giorniAssociati,
                 };
             }),

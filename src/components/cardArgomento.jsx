@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { rimuoviArgomento, aggiornaArgomento } from '../store/argomentiSlice';
+import { rimuoviArgomento, aggiornaTitoloArgomento, aggiornaFileArgomento } from '../store/argomentiSlice';
 import dragDrop from '../img/dragDrop.svg';
 import caricaIcon from '../img/caricaIcon.svg';
 import cestinoIcon from '../img/cestinoIcon.svg';
 import cestinoIconRed from '../img/cestinoIconRed.svg';
 import FileCaricato from './fileCaricato';
 import '../index.css';
+import fileStorage from '../utils/fileStorage'; // Importa fileStorage
+
+
 
 function CardArgomento({ id, titolo, colore, file }) {
     const dispatch = useDispatch();
@@ -24,7 +27,7 @@ function CardArgomento({ id, titolo, colore, file }) {
 
     const handleTitleChange = (e) => {
         const newTitle = e.target.value;
-        dispatch(aggiornaArgomento({ id, titolo: newTitle }));
+        dispatch(aggiornaTitoloArgomento({ id, titolo: newTitle }));
     };
 
     const handleFileUpload = async (e) => {
@@ -39,58 +42,51 @@ function CardArgomento({ id, titolo, colore, file }) {
         }
 
         if (validFiles.length > 0) {
-            // Filtra i file già caricati
-            const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
+            const existingFileNames = new Set(file.map((fileObj) => fileObj.fileName));
+
+            // Filtra i nuovi file
+            const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name.replace(/ /g, '_')));
+
 
             if (newFiles.length > 0) {
+                // Salva i file veri e propri nella memoria temporanea
+                if (!fileStorage[id]) {
+                    fileStorage[id] = [];
+                }
+                fileStorage[id].push(...newFiles);
+
+                console.log('fileStorage:', fileStorage);
+
+
+                // Recupera i file esistenti dallo stato Redux
+                const existingFiles = file || [];
+
+                // Salva i metadati dei file in Redux
                 const fileDetails = newFiles.map((file) => ({
-                    name: file.name, // Nome del file
-                    path: URL.createObjectURL(file), // Percorso temporaneo del file
-                    type: file.type, // Tipo MIME del file
+                    fileName: file.name.replace(/ /g, '_'), // Sostituisci gli spazi con "_"
                 }));
 
-                dispatch(aggiornaArgomento({ id, file: [...file, ...fileDetails] }));
 
-                // Esegui il POST al backend per ogni file
-                for (const file of newFiles) {
-                    const formData = new FormData();
-                    const sanitizedFileName = file.name.replace(/ /g, '_'); // Sostituisci gli spazi con "_"
-                    formData.append('file', file, sanitizedFileName);
+                // Combina i file esistenti con i nuovi file
+                const updatedFiles = [...existingFiles, ...fileDetails];
 
-                    try {
-                        const response = await fetch('http://localhost/progetto-1/backend/api/uploadFile.php', {
-                            method: 'POST',
-                            body: formData,
-                        });
-
-                        const result = await response.json();
-
-                        if (result.success) {
-                            console.log(`File caricato con successo: ${result.fileUrl}`);
-                        } else {
-                            console.error(`Errore nel caricamento del file: ${result.error}`);
-                            setErrorMessage('Errore nel caricamento del file!');
-                            setTimeout(() => setErrorMessage(''), 4000);
-                        }
-                    } catch (error) {
-                        console.error('Errore nella richiesta al backend:', error);
-                        setErrorMessage('Errore nella connessione al server!');
-                        setTimeout(() => setErrorMessage(''), 4000);
-                    }
-                }
+                dispatch(aggiornaFileArgomento({ id: id, file: updatedFiles }));
             } else {
                 setErrorMessage('Alcuni file sono già stati caricati!');
                 setTimeout(() => setErrorMessage(''), 4000);
             }
+
         }
 
         // Resetta il valore del file input
         e.target.value = '';
     };
 
+
     const openFileSelector = () => {
         document.getElementById(`file-input-${id}`).click();
     };
+
 
     const handleDrop = async (event) => {
         event.preventDefault();
@@ -105,8 +101,12 @@ function CardArgomento({ id, titolo, colore, file }) {
         }
 
         if (validFiles.length > 0) {
-            // Filtra i file già caricati
-            const newFiles = validFiles.filter((file) => !fileAlreadyExists(file.name));
+
+            // Crea un Set con i nomi dei file già presenti
+            const existingFileNames = new Set(file.map((fileObj) => fileObj.fileName));
+
+            // Filtra i nuovi file
+            const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name.replace(/ /g, '_')));
 
             if (newFiles.length > 0) {
                 // Aggiorna lo stato Redux con i nuovi file
@@ -132,9 +132,7 @@ function CardArgomento({ id, titolo, colore, file }) {
 
                         const result = await response.json();
 
-                        if (result.success) {
-                            console.log(`File caricato con successo: ${result.fileUrl}`);
-                        } else {
+                        if (!result.success) {
                             console.error(`Errore nel caricamento del file: ${result.error}`);
                             setErrorMessage('Errore nel caricamento del file!');
                             setTimeout(() => setErrorMessage(''), 4000);
@@ -153,9 +151,7 @@ function CardArgomento({ id, titolo, colore, file }) {
     };
 
     // Funzione per verificare se un file è già stato caricato
-    const fileAlreadyExists = (fileName) => {
-        return file.some((fileObj) => fileObj.name === fileName);
-    };
+
 
 
 
@@ -236,7 +232,7 @@ function CardArgomento({ id, titolo, colore, file }) {
                                     </div>
                                 ) : (
                                     file.map((fileObj, index) => (
-                                        <FileCaricato key={index} titolo={fileObj.name} id={id} file={file} />
+                                        <FileCaricato key={index} id={id} files={file} fileCaricato={fileObj} />
                                     ))
 
 

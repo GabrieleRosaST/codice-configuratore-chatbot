@@ -11,7 +11,6 @@ import frecciaDestraButton from '../img/frecciaDestraButton.svg';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { updateForm } from '../store/formSlice';
-
 import { useStepContext } from '../context/StepContext.jsx';
 
 
@@ -144,22 +143,10 @@ function Configurazione() {
                             <img
                                 src={formState.fotoChatbot || fotoPlaceholder}
                                 alt="Seleziona immagine"
-                                className="w-19 h-19 object-cover rounded-full border-2 border-gray-300 cursor-pointer hover:opacity-80"
-                                onClick={() => fileInputRef.current.click()} // Usa il riferimento per aprire il selettore file
+                                className="w-19 h-19 object-cover rounded-full border-2 border-gray-300"
+
                             />
-                            <input
-                                ref={fileInputRef} // Collega il riferimento all'input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                    const file = e.target.files[0];
-                                    if (file) {
-                                        const imageUrl = URL.createObjectURL(file);
-                                        dispatch(updateForm({ fotoChatbot: imageUrl }));
-                                    }
-                                }}
-                                style={{ display: 'none' }} // Nasconde l'input file
-                            />
+
                         </div>
 
 

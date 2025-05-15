@@ -15,6 +15,9 @@ import { useState } from 'react';
 import closeAiutoIcon from '../img/closeAiutoIcon.svg';
 import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
+import fileStorage from '../utils/fileStorage'; // Importa fileStorage
+import axios from 'axios'; // Importa axios per le richieste HTTP
+
 
 
 
@@ -27,12 +30,14 @@ function PianoLavoro() {
     const { argomenti } = useSelector((state) => state.argomenti);
 
     const [mostraAiuto, setMostraAiuto] = useState(false); // Stato per gestire la visibilità del div di aiuto
-    console.log(mostraAiuto)
 
     const dataInizioDate = new Date(dataInizio);
 
+
+
     const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
     const giorniSettimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
+
 
 
     const cambiaMese = (direzione) => {
@@ -124,7 +129,6 @@ function PianoLavoro() {
 
     // Inizializza i giorni del calendario in Redux
     useEffect(() => {
-        console.log("Selezionato:", dataInizioDate.getMonth(), dataInizioDate.getFullYear());
 
         const giorniCorrenti = costruisciCalendario();
 
@@ -133,38 +137,67 @@ function PianoLavoro() {
     }, [dispatch, selezionato]);
 
 
-    //Funzione per inviare i dati al backend 
-    const handleTerminaConfigurazione = async (event) => {
-        event.preventDefault(); // Previeni il comportamento predefinito del modulo
+
+
+    //Funzione per inviare i dati al backend e creare FORMDATA
+
+    const handleTerminaConfigurazione = async () => {
+
+        // Genera il JSON con i dati della pagina CONFIGURAZIONE
+        const jsonData = generateJson();
+
+        const formData = new FormData();
+
+        // Aggiungi il JSON al FormData
+        formData.append('data', jsonData);
+
+        // Itera sugli argomenti e aggiungi i file al FormData
+        argomenti.forEach((argomento, argomentoIndex) => {
+            if (fileStorage[argomento.id]) {
+                fileStorage[argomento.id].forEach((file, fileIndex) => {
+                    // Usa una chiave univoca per ogni file
+                    formData.append(`files[${argomentoIndex}][${fileIndex}]`, file);
+                });
+            }
+        });
+
+        // Visualizza il contenuto del FormData
+        const formDataArray = [];
+        for (let [key, value] of formData.entries()) {
+            if (value instanceof File) {
+                formDataArray.push({
+                    key,
+                    name: value.name,
+                    size: value.size,
+                    type: value.type
+                });
+            } else {
+                formDataArray.push({ key, value });
+            }
+        }
+        console.log(formDataArray);
+
 
         try {
-            // Genera il JSON
-            const jsonData = generateJson();
-            console.log('Dati inviati al backend:', jsonData); // Log per verificare i dati
 
-            // Invia i dati al backend
-            const response = await fetch('http://localhost/progetto-1/backend/api/index.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: jsonData, // Invia il JSON generato
-            });
+            // Invia i dati al backend con axios
+            const response = await axios.post(
+                'http://localhost/progetto-1/backend/api/index.php',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    withCredentials: true, // se usi cookie/sessione
+                }
+            );
 
 
-            const data = await response.json();
-            console.log('Risposta dal backend:', data); // Log per verificare la risposta
+            if (!response.data.success)
+                alert(`Errore: ${response.data.error}`);
 
-            // Gestisci la risposta
-            if (data.success) {
-                alert('Corso creato con successo!');
-                window.location.href = data.courseUrl; // Reindirizza alla pagina del corso di Moodle
-            } else {
-                alert(`Errore: ${data.error}`);
-            }
         } catch (error) {
-            console.error('Errore durante la creazione del corso:', error);
-            alert('Errore durante la creazione del corso.');
+            console.error('Errore durante l\'invio dei dati:', error);
         }
     };
 
@@ -175,6 +208,7 @@ function PianoLavoro() {
 
     return (
         <DndProvider backend={HTML5Backend}>
+
             <div className="h-full">
 
                 {/* Mostra il div di aiuto se mostraAiuto è true */}
@@ -352,7 +386,6 @@ function PianoLavoro() {
                                     // Determina se il giorno è nel corso
                                     const isInCorso = !!giornoCorso;
 
-                                    //console.log("Anno 1 ", giornoCorso.anno, "Anno 2:", giornoCorrente.anno);
 
 
                                     return (
@@ -424,7 +457,13 @@ function PianoLavoro() {
                                 </div>
 
                             </button>
+
+
                         </div>
+
+
+
+
 
                     </>
                 )}

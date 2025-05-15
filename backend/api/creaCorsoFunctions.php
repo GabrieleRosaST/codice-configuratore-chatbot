@@ -161,12 +161,14 @@ function uploadFileToMoodle($filePath, $fileName, $userId, $token, $url) {
 
 
 
-function aggiungiModuloMoodle($courseId, $targetSectionId, $modname, $moduleData, $token, $url) {
+function aggiungiModuloMoodle($courseId, $targetSectionId, $token, $url) {
 
-    // Dati per creare il modulo
-    $moduleData['courseid'] = $courseId;
-    $moduleData['targetsectionid'] = $targetSectionId;
-    $moduleData['modname'] = $modname;
+
+    $moduleData = [
+        'courseid' => $courseId,
+        'targetsectionid' => $targetSectionId,
+        'modname' => 'label',
+    ];
 
 
     $moduleFunctionName = 'core_courseformat_new_module';

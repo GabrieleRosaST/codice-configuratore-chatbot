@@ -36,5 +36,6 @@ if (!move_uploaded_file($_FILES['file']['tmp_name'], $uploadPath)) {
 // Restituisci l'URL del file salvato e l'ID su Moodle
 echo json_encode([
     'success' => true,
+    'fileName' => $fileName, // Nome del file salvato
     'fileUrl' => 'http://localhost/progetto-1/backend/uploads/' . $fileName,
 ]);

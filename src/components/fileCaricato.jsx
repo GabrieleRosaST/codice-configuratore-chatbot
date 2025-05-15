@@ -2,14 +2,25 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import iconPDF from '../img/iconPDF.svg';
 import eliminaFile from '../img/eliminaFile.svg';
-import { aggiornaArgomento } from '../store/argomentiSlice';
+import { aggiornaFileArgomento } from '../store/argomentiSlice';
+import fileStorage from '../utils/fileStorage.js'; // Importa l'oggetto fileStorage
 
-function FileCaricato({ titolo, id, file }) {
+
+function FileCaricato({ fileCaricato, id, files }) {
     const dispatch = useDispatch();
 
+
     const handleDeleteFile = () => {
-        const updatedFiles = file.filter(f => f.name !== titolo); // Confronta il nome del file
-        dispatch(aggiornaArgomento({ id, file: updatedFiles })); // Aggiorna la lista dei file nello store Redux
+        // Rimuovi il file dalla memoria temporanea
+        if (fileStorage[id]) {
+            fileStorage[id] = fileStorage[id].filter(
+                (file) => file.name.replace(/ /g, '_') !== fileCaricato.fileName
+            );
+        }
+
+        console.log('fileStorage:', fileStorage);
+        const updatedFiles = files.filter(f => f.fileName !== fileCaricato.fileName); // Confronta il nome del file
+        dispatch(aggiornaFileArgomento({ id, file: updatedFiles })); // Aggiorna la lista dei file nello store Redux
     };
 
     return (
@@ -23,7 +34,7 @@ function FileCaricato({ titolo, id, file }) {
                 </div>
 
                 <p className="w-[320px] h-full pl-1 text-[18px] text-left text-[#495057] flex items-center truncate">
-                    {titolo}
+                    {fileCaricato.fileName}
                 </p>
 
             </div>

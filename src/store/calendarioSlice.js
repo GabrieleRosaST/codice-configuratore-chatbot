@@ -21,7 +21,6 @@ const calendarioSlice = createSlice({
 
         aggiornaSelezionato: (state, action) => {
             const { mese, anno } = action.payload;
-            console.log('Mese:', mese, 'Anno:', anno);
             state.selezionato = { mese, anno };
         },
 
@@ -35,7 +34,6 @@ const calendarioSlice = createSlice({
             const dataFineCorso = new Date(dataFine);
 
             for (let d = new Date(dataInizioCorso); d <= dataFineCorso; d.setDate(d.getDate() + 1)) {
-                console.log(d.getDate(), d.getMonth(), d.getFullYear());
                 giorniCorso.push({
                     giorno: d.getDate(),
                     mese: d.getMonth(),
@@ -82,7 +80,6 @@ const calendarioSlice = createSlice({
 
         inizializzaCalendario: (state, action) => {
             state.giorniCorrenti = action.payload.giorniCorrenti;
-            console.log('Giorni correnti:', state.giorniCorrenti);
         },
 
         spostaArgomento: (state, action) => {

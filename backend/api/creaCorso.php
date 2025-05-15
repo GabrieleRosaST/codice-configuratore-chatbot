@@ -36,6 +36,10 @@ function creaCorsoMoodle($fullname, $shortname, $categoryid, $summary = '', $for
         $updateSectionResult = aggiornaNomeSezione($courseId, $index + 1, $argomento['titolo'], $summary, $token, $url);
 
 
+        
+
+
+
         if (!$updateSectionResult['success']) {
             return $updateSectionResult;
         }
@@ -72,19 +76,13 @@ function creaCorsoMoodle($fullname, $shortname, $categoryid, $summary = '', $for
                 curl_close($courseContentsCurl);
 
                 $courseContents = json_decode($courseContentsResponse, true);
-                $targetSectionId = $courseContents[$index + 1 - 1]['id'];
+                file_put_contents(__DIR__ . '/debug.log', "Course contents: " . print_r($courseContents, true) . "\n", FILE_APPEND);            
+                $targetSectionId = $courseContents[$index + 1]['id'];
+                file_put_contents(__DIR__ . '/debug.log', "targetSectionId: " . print_r($targetSectionId, true) . "\n", FILE_APPEND);   
 
-                $moduleData = [
-                    'name' => $fileName,
-                    'contentfiles' => [
-                        [
-                            'type' => 'draft',
-                            'itemid' => $itemid
-                        ]
-                    ]
-                ];
+                
 
-                $addModuleResult = aggiungiModuloMoodle($courseId, $targetSectionId, 'resource', $moduleData, $token, $url);
+                $addModuleResult = aggiungiModuloMoodle($courseId, $targetSectionId, $materiale['nome'], $token, $url);
 
                 if (!$addModuleResult['success']) {
                     file_put_contents(__DIR__ . '/debug.log', "Errore aggiunta modulo: " . $addModuleResult['error'] . "\n", FILE_APPEND);

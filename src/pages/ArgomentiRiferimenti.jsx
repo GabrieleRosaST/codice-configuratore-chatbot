@@ -26,7 +26,6 @@ function ArgomentiRiferimenti() {
     const handleAggiungiArgomento = () => {
 
         const nuovoArgomento = {
-            id: argomenti.length + 1, // ID univoco per l'argomento
             titolo: '', // Titolo vuoto iniziale
             colore: '', // Colore predefinito
             file: [] // Nessun file iniziale
@@ -60,6 +59,7 @@ function ArgomentiRiferimenti() {
 
     return (
         <div className="w-full">
+
 
             {mostraAiuto ? (
                 <div className="w-[1500px] mx-auto mt-1">
