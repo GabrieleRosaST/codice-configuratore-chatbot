@@ -25,7 +25,7 @@ function PianoLavoro() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const generateJson = useGenerateJson(); // Usa il custom hook
-    const { selezionato, giorniCorrenti, giorniCorso } = useSelector((state) => state.calendario);
+    const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti } = useSelector((state) => state.calendario);
     const { dataInizio, dataFine } = useSelector((state) => state.form);
     const { argomenti } = useSelector((state) => state.argomenti);
 
@@ -118,13 +118,19 @@ function PianoLavoro() {
     useEffect(() => {
         dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
 
-        // Distribuisci gli argomenti solo al primo caricamento della pagina
-        dispatch(distribuisciArgomentiGiorniCorso({
-            argomenti,
-            dataInizio,
-            dataFine,
-        }));
-    }, []); // Dipendenza vuota: viene eseguito solo al primo rendering
+        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
+        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
+        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
+
+        if (argomentiIds !== distribuitiIds) {
+            dispatch(distribuisciArgomentiGiorniCorso({
+                argomenti,
+                dataInizio,
+                dataFine,
+            }));
+        }
+        // eslint-disable-next-line
+    }, [dispatch, argomenti, dataInizio, dataFine]);
 
 
     // Inizializza i giorni del calendario in Redux
@@ -200,6 +206,9 @@ function PianoLavoro() {
         } catch (error) {
             console.error('Errore durante l\'invio dei dati:', error);
         }
+
+
+        navigate('/corsoChatbot'); // Reindirizza alla pagina di riepilogo
     };
 
 

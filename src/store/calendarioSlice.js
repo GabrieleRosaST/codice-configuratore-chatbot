@@ -15,6 +15,7 @@ const calendarioSlice = createSlice({
         },
         giorniCorrenti: [],
         giorniCorso: [],
+        argomentiDistribuiti: [],
 
     },
     reducers: {
@@ -44,6 +45,7 @@ const calendarioSlice = createSlice({
 
             // Salva i giorni del corso nello stato Redux
             state.giorniCorso = giorniCorso;
+            state.argomentiDistribuiti = argomenti.map(a => a.id); // salva gli id
 
 
             const lunghezzaCorso = state.giorniCorso.length;
@@ -84,6 +86,8 @@ const calendarioSlice = createSlice({
 
         spostaArgomento: (state, action) => {
             const { argomento, giornoOrigine, giornoDestinazione } = action.payload;
+
+            console.log("SPOSTO ARGOMENTO", argomento, giornoOrigine, giornoDestinazione);
 
             // TROVA il giorno di ORIGINE nel corso
             const giornoOrigineIndex = state.giorniCorso.findIndex(

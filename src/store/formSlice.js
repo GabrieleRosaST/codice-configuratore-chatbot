@@ -9,8 +9,8 @@ const formSlice = createSlice({
         corsoChatbot: 'Testttt',
         descrizioneChatbot: '',
         istruzioniChatbot: '',
-        dataInizio: '2025-05-18',
-        dataFine: '2025-05-24',
+        dataInizio: '2025-05-24',
+        dataFine: '2025-06-02',
         newSuggerimento: '',
     },
     reducers: { // Funzioni per aggiornare lo stato
