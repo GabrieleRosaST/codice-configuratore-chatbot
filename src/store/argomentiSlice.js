@@ -32,8 +32,9 @@ const argomentiSlice = createSlice({
     name: 'argomenti',
     initialState: {
         argomenti: [
-            // Esempio di argomento predefinito
-        ] // Array per memorizzare gli argomenti predefiniti
+        ],
+        cambiatoTitolo: 0,
+
     },
     reducers: {
         aggiungiArgomento: (state, action) => {
@@ -62,6 +63,7 @@ const argomentiSlice = createSlice({
             const argomento = state.argomenti.find(argomento => argomento.id === id);
             if (argomento) {
                 argomento.titolo = titolo;
+                state.cambiatoTitolo += 1;
             }
 
         },

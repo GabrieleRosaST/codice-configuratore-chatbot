@@ -33,13 +33,13 @@ export default function Giorno({ giorno, isInCorso, isAltroMese, spostaArgomento
     return (
         <div
             ref={drop}
-            className={`text-center h-[120px] p-1 ${giornoClasse}`}
+            className={`text-center h-25 2xl:h-25 p-1 ${giornoClasse} transition duration-10  `}
         >
-            <p className={`text-[14px] mt-[3px] text-[#1D2125] ${!isInCorso && giorno.tipo !== "corrente" ? "opacity-30" : "opacity-90"}`}>
+            <p className={`text-[10px] mt-[3px] text-[#1D2125] ${!isInCorso && giorno.tipo !== "corrente" ? "opacity-30" : "opacity-90"}`}>
                 {giorno.giorno}
             </p>
             <div
-                className="max-h-[80px] overflow-y-auto overflow-x-hidden scroll-container"
+                className="max-h-[68px] overflow-y-auto overflow-x-hidden scroll-container"
                 style={{
                     padding: 0,
                     direction: "ltr",

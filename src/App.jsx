@@ -31,28 +31,22 @@ function App() {
 
 
   return (
-    <div className="flex flex-col w-full min-h-screen mb-12 overflow-x-hidden ">
-
-      <div className="h-20">
-        <img src={header} />
-      </div>
+    <div className="w-screen scroll-container2">
 
 
-      <div className="flex-grow">
-        <StepProvider>
-          <Navbar> </Navbar>
-          <Routes>
-            <Route path="/corsoChatbot" element={<corsoChatbot />} />
-            <Route path="/configurazione" element={<Configurazione />} />
-            <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
-            <Route path="/pianoLavoro" element={<PianoLavoro />} />
-            <Route path="/riepilogo" element={<Riepilogo />} />
-            <Route path="/corso-creato/:courseId" element={<CorsoCreato />} />
-            <Route path="*" element={<Configurazione />} />
-          </Routes>
-        </StepProvider>
+      <StepProvider>
+        <Navbar> </Navbar>
+        <Routes>
+          <Route path="/corsoChatbot" element={<corsoChatbot />} />
+          <Route path="/configurazione" element={<Configurazione />} />
+          <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
+          <Route path="/pianoLavoro" element={<PianoLavoro />} />
+          <Route path="/riepilogo" element={<Riepilogo />} />
+          <Route path="/corso-creato/:courseId" element={<CorsoCreato />} />
+          <Route path="*" element={<Configurazione />} />
+        </Routes>
+      </StepProvider>
 
-      </div>
     </div >
   )
 }

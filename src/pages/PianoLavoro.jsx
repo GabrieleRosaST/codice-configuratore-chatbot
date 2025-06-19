@@ -1,8 +1,8 @@
-import React from 'react';
+import { useRef } from 'react';
 import domandaIcon from '../img/domandaIcon.svg';
 import frecciaDestra from '../img/frecciaDestra.svg';
 import { useSelector, useDispatch } from 'react-redux';
-import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso } from '../store/calendarioSlice';
+import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso, aggiornaTitoliGiorni } from '../store/calendarioSlice';
 import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import terminaConfigIcon from '../img/terminaConfigIcon.svg';
 import { DndProvider } from 'react-dnd';
@@ -25,9 +25,9 @@ function PianoLavoro() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const generateJson = useGenerateJson(); // Usa il custom hook
-    const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti } = useSelector((state) => state.calendario);
+    const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti, primaVisita } = useSelector((state) => state.calendario);
     const { dataInizio, dataFine } = useSelector((state) => state.form);
-    const { argomenti } = useSelector((state) => state.argomenti);
+    const { argomenti, cambiatoTitolo } = useSelector((state) => state.argomenti);
 
     const [mostraAiuto, setMostraAiuto] = useState(false); // Stato per gestire la visibilità del div di aiuto
 
@@ -37,6 +37,7 @@ function PianoLavoro() {
 
     const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
     const giorniSettimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
+
 
 
 
@@ -66,6 +67,8 @@ function PianoLavoro() {
 
     // Funzione per costruire il calendario
     const costruisciCalendario = () => {
+
+
         const { mese, anno } = selezionato;
 
         // Giorno della settimana del primo giorno del mese (0 = Domenica, 1 = Lunedì, ...)
@@ -115,6 +118,8 @@ function PianoLavoro() {
     };
 
 
+
+
     useEffect(() => {
         dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
 
@@ -122,15 +127,20 @@ function PianoLavoro() {
         const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
         const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
 
+
         if (argomentiIds !== distribuitiIds) {
+
             dispatch(distribuisciArgomentiGiorniCorso({
                 argomenti,
                 dataInizio,
                 dataFine,
             }));
+
         }
         // eslint-disable-next-line
     }, [dispatch, argomenti, dataInizio, dataFine]);
+
+
 
 
     // Inizializza i giorni del calendario in Redux
@@ -142,6 +152,14 @@ function PianoLavoro() {
 
     }, [dispatch, selezionato]);
 
+    useEffect(() => {
+        console.log("cambiatoTitolo", cambiatoTitolo);
+        console.log("primaVisita", primaVisita);
+
+        if (primaVisita) {
+            dispatch(aggiornaTitoliGiorni({ argomenti }));
+        }
+    }, [dispatch, cambiatoTitolo]);
 
 
 
@@ -216,37 +234,41 @@ function PianoLavoro() {
 
 
 
+
     return (
         <DndProvider backend={HTML5Backend}>
 
-            <div className="h-full">
+            <div className=" flex flex-col items-center justify-start ">
 
                 {/* Mostra il div di aiuto se mostraAiuto è true */}
                 {mostraAiuto ? (
-                    <div className="w-[1500px] mx-auto mt-1">
-                        <div className="w-full h-15 mb-6 relative flex items-center">
+                    <div className="w-[85vw] 2xl:w-[65vw] mx-auto  flex flex-col items-center justify-">
+
+                        <div className="w-full h-14 mb-6  relative flex items-center justify-center md:justify-start " >
                             <button
-                                className="w-[110px] text-[#4f5255] h-10 rounded-[25px] bg-white absolute left-0 flex items-center justify-center  cursor-pointer transform transition-transform duration-200 hover:scale-102 "
+                                className="w-21 h-9 rounded-[25px] bg-white flex items-center justify-center cursor-pointer transform transition-transform duration-200 hover:scale-102"
                                 style={{ boxShadow: '0px 2px 8.5px 10px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7' }}
                                 onClick={() => setMostraAiuto(false)} // Nascondi il div di aiuto
                             >
-                                <img src={closeAiutoIcon} alt="Icona domanda" className="w-3 h-3 mr-2" />
-                                <p className="text-lg text-center text-[#4f5255]">Chiudi</p>
+                                <img src={closeAiutoIcon} alt="Icona domanda" className="w-2.5 h-2.5 mr-2" />
+                                <p className="text-[13px] text-center text-[#4f5255]">
+
+                                    Chiudi</p>
                             </button>
                         </div>
 
-                        <div className="w-[1000px] mx-auto mt-1 p-5  bg-white rounded-[15px] "
+
+                        <div className="w-[50vw] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
                             style={{ boxShadow: '0px 0px 6px 6px rgba(0,0,0,0.0)', outline: '1px solid #E5E5E7' }}>
 
-                            <div className="w-full h-12  relative flex items-center  justify-center mb-3 mt-4 gap-3 ">
-
-                                <img src={obiettivoIcon} className='w-6 h-6 ' />
-                                <h2 className="text-2xl h-full flex  items-center font-bold text-center text-[#21225f]">A cosa serve questa pagina?</h2>
+                            <div className="w-[90%]  h-10  relative flex items-center  justify-center mt-4 gap-3 mb-3 ">
+                                <img src={obiettivoIcon} className='w-5 h-5 ' />
+                                <h2 className="text-[18px] h-full flex  items-center font-bold text-center text-[#21225f]">A cosa serve questa pagina?</h2>
 
                             </div>
 
-                            <div className='w-[800px] mx-auto '>
-                                <ul className="list-disc list-inside text-lg text-[#4f5255] space-y-4">
+                            <div className='w-[82%] mx-auto '>
+                                <ul className="list-disc list-inside text-[14px] text-[#4f5255] space-y-2">
                                     <li>
                                         I giorni evidenziati in giallo rappresentano l’intervallo di date in cui il corso (e il chatbot) sarà attivo.
                                     </li>
@@ -266,26 +288,27 @@ function PianoLavoro() {
                             <div className="w-full h-12  relative flex items-center  justify-center mb-3 mt-10 gap-3 ">
 
                                 <img src={studentIcon} className='w-6 h-6 ' />
-                                <h2 className="text-2xl h-full flex  items-center font-bold text-center text-[#21225f]">Cosa vedranno gli studenti?
+                                <h2 className="text-[18px] h-full flex  items-center font-bold text-center text-[#21225f]">Cosa vedranno gli studenti?
+
                                 </h2>
 
                             </div>
 
-                            <div className='w-[800px] mx-auto'>
-                                <p className='text-lg text-[#4f5255] mb-3'>
+                            <div className='w-[82%] mx-auto'>
+                                <p className='text-[14px] text-[#4f5255] mb-3'>
                                     All’interno del chatbot, gli studenti troveranno dei suggerimenti che li guideranno nello studio, come:
                                 </p>
-                                <ul className='list-disc list-inside text-lg text-[#4f5255] space-y-1 mb-3'>
+                                <ul className='list-disc list-inside text-[14px] text-[#4f5255] space-y-1 mb-3'>
                                     <li>"Studia la lezione di oggi”</li>
                                     <li>“Ripassa la lezione precedente”
                                     </li>
                                 </ul>
 
-                                <p className='text-lg text-[#4f5255] mb-3 mt-5'>
+                                <p className='text-[14px] text-[#4f5255] mb-3 mt-5'>
                                     Il chatbot seguirà il piano che hai impostato, fornendo supporto coerente con il programma del corso. Questo li aiuta a:
 
                                 </p>
-                                <ul className='list-disc list-inside text-lg text-[#4f5255] space-y-1 mb-14'>
+                                <ul className='list-disc list-inside text-[14px] text-[#4f5255] space-y-1 mb-14'>
                                     <li>Mantenere un ritmo di studio regolare
                                     </li>
                                     <li>Restare organizzati
@@ -293,7 +316,7 @@ function PianoLavoro() {
                                     <li>Studiare gli argomenti nel momento più adatto</li>
                                 </ul>
 
-                                <p className='text-lg text-[#4f5255] mb-5'>📌 Nota: Lo studente può comunque utilizzare il chatbot in qualsiasi momento, anche al di fuori del calendario impostato.</p>
+                                <p className='text-[14px] text-[#4f5255] mb-5'>📌 Nota: Lo studente può comunque utilizzare il chatbot in qualsiasi momento, anche al di fuori del calendario impostato.</p>
                             </div>
 
 
@@ -310,52 +333,52 @@ function PianoLavoro() {
 
 
                         {/* Header con aiuto, mese e anno */}
-                        <div className="w-[1500px]  m-1 mx-auto h-15 flex justify-between items-center relative">
+                        <div className="w-[85vw] 2xl:w-[65vw] min-h-14 flex justify-between items-center relative ">
 
-                            <button
-                                className="w-[98px] z-13 h-10 rounded-[25px] bg-white  flex items-center justify-center  z-5 cursor-pointer transform transition-transform duration-200 hover:scale-102 "
-                                style={{ boxShadow: '0px 2px 8.5px 10px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7' }}
-                                onClick={() => setMostraAiuto(true)}
+                            <div className=" z-13 h-10  flex items-center justify-center "
                             >
-                                <img src={domandaIcon} alt="Icona domanda" className="w-4 h-4 mr-1" />
-                                <p className="text-lg text-center text-[#4f5255]">Aiuto</p>
-                            </button>
+                                <button
+                                    className="w-20 h-9 rounded-[25px] bg-white flex items-center justify-center cursor-pointer transform transition-transform duration-200 hover:scale-102"
+                                    onClick={() => setMostraAiuto(true)}
+                                    style={{ boxShadow: '0px 2px 8.5px 10px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7' }}
+                                >
+                                    <img src={domandaIcon} alt="Icona domanda" className="w-2 mr-2 ml-1" />
+                                    <p className="text-[14px] text-center text-[#4f5255]">Aiuto</p>
+                                </button>
+                            </div>
 
-                            <div className="w-[225px] flex items-center justify-center relative ">
+                            <div className="w-40 flex h-11 mt-2 relative flex justify-between items-center ">
 
-                                <div className="w-9 h-9 absolute left-0 ">
+                                <div className="w-5 h-5   ">
                                     <button
-                                        className="w-full h-full  text-xl font-bold text-[#21225f] cursor-pointer "
+                                        className="w-full h-full cursor-pointer flex items-center justify-center"
                                         onClick={() => cambiaMese('sinistra')}
                                     >
-                                        <img src={frecciaDestra} className="w-5 h-5  mx-auto my-auto transform rotate-180 transition-transform duration-200 opacity-80 hover:scale-105" />
+                                        <img src={frecciaDestra} className=" transform transition-transform transform rotate-180 duration-200 opacity-80 hover:scale-105" />
                                     </button>
-
-
                                 </div>
 
-                                <p className="text-2xl font-bold text-center text-[#21225f]  mx-2">
+                                <p className="text-[17px] font-bold text-center text-[#21225f]  mx-2">
                                     {mesi[selezionato.mese]}
                                 </p>
 
-                                <div className="w-9 h-9 absolute right-0 ">
+                                <div className="w-4 h-4 ">
                                     <button
-                                        className="w-full h-full  text-xl font-bold text-[#21225f] cursor-pointer "
+                                        className="w-full h-full cursor-pointer flex items-center justify-center"
                                         onClick={() => cambiaMese('destra')}
                                     >
-                                        <img src={frecciaDestra} className="w-5 h-5  mx-auto my-auto transform transition-transform duration-200 opacity-80 hover:scale-105" />
+                                        <img src={frecciaDestra} className=" transform transition-transform duration-200 opacity-80 hover:scale-105" />
                                     </button>
-
-
                                 </div>
+
                             </div>
 
 
 
-                            <div className="w-[92px] h-[41px]">
+                            <div className=" h-14 flex items-center justify-end  pl-2">
 
-                                <div className="w-full h-full rounded-[25px] bg-white  flex items-center justify-center" style={{ outline: '1px solid rgba(229, 229, 231, 0.6)' }}>
-                                    <p className="w-full h-full text-[18px] font-bold text-center text-[#21225f] flex items-center justify-center">
+                                <div className="w-18 h-9 rounded-[25px] bg-white  flex items-center justify-center" style={{ outline: '1px solid rgba(229, 229, 231, 0.6)' }}>
+                                    <p className="w-full h-full text-[13px] font-bold text-center text-[#21225f] flex items-center justify-center">
                                         {selezionato.anno}
                                     </p>
                                 </div>
@@ -366,7 +389,7 @@ function PianoLavoro() {
 
                         {/* CONTENITORE CALENDARIO */}
 
-                        <div className="w-[1500px] h-auto mx-auto mt-6 mb-4 bg-[#E5E5E7] rounded-[15px] overflow-hidden "
+                        <div className="w-[85vw] 2xl:w-[65vw] h-auto mt-6  bg-[#E5E5E7] rounded-[15px] overflow-hidden "
                             style={{
                                 boxShadow: '0px 2px 8.5px 10px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7'
                             }}>
@@ -375,7 +398,7 @@ function PianoLavoro() {
 
                                 {/* Giorni della settimana */}
                                 {giorniSettimana.map((giorno, index) => (
-                                    <div key={index} className="text-center h-11 bg-white text-[15px] font-medium text-[#21225f] flex items-center justify-center">
+                                    <div key={index} className="text-center h-10 bg-white text-[12px] font-medium text-[#21225f] flex items-center justify-center">
                                         {giorno}
                                     </div>
                                 ))}
@@ -419,23 +442,25 @@ function PianoLavoro() {
                         </div>
 
 
-                        {/* PULSANTI FINALI */}
-                        <div className="w-[1500px] h-20  mx-auto mt-7  flex justify-between items-center ">
+                        {/* Pulsante Esci e salva bozza e Step successivo */}
+                        <div className="w-[85vw] 2xl:w-[65vw] h-30 2xl:mt-4 mt-1 flex justify-between items-center ">
+
+
                             <button
-                                type="submit"
-                                className="w-[196px] h-[46px]"
+                                type="button"
+                                className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7] "
                             >
                                 <div
                                     className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
                                     style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                                 >
 
-                                    <div className=" h-full w-16 flex  justify-center pt-3.5">
-                                        <img src={esciSalvaIcon} alt="" className="w-[16px] h-[16px]" />
+                                    <div className=" h-full w-16 flex items-center justify-center ">
+                                        <img src={esciSalvaIcon} alt="" className="w-3.5 " />
                                     </div>
 
                                     <div className="h-full flex items-center w-full">
-                                        <p className="text-[17px] text-left text-[#1d2125]">
+                                        <p className="text-[13px] text-left text-[#1d2125]">
                                             Esci e salva bozza
                                         </p>
                                     </div>
@@ -444,10 +469,11 @@ function PianoLavoro() {
 
                             </button>
 
-                            {/* Pulsante Termina configurazione */}
+
+                            {/* Pulsante Step Successivo */}
                             <button
-                                className="w-[232px] h-[46px] right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
-                                onClick={handleTerminaConfigurazione}
+                                className="w-48 h-11 right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                                onClick={handleTerminaConfigurazione} // Usa la funzione per verificare le condizioni
                             >
 
                                 <div
@@ -455,20 +481,19 @@ function PianoLavoro() {
                                     style={{ boxShadow: "0px 0px 8.5px 3px rgba(0,0,0,0.02)" }}>
 
                                     <div className="h-full flex items-center w-full pl-5">
-                                        <p className="text-[17px] text-left text-[#1d2125]">
+                                        <p className="text-[13px] text-left text-[#1d2125]">
                                             Termina configurazione
                                         </p>
                                     </div>
 
-                                    <div className=" h-full w-12 flex pr-1 justify-center pt-4">
-                                        <img src={terminaConfigIcon} alt="" className="w-[15px] h-[15px]" />
+                                    <div className="w-12 flex pr-1 justify-center ">
+                                        <img src={terminaConfigIcon} alt="" className="w-3" />
                                     </div>
+
 
                                 </div>
 
                             </button>
-
-
                         </div>
 
 
@@ -484,3 +509,8 @@ function PianoLavoro() {
 }
 
 export default PianoLavoro
+
+
+
+
+

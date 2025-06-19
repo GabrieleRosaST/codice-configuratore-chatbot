@@ -8,12 +8,6 @@ import pianoIcon from '../img/pianoIcon.svg';
 import pianoIconActive from '../img/pianoIconActive.svg';
 import { useLocation } from 'react-router-dom';
 import { useStepContext } from '../context/StepContext';
-import sfondoConfig from '../img/sfondoConfig.svg';
-import sfondoArgomenti from '../img/sfondoArgomenti.svg';
-import sfondoPiano from '../img/sfondoPiano.svg';
-
-
-
 
 function Navbar() {
     const location = useLocation();
@@ -28,11 +22,6 @@ function Navbar() {
             iconActive: configurazioneIconActive,
             link: '/configurazione',
             disabled: false,
-            background: {
-                src: sfondoConfig,
-                style: { left: '0', zIndex: 3 },
-            },
-
         },
         {
             id: 'argomentiRiferimenti',
@@ -41,10 +30,6 @@ function Navbar() {
             iconActive: argomentiIconActive,
             link: '/argomentiRiferimenti',
             disabled: !completedSteps.step1,
-            background: {
-                src: sfondoArgomenti,
-                style: { left: '300px ', zIndex: 2 },
-            },
         },
         {
             id: 'pianoLavoro',
@@ -53,31 +38,22 @@ function Navbar() {
             iconActive: pianoIconActive,
             link: '/pianoLavoro',
             disabled: !completedSteps.step2 || !completedSteps.step1,
-            background: {
-                src: sfondoPiano,
-                style: { left: '600px ', zIndex: 1 },
-            },
         },
     ];
 
     return (
-        <div className=" h-19  pt-1  mt-11">
-
-
-            {/* Navbar */}
-            <div
-                className=" w-[950px] h-[51px]  mx-auto relative"
-            //style={{ boxShadow: '0px 3px 15px rgba(0, 0, 0, 0.05)' }}
-            >
-                {/* Sfondi dinamici */}
-
+        <div className="h-18 w-full flex items-center justify-center mt-6">
+            <div className="w-[48%] 2xl:w-[35%] h-11 bg-white flex justify-center gap-[6%] items-center rounded-[50px] border-[1px] border-black/[0.08]"
+                style={{
+                    boxShadow: '0px 3px 15.6px 6px rgba(0,0,0,0.015)'
+                }}>
                 {navItems.map((item) => (
                     <Link
                         key={item.id}
                         to={item.link}
-                        className={`w-[350px]  h-[51px] absolute  ${item.disabled ? 'pointer-events-none ' : ''
-                            }  `}
-                        style={item.background.style}
+                        className={`flex items-center px-4 py-2 rounded-[50px] h-full justify-center hover:scale-102 transition duration-180 ease-in-out
+                        ${currentPage === item.id ? 'text-black font-medium text-[#1D2125]' : 'text-[#1D2125]'} 
+                        ${item.disabled ? 'opacity-40 pointer-events-none' : ''}`}
                         onClick={(e) => {
                             if (item.disabled) {
                                 e.preventDefault();
@@ -86,33 +62,13 @@ function Navbar() {
                         }}
                     >
                         <img
-                            src={item.background.src}
-                            className=" object-cover p-0 m-0 inset-0  "
+                            src={currentPage === item.id ? item.iconActive : item.icon}
+                            alt={`${item.label} Icon`}
+                            className="w-3.5 h-3.5 "
                         />
-                        <div className={`flex items-center justify-center space-x-2 absolute left-1/2 w-[200px] transform -translate-x-1/2 top-[21px] ${item.disabled ? 'opacity-30' : ''
-                            }`}>
-                            <img
-                                src={currentPage === item.id ? item.iconActive : item.icon}
-                                alt={`${item.label} Icon`}
-                                className="w-[19px] h-[19px] "
-                            />
-                            <span
-                                className={` ${currentPage === item.id ? 'font-medium text-[#1d2125]' : 'text-[#1d2125]'} `}
-                            >
-                                {item.label}
-                            </span>
-                        </div>
-
-
+                        <span className="text-[12px] hidden md:inline ml-2">{item.label}</span>
                     </Link>
                 ))}
-
-
-
-
-
-
-
             </div>
         </div>
     );

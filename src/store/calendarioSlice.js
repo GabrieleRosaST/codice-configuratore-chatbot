@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 
 
+
 const today = new Date();
 
 
@@ -16,6 +17,7 @@ const calendarioSlice = createSlice({
         giorniCorrenti: [],
         giorniCorso: [],
         argomentiDistribuiti: [],
+        primaVisita: false,
 
     },
     reducers: {
@@ -76,12 +78,29 @@ const calendarioSlice = createSlice({
 
             // Aggiorna lo stato Redux con la copia aggiornata
             state.giorniCorso = giorniCorso;
-
+            state.primaVisita = true;
 
         },
 
         inizializzaCalendario: (state, action) => {
             state.giorniCorrenti = action.payload.giorniCorrenti;
+        },
+
+        aggiornaTitoliGiorni: (state, action) => {
+            const { argomenti } = action.payload; // Ricevi argomenti come payload
+            console.log("ok dentro")
+            state.giorniCorso = state.giorniCorso.map((giorno) => {
+                return {
+                    ...giorno,
+                    argomenti: giorno.argomenti.map((argomento) => {
+                        const argomentoAggiornato = argomenti.find((a) => a.id === argomento.id);
+                        return argomentoAggiornato
+                            ? { ...argomento, titolo: argomentoAggiornato.titolo } // Aggiorna il titolo
+                            : argomento; // Mantieni l'argomento invariato se non trovato
+                    }),
+                };
+            });
+            console.log("titoli aggiornati", state.giorniCorso);
         },
 
         spostaArgomento: (state, action) => {
@@ -121,5 +140,5 @@ const calendarioSlice = createSlice({
     }
 });
 
-export const { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso } = calendarioSlice.actions;
+export const { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, aggiornaTitoliGiorni, distribuisciArgomentiGiorniCorso } = calendarioSlice.actions;
 export default calendarioSlice.reducer;

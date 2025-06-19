@@ -4,7 +4,6 @@ import dragIcon from '../img/dragIcon.svg';
 
 export default function Argomento({ argomento, giornoOrigine }) {
 
-    // provaaaaaaaaaa
     const [isHovered, setIsHovered] = useState(false);
 
     const [{ isDragging }, drag] = useDrag(() => ({
@@ -23,7 +22,7 @@ export default function Argomento({ argomento, giornoOrigine }) {
     return (
         <div
             ref={drag}
-            className="mt-[7px] mb-1 mx-auto w-[178px] h-[31px] text-[#1D2125]/83 rounded-[7px] bg-white relative cursor-pointer"
+            className="mt-[7px] mb-1 mx-auto w-[90%] h-6 text-[#1D2125]/83 rounded-[7px] bg-white relative cursor-pointer"
             style={{
                 border: `1px solid ${argomento.colore}`,
                 boxShadow: '0px 0px 8px rgba(0,0,0,0.06)',
@@ -33,17 +32,17 @@ export default function Argomento({ argomento, giornoOrigine }) {
             onMouseLeave={() => setIsHovered(false)}
         >
             <div
-                className="w-[28px] h-full absolute left-0 rounded-l flex items-center justify-center"
+                className="w-6 h-full absolute left-0 rounded-l flex items-center justify-center"
                 style={{ backgroundColor: argomento.colore }}
             >
                 {isHovered && (
-                    <img src={dragIcon} className="w-[33px] h-[33px] p-[3px] opacity-80" />
+                    <img src={dragIcon} className="w-6 h-6 p-[3px] opacity-80" />
                 )}
             </div>
 
             <div className="w-[full] pr-1 h-full flex items-center overflow-hidden">
                 <p
-                    className="ml-[35px] text-[13px] whitespace-nowrap overflow-hidden text-ellipsis"
+                    className="ml-[35px] text-[11px] whitespace-nowrap overflow-hidden text-ellipsis"
                     style={{ maxWidth: 'calc(100% - 35px)' }}
                     title={argomento.titolo}
                 >

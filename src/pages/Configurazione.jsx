@@ -61,6 +61,8 @@ function Configurazione() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
+        console.log("   okkkkkkkk");
+
         const today = new Date();
         const startDate = new Date(formState.dataInizio);
         const endDate = new Date(formState.dataFine);
@@ -124,67 +126,63 @@ function Configurazione() {
 
 
 
-        <div className="w-full">
+        <div className="w-full  flex flex-col items-center justify-center">
 
 
 
-            <div className="mx-auto w-[1500px] h-[865px] bg-[#F2F3F7] rounded-[50px] flex mt-6">
+            <div className="w-[85vw] 2xl:w-[65vw] min-h-135 2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 ">
 
 
 
                 {/* PRIMO DIV */}
 
-                <div className="w-1/2 h-full rounded-l-xl">
+                <div className="min-w-[50%] h-full rounded-l-xl ">
 
-                    <div className="w-full h-full flex flex-col items-center p-10 ml-5 relative ">
-
-                        {/* Modifica IMMAGINE chatbot */}
-                        <div className="relative w-[150px] h-[100px] my-4  mx-auto flex flex-col items-center justify-center">
-                            <img
-                                src={formState.fotoChatbot || fotoPlaceholder}
-                                alt="Seleziona immagine"
-                                className="w-19 h-19 object-cover rounded-full border-2 border-gray-300"
-
-                            />
-
-                        </div>
+                    <div className="w-full h-full flex flex-col  items-center relative pt-15 pr-10  ">
 
 
-                        <form className="space-y-8" onSubmit={handleSubmit}>
-
-
-                            {/* Input per il NOME DEL CHATBOT */}
-                            <div className="mb-6">
-                                <p className="w-[205.51px] h-[28.77px] text-lg font-medium text-left text-[#1d2125] mb-1">Nome</p>
-                                <input
-                                    id="input-nome"
-                                    type="text"
-                                    placeholder="Assegna un nome al chatbot"
-                                    value={formState.nomeChatbot}
-                                    onChange={(e) => dispatch(updateForm({ nomeChatbot: e.target.value }))}
-                                    className={`w-[630px] h-11 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] ${errors.nomeChatbot ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                        } placeholder-opacity-50 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
-                                />
-                            </div>
+                        <form className="space-y-8 w-full flex flex-col items-end  " onSubmit={handleSubmit}>
 
 
                             {/* Input per il NOME DEL CORSO */}
-                            <div className="mb-6">
-                                <p className="w-[205.51px] h-[28.77px] text-lg font-medium text-left text-[#1d2125] mb-1">Corso</p>
+                            <div className="mb-6 w-[88%]">
+                                <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125]">Corso</p>
                                 <input
                                     id="input-corso"
                                     type="text"
                                     placeholder="Inserisci il nome del corso"
                                     value={formState.corsoChatbot}
                                     onChange={(e) => dispatch(updateForm({ corsoChatbot: e.target.value }))}
-                                    className={`w-[630px] h-11 p-2 pl-3 rounded-[10px] bg-white border ${errors.corsoChatbot ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                        } placeholder-[#A3A7AA] placeholder-opacity-51 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`} />
+                                    className={`w-full h-9 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56]  text-[13px] placeholder-[#A3A7AA] ${errors.corsoChatbot ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
+                                        } placeholder-opacity-50 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`} />
                             </div>
 
 
+                            {/* Input per il NOME DEL CHATBOT */}
+                            <div className="mb-6 w-[88%]">
+                                <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125]">Assistente</p>
+                                <input
+                                    id="input-nome"
+                                    type="text"
+                                    placeholder="Assegna un nome all'assistente"
+                                    value={formState.nomeChatbot}
+                                    onChange={(e) => {
+                                        if (e.target.value.length <= 55) { // Limite di 50 caratteri
+                                            dispatch(updateForm({ nomeChatbot: e.target.value }));
+                                        }
+                                    }}
+                                    maxLength={55} // Imposta il limite di caratteri
+                                    className={`w-full h-9 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56]  text-[13px] placeholder-[#A3A7AA] ${errors.nomeChatbot ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
+                                        } placeholder-opacity-50 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`} />
+                            </div>
+
+
+
+
+
                             {/* Input per la DESCRIZIONE del chatbot */}
-                            <div className=" mb-0">
-                                <p className="w-[205.51px] h-[28.77px] text-lg font-medium text-left text-[#1d2125] mb-1">Descrizione</p>
+                            <div className=" mb-0 w-[88%] ">
+                                <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Descrizione</p>
                                 <textarea
                                     id="input-descrizione"
                                     placeholder="Scrivi una descrizione per il tuo chatbot"
@@ -194,19 +192,19 @@ function Configurazione() {
                                             dispatch(updateForm({ descrizioneChatbot: e.target.value }))
                                         }
                                     }}
-                                    className="w-[630px] h-23 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-50 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none"
+                                    className="w-full h-20 2xl:h-28 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none custom-scrollbar"
                                 />
-                                <p className="text-right text-sm text-gray-500 mt-1 opacity-60">{formState.descrizioneChatbot.length}/200</p>
+                                <p className="text-right text-xs text-gray-500 mt-1 opacity-60">{formState.descrizioneChatbot.length}/200</p>
                             </div>
 
 
                             {/* Input per le ISTRUZIONI */}
-                            <div className="mb-6">
-                                <p className="w-[205.51px] h-[29px] text-lg font-medium text-left text-[#1d2125] mb-1">Istruzioni</p>
+                            <div className="mb-3 w-[88%]">
+                                <p className="w-[205.51px] h-[29px] text-[13px] font-medium text-left text-[#1d2125] ">Istruzioni</p>
                                 <textarea
                                     id="input-4"
-                                    placeholder="Scrivi delle brevi istruzioni che il chatbot dovrà seguire durante il corso, spiegando cosa farà per aiutare gli studenti e cosa invece dovrà evitare."
-                                    className="w-[630px] h-29 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none"
+                                    placeholder="Scrivi delle brevi istruzioni che il chatbot dovrà seguire durante il corso."
+                                    className="w-full h-20 2xl:h-28 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none custom-scrollbar"
                                     value={formState.istruzioniChatbot}
                                     onChange={(e) => dispatch(updateForm({ istruzioniChatbot: e.target.value }))}
                                 />
@@ -214,24 +212,24 @@ function Configurazione() {
 
 
                             {/* Input per le DATE */}
-                            <div className="flex space-x-20 w-full h-21  flex justify-between items-center ">
+                            <div className="flex w-[88%] h-20 flex justify-between items-center ">
 
                                 {/* data di inizio */}
-                                <div className="">
-                                    <p className="w-[205.51px] h-[28.77px] text-lg font-medium text-left text-[#1d2125] mb-1">Data inizio corso</p>
+                                <div className="min-w-[40%] ">
+                                    <p className="w-full h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Data inizio corso</p>
                                     <input
                                         id="start-date"
                                         type="date"
                                         value={formState.dataInizio}
                                         onChange={(e) => dispatch(updateForm({ dataInizio: e.target.value }))}
-                                        className={`w-65 h-11 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataInizio ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                            } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
+                                        className={`"w-full h-9 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataInizio ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
+                                            } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
                                     />
                                 </div>
 
                                 {/* data di fine */}
-                                <div className="">
-                                    <p className="w-[205.51px] h-[28.77px] text-lg font-medium text-left text-[#1d2125] mb-1">Data fine corso</p>
+                                <div className="min-w-[40%]">
+                                    <p className="w-full h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Data fine corso</p>
                                     <input
                                         id="end-date"
                                         type="date"
@@ -240,76 +238,10 @@ function Configurazione() {
                                             dispatch(updateForm({ dataFine: e.target.value }));
                                             setErrors((prev) => ({ ...prev, dataFine: false }));
                                         }}
-                                        className={`w-65 h-11 p-2 pl-3 rounded-[10px] bg-white ${errors.dataFine ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                            } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
-                                    />
+                                        className={`"w-full h-9 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataFine ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
+                                            } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`} />
                                 </div>
                             </div>
-
-
-                            {/* 
-                            <div className="space-y-4 pt-2 ">
-                                <p className="w-1/2 h-[28.77px] text-lg font-medium text-left text-[#1d2125]  mb-2">Suggerimenti di interazione</p>
-
-
-                                <div className="w-[633px] h-11 relative  mb-2">
-                                    <div className="w-[633px] h-11 absolute left-0 top-0">
-                                        <div
-                                            className="w-[678px] h-11 absolute left-[-1px] top-[-1px] rounded-[10px] bg-white border border-[#bfbfbf]/[0.56]"
-                                            style={{ boxShadow: "0px 0px 6.7px 4px rgba(0,0,0,0.02)" }}
-                                        ></div>
-                                    </div>
-                                    <img
-                                        src={rewindSuggerimento}
-                                        alt="Icona suggerimento"
-                                        className="absolute left-[14px] top-[11px] w-[20px] h-[20px]"
-                                    />
-                                    <img
-                                        src={lineaDopoIconaSuggerimento}
-                                        alt="Linea dopo icona"
-                                        className="absolute left-[47px] top-[4.5px] w-[2px] h-[32px]"
-                                    />
-                                    <p className="w-[547.72px] h-7 absolute left-[62px] top-2  text-left text-[#495057]">
-                                        Ripassa le ultime lezioni
-                                    </p>
-                                </div>
-
-                                <div className="w-[633px] h-11 relative  mb-2">
-                                    <div className="w-[633px] h-11 absolute left-0 top-0">
-                                        <div
-                                            className="w-[678px] h-11 absolute left-[-1px] top-[-1px] rounded-[10px] bg-white border border-[#bfbfbf]/[0.56]"
-                                            style={{ boxShadow: "0px 0px 6.7px 4px rgba(0,0,0,0.02)" }}
-                                        ></div>
-                                    </div>
-                                    <img
-                                        src={libroSuggerimento}
-                                        alt="Icona suggerimento"
-                                        className="absolute left-[14px] top-[11px] w-[20px] h-[20px]"
-                                    />
-                                    <img
-                                        src={lineaDopoIconaSuggerimento}
-                                        alt="Linea dopo icona"
-                                        className="absolute left-[47px] top-[4.5px] w-[2px] h-[32px]"
-                                    />
-                                    <p className="w-[547.72px] h-7 absolute left-[62px] top-2  text-left text-[#495057]">
-                                        Studia la lezione di oggi
-                                    </p>
-                                </div>
-
-
-
-
-
-
-                            </div>
-                            */}
-
-
-
-                            {/* PULSANTI FINALI */}
-
-
-
 
 
                         </form>
@@ -323,75 +255,79 @@ function Configurazione() {
 
 
                 {/* SECONDO DIV */}
-                <div className="w-1/2 h-full flex justify-center items-center">
+                <div className="min-w-[50%] min-h-165  flex justify-center items-center p-8 md:pr-14 2xl:pr-16  ">
 
                     {/* Contenitore principale */}
-                    <div className="w-[625px] h-[730px] relative flex flex-col mr-4 justify-start rounded-[40px] bg-white  border-2 border-[#21225f]/[0.1] shadow-[0px_0px_26px_13px_rgba(0,0,0,0.01)]">
+                    <div className="min-w-70 w-full min-h-140 2xl:min-h-150 relative flex flex-col  justify-center items-center rounded-[40px] bg-white  border-2 border-[#21225f]/[0.1] shadow-[0px_0px_26px_13px_rgba(0,0,0,0.01)]">
 
                         {/* Titolo Anteprima */}
-                        <div className="w-full h-16  flex items-center justify-center"
+                        <div className="w-full absolute h-10 top-0  flex items-center justify-center"
                             style={{ pointerEvents: "none" }}>
-                            <p className="text-xl font-bold text-center text-[#21225f]">
+                            <p className="text-sm font-bold text-center text-[#21225f]">
                                 Anteprima
                             </p>
                         </div>
 
-                        <div className="h-32"></div>
 
 
                         {/* Immagine */}
-                        <div className="flex justify-center  items-center w-full h-[100px]">
+                        <div className="flex justify-center  items-center w-full ">
                             <img
                                 src={formState.fotoChatbot || fotoPlaceholder}
-                                className="w-[73px] h-[73px] object-cover rounded-full"
+                                className="w-15 h-15 object-cover rounded-full"
                             />
                         </div>
 
 
                         {/* Nome chatbot */}
                         {formState.nomeChatbot && (
-                            <div className="flex justify-center  items-center w-full mb-2 mt-2">
-                                <p className="text-[#495057] w-130 text-xl font-bold text-center">{formState.nomeChatbot}</p>
+                            <div className="flex justify-center  items-center w-full mb-2 mt-3">
+                                <p className="text-[#495057] w-130 text-[17px] font-bold text-center">{formState.nomeChatbot}</p>
                             </div>
                         )}
 
                         {/* Descrizione chatbot */}
                         {formState.descrizioneChatbot && (
-                            <div className="flex justify-center items-center w-full  mb-2">
-                                <p className="text-[#495057] w-110  text-center">{formState.descrizioneChatbot}</p>
+                            <div className="flex justify-center items-center w-[80%] mb-2 ">
+                                <p className="text-[#495057] text-[13px] text-center">{formState.descrizioneChatbot}</p>
                             </div>
                         )}
 
                         {/* Pulsanti suggerimenti */}
-                        <div className="w-full h-20  flex items-center justify-center gap-x-5">
+                        <div className="w-full min-h-16 flex items-center justify-center gap-y-2 flex-wrap ">
 
                             {/* Suggerimento 1 */}
-                            <div className="w-[235px] h-[50px] relative"
+                            <div className="w-50 h-12 relative flex justify-center items-center  "
                                 style={{ pointerEvents: "none" }}>
-                                <div className="w-full h-full rounded-[15px] border-[2.3px] border-[#6982ab]/[0.12]"></div>
-                                <p className="w-[187px] h-7 absolute left-[51px] top-[14px]  text-left text-[#495057]">
-                                    Ripassa le ultime lezioni
-                                </p>
-                                <img
-                                    src={rewindSuggerimento}
-                                    alt="Icona"
-                                    className="absolute left-[18px] top-[17px] w-[18px] h-[18px]"
-                                />
+                                <div className="w-47 h-full rounded-[15px] border-[2px] border-[#6982ab]/[0.12] flex justify-center items-center relative">
+                                    <img
+                                        src={rewindSuggerimento}
+                                        alt="Icona"
+                                        className="left-5 w-3.5 mr-2 h-4"
+                                    />
+                                    <p className=" h-7 top-[14px]  text-left text-[#495057] text-[13px]  flex items-center justify-center">
+                                        Ripassa le ultime lezioni
+                                    </p>
+
+                                </div>
                             </div>
 
-                            {/* Suggerimento 2 */}
-                            <div className="w-[235px] h-[50px] relative"
+                            <div className="w-50 h-12 relative flex justify-center items-center "
                                 style={{ pointerEvents: "none" }}>
-                                <div className="w-full h-full rounded-[15px] border-[2.3px] border-[#6982ab]/[0.12]"></div>
-                                <p className="w-[187px] h-7 absolute left-[51px] top-[14px]  text-left text-[#495057]">
-                                    Studia la lezione di oggi
-                                </p>
-                                <img
-                                    src={libroSuggerimento}
-                                    alt="Icona"
-                                    className="absolute left-[18px] top-[17px] w-[18px] h-[18px]"
-                                />
+                                <div className="w-47 h-full rounded-[15px] border-[2px] border-[#6982ab]/[0.12] flex justify-center items-center relative">
+                                    <img
+                                        src={libroSuggerimento}
+                                        alt="Icona"
+                                        className=" left-5 mr-2 w-3.5  h-4"
+                                    />
+                                    <p className=" h-7 top-[14px]  text-left text-[#495057] text-[13px]  flex items-center justify-center">
+                                        Studia la lezione di oggi
+                                    </p>
+
+                                </div>
                             </div>
+
+
 
 
 
@@ -399,15 +335,15 @@ function Configurazione() {
                         </div>
 
                         {/* barra input messaggio */}
-                        <div className="absolute bottom-7  w-full h-[60px]  flex items-center justify-center">
-                            <div className="relative w-[535px] flex justify-between p-2  h-[44px] rounded-[25px] bg-white border-[2px] border-[#6982ab]/[0.15] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.01)]">
+                        <div className="absolute bottom-4  w-full h-15 flex items-center justify-center ">
+                            <div className="relative w-[84%] h-9 flex justify-between p-2 rounded-[25px] bg-white border-[1.5px] border-[#6982ab]/[0.15] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.01)]">
 
-                                <p className=" h-full ml-3 opacity-[0.50] text-left text-[#495057] "
+                                <p className=" h-full ml-3 opacity-[0.50] text-[13px] text-[#495057] flex items-center justify-center"
                                     style={{ pointerEvents: "none" }}>
                                     Scrivi un messaggio...
                                 </p>
 
-                                <img src={invioButton} className="absolute top-1.5 right-3 w-[28px] h-[28px] " />
+                                <img src={invioButton} className="absolute top-1.5 right-3 w-5 h-5 " />
 
                             </div>
 
@@ -422,24 +358,24 @@ function Configurazione() {
             </div>
 
 
-            <div className="w-[1500px] h-30 mx-auto mt-2 flex justify-between items-center ">
+            <div className="w-[85vw] 2xl:w-[65vw] h-30 mx-auto mt-2 flex justify-between items-center ">
 
                 {/* Pulsante Esci e salva bozza */}
                 <button
                     type="submit"
-                    className="w-[196px] h-[46px]"
+                    className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7] "
                 >
                     <div
-                        className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
+                        className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
                         style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                     >
 
-                        <div className=" h-full w-16 flex  justify-center pt-3.5">
-                            <img src={esciSalvaIcon} alt="" className="w-[16px] h-[16px]" />
+                        <div className=" h-full w-16 flex items-center justify-center ">
+                            <img src={esciSalvaIcon} alt="" className="w-3.5 " />
                         </div>
 
                         <div className="h-full flex items-center w-full">
-                            <p className="text-[17px] text-left text-[#1d2125]">
+                            <p className="text-[13px] text-left text-[#1d2125]">
                                 Esci e salva bozza
                             </p>
                         </div>
@@ -451,7 +387,7 @@ function Configurazione() {
                 {/* Pulsante Step Successivo */}
                 <button
                     type="button"
-                    className="w-[172px] h-[46px] right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                    className="w-35 h-11 right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
                     onClick={handleSubmit}
                 >
 
@@ -459,14 +395,14 @@ function Configurazione() {
                         className="w-full h-full rounded-[10px] bg-[#fcc63d] flex justify-stretch"
                         style={{ boxShadow: "0px 0px 8.5px 3px rgba(0,0,0,0.02)" }}>
 
-                        <div className="h-full flex items-center w-full pl-5">
-                            <p className="text-[17px] text-left text-[#1d2125]">
+                        <div className="h-full flex items-center justify-end w-full">
+                            <p className="text-[13px]  text-[#1d2125] flex items-center justify-center">
                                 Step successivo
                             </p>
                         </div>
 
-                        <div className=" h-full w-12 flex pr-1 justify-center pt-4">
-                            <img src={frecciaDestraButton} alt="" className="w-[15px] h-[15px]" />
+                        <div className=" h-full w-12 flex items-center justify-center ">
+                            <img src={frecciaDestraButton} alt="" className="w-2 " />
                         </div>
 
                     </div>
