@@ -150,12 +150,13 @@ function CardArgomento({ id, titolo, colore, file }) {
                         ></div>
                     </div>
 
-                    <div className="w-70 flex items-center justify-center">
+                    <div className="w-70 flex items-center justify-center shadow-none  focus:shadow-none focus:outline-none focus:ring-0">
                         <input
                             type="text"
                             value={titolo}
                             placeholder="Titolo dell'argomento"
-                            className="text-[13px] z-11 text-[#495057] text-center flex-grow bg-transparent border-none focus:outline-none focus:shadow-none"
+                            className="text-[13px] z-11 text-[#495057] text-center flex-grow bg-transparent  focus:shadow-none focus:outline-none focus:ring-0 shadow-none inputTitolo"
+                            title={titolo}
                             onChange={handleTitleChange}
                         />
                     </div>

@@ -80,6 +80,10 @@
   /* Colore dello sfondo della barra */
 }
 
+.inputTitolo {
+  box-shadow: none !important;
+  outline: none !important;
+}
 
 
 body {
