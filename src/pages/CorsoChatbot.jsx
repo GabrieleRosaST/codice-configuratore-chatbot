@@ -4,7 +4,7 @@ import footerCorso from '../img/footerCorso.svg';
 import fotoBot from '../img/fotoBot.svg';
 import frecciaDown from '../img/frecciaDown.svg';
 import sidebarIcon from '../img/sidebarIcon.svg';
-import ApriFullscreenIcon from '../img/apriFullscreenIcon.svg';
+import ApriFullscreenIcon from '../img/ApriFullscreenIcon.svg';
 import frecciaUp from '../img/frecciaUp.svg';
 import chiudiFullscreenIcon from '../img/chiudiFullscreenIcon.svg';
 import invioButtonChat from '../img/invioButtonChat.svg';
