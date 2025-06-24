@@ -37,12 +37,10 @@ function App() {
       <StepProvider>
         <Navbar> </Navbar>
         <Routes>
-          <Route path="/corsoChatbot" element={<corsoChatbot />} />
           <Route path="/configurazione" element={<Configurazione />} />
           <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
           <Route path="/pianoLavoro" element={<PianoLavoro />} />
           <Route path="/riepilogo" element={<Riepilogo />} />
-          <Route path="/corso-creato/:courseId" element={<CorsoCreato />} />
           <Route path="*" element={<Configurazione />} />
         </Routes>
       </StepProvider>
