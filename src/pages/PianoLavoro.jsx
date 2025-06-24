@@ -226,7 +226,7 @@ function PianoLavoro() {
         }
 
 
-        navigate('/corsoChatbot'); // Reindirizza alla pagina di riepilogo
+        navigate('/Riepilogo'); // Reindirizza alla pagina di riepilogo
     };
 
 
