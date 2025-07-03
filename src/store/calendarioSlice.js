@@ -88,7 +88,6 @@ const calendarioSlice = createSlice({
 
         aggiornaTitoliGiorni: (state, action) => {
             const { argomenti } = action.payload; // Ricevi argomenti come payload
-            console.log("ok dentro")
             state.giorniCorso = state.giorniCorso.map((giorno) => {
                 return {
                     ...giorno,
@@ -100,13 +99,11 @@ const calendarioSlice = createSlice({
                     }),
                 };
             });
-            console.log("titoli aggiornati", state.giorniCorso);
         },
 
         spostaArgomento: (state, action) => {
             const { argomento, giornoOrigine, giornoDestinazione } = action.payload;
 
-            console.log("SPOSTO ARGOMENTO", argomento, giornoOrigine, giornoDestinazione);
 
             // TROVA il giorno di ORIGINE nel corso
             const giornoOrigineIndex = state.giorniCorso.findIndex(

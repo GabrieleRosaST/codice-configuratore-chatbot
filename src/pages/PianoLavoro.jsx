@@ -18,7 +18,9 @@ import studentIcon from '../img/studentIcon.svg';
 import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 import axios from 'axios'; // Importa axios per le richieste HTTP
 
-
+let dataInizioGlobal = null;
+let dataFineGlobal = null;
+let shouldRedistribute = false;
 
 
 function PianoLavoro() {
@@ -37,7 +39,6 @@ function PianoLavoro() {
 
     const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
     const giorniSettimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
-
 
 
 
@@ -119,26 +120,43 @@ function PianoLavoro() {
 
 
 
+    useEffect(() => {
+        if (dataInizioGlobal === null || dataFineGlobal === null) {
+            dataInizioGlobal = dataInizio;
+            dataFineGlobal = dataFine;
+        } else if (dataInizioGlobal !== dataInizio || dataFineGlobal !== dataFine) {
+            shouldRedistribute = true;
+            dataInizioGlobal = dataInizio;
+            dataFineGlobal = dataFine;
+        }
+    }, []);
+
+
 
     useEffect(() => {
         dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
 
-        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
-        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
-        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
-
-
-        if (argomentiIds !== distribuitiIds) {
-
+        if (shouldRedistribute) {
             dispatch(distribuisciArgomentiGiorniCorso({
                 argomenti,
                 dataInizio,
                 dataFine,
             }));
+            shouldRedistribute = false;
+        }
 
+        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
+        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
+        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
+        if (argomentiIds !== distribuitiIds) {
+            dispatch(distribuisciArgomentiGiorniCorso({
+                argomenti,
+                dataInizio,
+                dataFine,
+            }));
         }
         // eslint-disable-next-line
-    }, [dispatch, argomenti, dataInizio, dataFine]);
+    }, [dispatch, argomenti, shouldRedistribute, giorniCorso, argomentiDistribuiti]);
 
 
 
@@ -153,8 +171,6 @@ function PianoLavoro() {
     }, [dispatch, selezionato]);
 
     useEffect(() => {
-        console.log("cambiatoTitolo", cambiatoTitolo);
-        console.log("primaVisita", primaVisita);
 
         if (primaVisita) {
             dispatch(aggiornaTitoliGiorni({ argomenti }));
@@ -171,6 +187,10 @@ function PianoLavoro() {
         const jsonData = generateJson();
 
         const formData = new FormData();
+
+        const dati = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+        const nomeCorso = dati?.DatiIniziali?.corsoChatbot;
+
 
         // Aggiungi il JSON al FormData
         formData.append('data', jsonData);
@@ -199,34 +219,39 @@ function PianoLavoro() {
                 formDataArray.push({ key, value });
             }
         }
-        console.log(formDataArray);
 
 
 
         try {
-
-            // Invia i dati al backend 
+            // Invia i dati al backend Node/Express per creare il corso
             const response = await axios.post(
-                'http://localhost/progetto-1/backend/api/index.php',
-                formData,
+                'http://localhost:3001/api/demo-create-course',
+                { courseName: nomeCorso },
                 {
                     headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    withCredentials: true, // se usi cookie/sessione
+                        'Content-Type': 'application/json',
+                    }
                 }
             );
 
-
-            if (!response.data.success)
-                alert(`Errore: ${response.data.error}`);
-
+            // Controlla la risposta
+            if (response.data && response.data.courseId) {
+                // Salva i dati del corso per usarli dopo (es: in uno stato globale, context, o localStorage)
+                const { courseId, courseName, conversationId, chatId } = response.data;
+                // Esempio: salva in localStorage
+                localStorage.setItem('courseId', courseId);
+                localStorage.setItem('courseName', courseName);
+                // Puoi anche passarli come stato nella navigazione
+                navigate('/Riepilogo', { state: { courseId, courseName, conversationId, chatId } });
+            } else {
+                alert('Errore: risposta backend non valida');
+            }
         } catch (error) {
             console.error('Errore durante l\'invio dei dati:', error);
+            alert('Errore durante la creazione del corso');
         }
 
 
-        navigate('/Riepilogo'); // Reindirizza alla pagina di riepilogo
     };
 
 

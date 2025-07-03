@@ -61,7 +61,6 @@ function Configurazione() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        console.log("   okkkkkkkk");
 
         const today = new Date();
         const startDate = new Date(formState.dataInizio);

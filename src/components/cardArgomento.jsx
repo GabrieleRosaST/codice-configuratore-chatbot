@@ -55,7 +55,6 @@ function CardArgomento({ id, titolo, colore, file }) {
                 }
                 fileStorage[id].push(...newFiles);
 
-                console.log('fileStorage:', fileStorage);
 
 
                 // Recupera i file esistenti dallo stato Redux
@@ -111,7 +110,6 @@ function CardArgomento({ id, titolo, colore, file }) {
                 }
                 fileStorage[id].push(...newFiles);
 
-                console.log('fileStorage:', fileStorage);
 
                 // Recupera i file esistenti dallo stato Redux
                 const existingFiles = file || [];

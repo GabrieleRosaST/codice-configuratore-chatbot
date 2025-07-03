@@ -18,7 +18,6 @@ function FileCaricato({ fileCaricato, id, files }) {
             );
         }
 
-        console.log('fileStorage:', fileStorage);
         const updatedFiles = files.filter(f => f.fileName !== fileCaricato.fileName); // Confronta il nome del file
         dispatch(aggiornaFileArgomento({ id, file: updatedFiles })); // Aggiorna la lista dei file nello store Redux
     };
