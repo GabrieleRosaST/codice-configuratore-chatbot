@@ -17,8 +17,11 @@ import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
 import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 import axios from 'axios'; // Importa axios per le richieste HTTP
+import { uploadFilesAndGetData } from '../utils/api';
 
-
+let dataInizioGlobal = null;
+let dataFineGlobal = null;
+let shouldRedistribute = false;
 
 
 function PianoLavoro() {
@@ -33,11 +36,10 @@ function PianoLavoro() {
 
     const dataInizioDate = new Date(dataInizio);
 
-
+    const [errore, setErrore] = useState(null);
 
     const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
     const giorniSettimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
-
 
 
 
@@ -119,26 +121,43 @@ function PianoLavoro() {
 
 
 
+    useEffect(() => {
+        if (dataInizioGlobal === null || dataFineGlobal === null) {
+            dataInizioGlobal = dataInizio;
+            dataFineGlobal = dataFine;
+        } else if (dataInizioGlobal !== dataInizio || dataFineGlobal !== dataFine) {
+            shouldRedistribute = true;
+            dataInizioGlobal = dataInizio;
+            dataFineGlobal = dataFine;
+        }
+    }, []);
+
+
 
     useEffect(() => {
         dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
 
-        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
-        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
-        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
-
-
-        if (argomentiIds !== distribuitiIds) {
-
+        if (shouldRedistribute) {
             dispatch(distribuisciArgomentiGiorniCorso({
                 argomenti,
                 dataInizio,
                 dataFine,
             }));
+            shouldRedistribute = false;
+        }
 
+        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
+        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
+        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
+        if (argomentiIds !== distribuitiIds) {
+            dispatch(distribuisciArgomentiGiorniCorso({
+                argomenti,
+                dataInizio,
+                dataFine,
+            }));
         }
         // eslint-disable-next-line
-    }, [dispatch, argomenti, dataInizio, dataFine]);
+    }, [dispatch, argomenti, shouldRedistribute, giorniCorso, argomentiDistribuiti]);
 
 
 
@@ -153,8 +172,6 @@ function PianoLavoro() {
     }, [dispatch, selezionato]);
 
     useEffect(() => {
-        console.log("cambiatoTitolo", cambiatoTitolo);
-        console.log("primaVisita", primaVisita);
 
         if (primaVisita) {
             dispatch(aggiornaTitoliGiorni({ argomenti }));
@@ -167,71 +184,80 @@ function PianoLavoro() {
 
     const handleTerminaConfigurazione = async () => {
 
+        setErrore(null);
         // Genera il JSON con i dati della pagina CONFIGURAZIONE
         const jsonData = generateJson();
 
-        const formData = new FormData();
+        let filesToUpload = [];
 
-        // Aggiungi il JSON al FormData
-        formData.append('data', jsonData);
+        const dati = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+        const nomeCorso = dati?.DatiIniziali?.corsoChatbot;
 
         // Itera sugli argomenti e aggiungi i file al FormData
-        argomenti.forEach((argomento, argomentoIndex) => {
+        argomenti.forEach((argomento) => {
             if (fileStorage[argomento.id]) {
-                fileStorage[argomento.id].forEach((file, fileIndex) => {
-                    // Usa una chiave univoca per ogni file
-                    formData.append(`files[${argomentoIndex}][${fileIndex}]`, file);
-                });
+            fileStorage[argomento.id].forEach((file) => {
+                filesToUpload.push({ file, argomentoId: argomento.id });
+            });
             }
         });
 
-        // Visualizza il contenuto del FormData
-        const formDataArray = [];
-        for (let [key, value] of formData.entries()) {
-            if (value instanceof File) {
-                formDataArray.push({
-                    key,
-                    name: value.name,
-                    size: value.size,
-                    type: value.type
-                });
-            } else {
-                formDataArray.push({ key, value });
-            }
-        }
-        console.log(formDataArray);
-
-
-
-        try {
-
-            // Invia i dati al backend 
+        /*try {
+            // Invia i dati al backend Node/Express per creare il corso
             const response = await axios.post(
-                'http://localhost/progetto-1/backend/api/index.php',
-                formData,
+                'http://localhost:3001/api/demo-create-course',
+                { courseName: nomeCorso },
                 {
                     headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    withCredentials: true, // se usi cookie/sessione
+                        'Content-Type': 'application/json',
+                    }
                 }
             );
 
-
-            if (!response.data.success)
-                alert(`Errore: ${response.data.error}`);
-
+            // Controlla la risposta
+            if (response.data && response.data.courseId) {
+                // Salva i dati del corso per usarli dopo (es: in uno stato globale, context, o localStorage)
+                const { courseId, courseName, conversationId, chatId } = response.data;
+                // Esempio: salva in localStorage
+                localStorage.setItem('courseId', courseId);
+                localStorage.setItem('courseName', courseName);
+                // Puoi anche passarli come stato nella navigazione
+                navigate('/Riepilogo', { state: { courseId, courseName, conversationId, chatId } });
+            } else {
+                alert('Errore: risposta backend non valida');
+            }
         } catch (error) {
             console.error('Errore durante l\'invio dei dati:', error);
+            alert('Errore durante la creazione del corso');
+        }*/
+
+        try {
+
+            const uploadResult = await uploadFilesAndGetData(filesToUpload, jsonData);
+
+            //carica i dati su Moodle (draft area) , e ottiene i metadati
+            const result = await M.core_ajax.call([{
+                methodname: 'block_configuratore_save_chatbot_config',
+                args: {
+                    data:typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData),
+                    filedata: uploadResult.files
+                }
+            }])[0];
+
+            if (result && result.success === true) {
+                alert('Configurazione salvata con successo!');
+                navigate('/corsoChatbot');
+            }else{
+                setErrore('Errore durante il salvataggio della configurazione.');
+            }
+
+        } catch (error) {
+            setErrore(error.message || 'Errore durante l\'upload dei file o salvataggio dati')
+            console.error('Errore ', error);
         }
 
 
-        navigate('/corsoChatbot'); // Reindirizza alla pagina di riepilogo
     };
-
-
-
-
 
 
 

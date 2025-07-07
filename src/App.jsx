@@ -4,11 +4,8 @@ import Navbar from './components/Navbar'
 import Configurazione from './pages/Configurazione'
 import ArgomentiRiferimenti from './pages/ArgomentiRiferimenti'
 import PianoLavoro from './pages/PianoLavoro'
-import header from './img/header.svg'
 import { StepProvider } from './context/StepContext';
 import Riepilogo from './pages/Riepilogo'
-import CorsoCreato from './pages/CorsoCreato'
-import CorsoChatbot from './pages/CorsoChatbot'
 
 function App() {
 
@@ -25,9 +22,6 @@ function App() {
   }, [isFirstLoad, navigate]);
 
 
-  if (window.location.pathname === '/corsoChatbot') {
-    return <CorsoChatbot />;
-  }
 
 
   return (
@@ -37,12 +31,10 @@ function App() {
       <StepProvider>
         <Navbar> </Navbar>
         <Routes>
-          <Route path="/corsoChatbot" element={<corsoChatbot />} />
           <Route path="/configurazione" element={<Configurazione />} />
           <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
           <Route path="/pianoLavoro" element={<PianoLavoro />} />
           <Route path="/riepilogo" element={<Riepilogo />} />
-          <Route path="/corso-creato/:courseId" element={<CorsoCreato />} />
           <Route path="*" element={<Configurazione />} />
         </Routes>
       </StepProvider>

@@ -155,7 +155,7 @@ function ArgomentiRiferimenti() {
                         <div className='md:w-22 h-9 w-0'></div>
                     </div>
 
-                    <div className="w-[85vw] 2xl:w-[65vw] min-h-90 2xl:min-h-145 mt-5">
+                    <div className="mx-auto w-[85vw] 2xl:w-[65vw] min-h-90 2xl:min-h-145 mt-5">
                         {/* Griglia per le card */}
 
                         <div className="w-full h-full flex  flex-wrap justify-start items-start gap-y-9 2xl:gap-x-12 gap-x-8  ">

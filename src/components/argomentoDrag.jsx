@@ -22,7 +22,7 @@ export default function Argomento({ argomento, giornoOrigine }) {
     return (
         <div
             ref={drag}
-            className="mt-[7px] mb-1 mx-auto w-[90%] h-6 text-[#1D2125]/83 rounded-[7px] bg-white relative cursor-pointer"
+            className="mt-[7px] mb-1 mx-auto w-[90%] h-6 text-[#1D2125]/83 rounded-[7px] bg-white relative cursor-pointer transition-transform duration-350 ease-in-out hover:scale-102"
             style={{
                 border: `1px solid ${argomento.colore}`,
                 boxShadow: '0px 0px 8px rgba(0,0,0,0.06)',

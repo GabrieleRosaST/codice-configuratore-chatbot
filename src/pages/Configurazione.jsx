@@ -61,7 +61,6 @@ function Configurazione() {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        console.log("   okkkkkkkk");
 
         const today = new Date();
         const startDate = new Date(formState.dataInizio);
@@ -130,7 +129,7 @@ function Configurazione() {
 
 
 
-            <div className="w-[85vw] 2xl:w-[65vw] min-h-135 2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 ">
+            <div className="mx-auto w-[85vw] 2xl:w-[65vw] min-h-135 2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 ">
 
 
 
@@ -215,7 +214,7 @@ function Configurazione() {
                             <div className="flex w-[88%] h-20 flex justify-between items-center ">
 
                                 {/* data di inizio */}
-                                <div className="min-w-[40%] ">
+                                <div className="min-w-[40%]  flex flex-col">
                                     <p className="w-full h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Data inizio corso</p>
                                     <input
                                         id="start-date"
@@ -228,7 +227,7 @@ function Configurazione() {
                                 </div>
 
                                 {/* data di fine */}
-                                <div className="min-w-[40%]">
+                                <div className="min-w-[40%]  flex flex-col">
                                     <p className="w-full h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Data fine corso</p>
                                     <input
                                         id="end-date"
@@ -239,7 +238,8 @@ function Configurazione() {
                                             setErrors((prev) => ({ ...prev, dataFine: false }));
                                         }}
                                         className={`"w-full h-9 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataFine ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                            } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`} />
+                                            } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
+                                    />
                                 </div>
                             </div>
 

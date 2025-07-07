@@ -4,7 +4,7 @@
 
 
 
-:root {
+.configuratore-block {
   font-family: 'Jost', sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -14,78 +14,82 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /*BODY*/
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #F9FAFC;
 }
 
-.scroll-container2 {
-  position: fixed;
+.configuratore-block .scroll-container2 {
+  position: relative;
   top: 0;
   right: 0;
   bottom: 0;
-  width: calc(100vw - 8px);
+  width: 100%;
   overflow-y: scroll;
 }
 
 
-.scroll-container2::-webkit-scrollbar {
+.configuratore-block .scroll-container2::-webkit-scrollbar {
   width: 8px;
 }
 
-.scroll-container2::-webkit-scrollbar-track {
+.configuratore-block .scroll-container2::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.scroll-container2::-webkit-scrollbar-thumb {
+.configuratore-block .scroll-container2::-webkit-scrollbar-thumb {
   background: #d0d0d9;
   border-radius: 4px;
 }
 
-.scroll-container2::-webkit-scrollbar-thumb:hover {
+.configuratore-block .scroll-container2::-webkit-scrollbar-thumb:hover {
   background: #aaaab4;
   cursor: pointer;
 }
 
 
 
-.scroll-container {
+.configuratore-block .scroll-container {
   direction: rtl;
   padding: 10px;
   overflow-y: scroll;
   /* Sposta la barra di scorrimento a sinistra */
 }
 
-.scroll-container>* {
+.configuratore-block .scroll-container>* {
   direction: ltr;
   /* Mantiene il contenuto nella direzione normale */
 }
 
 /* Aggiungi questo codice al tuo file CSS */
-.scroll-container::-webkit-scrollbar {
+.configuratore-block .scroll-container::-webkit-scrollbar {
   width: 4px;
   margin-right: 5px;
   /* Larghezza della barra */
 }
 
-.scroll-container::-webkit-scrollbar-thumb {
+.configuratore-block .scroll-container::-webkit-scrollbar-thumb {
   background-color: #cecedb6d;
   border-radius: 8px;
   cursor: pointer;
 }
 
-.scroll-container::-webkit-scrollbar-thumb:hover {
+.configuratore-block .scroll-container::-webkit-scrollbar-thumb:hover {
   background-color: #b8b8c58e;
 }
 
-.scroll-container::-webkit-scrollbar-track {
+.configuratore-block .scroll-container::-webkit-scrollbar-track {
   background-color: FCF9ED;
   /* Colore dello sfondo della barra */
 }
 
-.inputTitolo {
+.configuratore-block .inputTitolo {
   box-shadow: none !important;
   outline: none !important;
 }
 
-
+/*
 body {
   margin: 0;
   display: flex;
@@ -98,43 +102,43 @@ body {
 html,
 body {
   overflow: overlay;
-}
+}*/
 
 @layer utilities {
-  .custom-scrollbar::-webkit-scrollbar {
+  .configuratore-block .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
+  .configuratore-block .custom-scrollbar::-webkit-scrollbar-track {
     background: none;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+  .configuratore-block .custom-scrollbar::-webkit-scrollbar-thumb {
     background: #6982ab6a;
     border-radius: 10px;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  .configuratore-block .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #6982abb9;
   }
 }
 
 
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+.configuratore-block input[type="date"]::-webkit-calendar-picker-indicator {
   color: #495057;
   /* Cambia il colore dell'icona */
   opacity: 1;
   /* Assicurati che l'icona sia visibile */
 }
 
-input[type="date"] {
+.configuratore-block input[type="date"] {
   color-scheme: light;
   /* Assicura che il tema sia coerente */
 }
 
-input:focus,
-textarea:focus {
+.configuratore-block input:focus,
+.configuratore-block textarea:focus {
   outline: none;
   border-color: #a6a6a6;
   box-shadow: 0 0 4px 2px rgba(184, 184, 184, 0.1);
