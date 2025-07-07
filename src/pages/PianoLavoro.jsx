@@ -199,6 +199,7 @@ function PianoLavoro() {
         const dataFine = dati?.DatiIniziali?.dataFine;
 
 
+        //master
 
 
         // Aggiungi il JSON al FormData
@@ -230,36 +231,13 @@ function PianoLavoro() {
         }
 
 
-        /*
-        try {
 
-            // Invia i dati al backend 
-            const response = await axios.post(
-                'http://localhost/progetto-1/backend/api/creaCorso.php',
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                }
-            );
-
-
-            if (!response.data.success)
-                alert(`Errore: ${response.data.error}`);
-
-            //RIMANDA ALLA PAGINA DOVE VIENE VISUALIZZATO IL CORSO
-            window.location.href = `http://localhost:3000?courseId=${response.data.courseId}&userId=${response.data.userId}`;
-
-        } catch (error) {
-            console.error('Errore durante l\'invio dei dati:', error);
-        }
-        */
 
 
 
         const courseId = "43425255567890123456789012556789";
         const userId = "user1234567890";
-        const displayName = "GabriDrix"; // Sostituisci con il nome dell'utente
+        const displayName = "GabriDrix";
         const email = "gabrieledrix@gmail.com";
 
         try {
