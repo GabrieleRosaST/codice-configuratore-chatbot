@@ -189,7 +189,16 @@ function PianoLavoro() {
         const formData = new FormData();
 
         const dati = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-        const nomeCorso = dati?.DatiIniziali?.corsoChatbot;
+
+
+        const nomeChatbot = dati?.DatiIniziali?.nomeChatbot;
+        const courseName = dati?.DatiIniziali?.corsoChatbot;
+        const descrizioneChatbot = dati?.DatiIniziali?.descrizioneChatbot;
+        const istruzioniChatbot = dati?.DatiIniziali?.istruzioniChatbot
+        const dataInizio = dati?.DatiIniziali?.dataInizio;
+        const dataFine = dati?.DatiIniziali?.dataFine;
+
+
 
 
         // Aggiungi il JSON al FormData
@@ -221,35 +230,77 @@ function PianoLavoro() {
         }
 
 
-
+        /*
         try {
-            // Invia i dati al backend Node/Express per creare il corso
+
+            // Invia i dati al backend 
             const response = await axios.post(
-                'http://localhost:3001/api/demo-create-course',
-                { courseName: nomeCorso },
+                'http://localhost/progetto-1/backend/api/creaCorso.php',
                 {
                     headers: {
-                        'Content-Type': 'application/json',
-                    }
+                        'Content-Type': 'multipart/form-data',
+                    },
                 }
             );
 
-            // Controlla la risposta
-            if (response.data && response.data.courseId) {
-                // Salva i dati del corso per usarli dopo (es: in uno stato globale, context, o localStorage)
-                const { courseId, courseName, conversationId, chatId } = response.data;
-                // Esempio: salva in localStorage
-                localStorage.setItem('courseId', courseId);
-                localStorage.setItem('courseName', courseName);
-                // Puoi anche passarli come stato nella navigazione
-                navigate('/Riepilogo', { state: { courseId, courseName, conversationId, chatId } });
-            } else {
-                alert('Errore: risposta backend non valida');
-            }
+
+            if (!response.data.success)
+                alert(`Errore: ${response.data.error}`);
+
+            //RIMANDA ALLA PAGINA DOVE VIENE VISUALIZZATO IL CORSO
+            window.location.href = `http://localhost:3000?courseId=${response.data.courseId}&userId=${response.data.userId}`;
+
         } catch (error) {
             console.error('Errore durante l\'invio dei dati:', error);
-            alert('Errore durante la creazione del corso');
         }
+        */
+
+
+
+        const courseId = "43425255567890123456789012556789";
+        const userId = "user1234567890";
+        const displayName = "GabriDrix"; // Sostituisci con il nome dell'utente
+        const email = "gabrieledrix@gmail.com";
+
+        try {
+            const response = await axios.post(
+                'http://localhost:3001/api/create-conversations',
+                {
+                    courseId,
+                    userId,
+                    displayName,
+                    email,
+                    courseName,
+                    descrizioneChatbot,
+                    istruzioniChatbot,
+                    dataInizio,
+                    dataFine,
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            // Controlla solo che la risposta sia presente e non sia errore
+            if (!response.data || response.data.error) {
+                alert(`Errore: ${response.data?.error || 'Risposta non valida dal server'}`);
+                return;
+            }
+
+            window.location.href = `http://localhost:3000?userId=${userId}&courseId=${courseId}&chatbot=${encodeURIComponent(nomeChatbot)}`;
+        } catch (error) {
+            console.error('Errore durante l\'invio dei dati:', error);
+        }
+
+
+
+
+
+
+
+
 
 
     };
