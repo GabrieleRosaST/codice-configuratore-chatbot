@@ -17,6 +17,8 @@ import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
 import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 import axios from 'axios'; // Importa axios per le richieste HTTP
+import { uploadFilesAndGetData } from '../utils/api';
+
 
 let dataInizioGlobal = null;
 let dataFineGlobal = null;
@@ -181,14 +183,26 @@ function PianoLavoro() {
 
     //Funzione per inviare i dati al backend e creare FORMDATA
 
+    //BRANCH FINALE
+
     const handleTerminaConfigurazione = async () => {
 
         // Genera il JSON con i dati della pagina CONFIGURAZIONE
         const jsonData = generateJson();
 
-        const formData = new FormData();
+        let filesToUpload = [];
 
         const dati = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+
+
+        // Itera sugli argomenti e aggiungi i file al FormData
+        argomenti.forEach((argomento) => {
+            if (fileStorage[argomento.id]) {
+                fileStorage[argomento.id].forEach((file) => {
+                    filesToUpload.push({ file, argomentoId: argomento.id });
+                });
+            }
+        });
 
 
         const nomeChatbot = dati?.DatiIniziali?.nomeChatbot;
@@ -199,52 +213,17 @@ function PianoLavoro() {
         const dataFine = dati?.DatiIniziali?.dataFine;
 
 
-        //master
-
-
-        // Aggiungi il JSON al FormData
-        formData.append('data', jsonData);
-
-        // Itera sugli argomenti e aggiungi i file al FormData
-        argomenti.forEach((argomento, argomentoIndex) => {
-            if (fileStorage[argomento.id]) {
-                fileStorage[argomento.id].forEach((file, fileIndex) => {
-                    // Usa una chiave univoca per ogni file
-                    formData.append(`files[${argomentoIndex}][${fileIndex}]`, file);
-                });
-            }
-        });
-
-        // Visualizza il contenuto del FormData
-        const formDataArray = [];
-        for (let [key, value] of formData.entries()) {
-            if (value instanceof File) {
-                formDataArray.push({
-                    key,
-                    name: value.name,
-                    size: value.size,
-                    type: value.type
-                });
-            } else {
-                formDataArray.push({ key, value });
-            }
-        }
-
-
-
-
-
-
-        const courseId = "43425255567890123456789012556789";
-        const userId = "user1234567890";
-        const displayName = "GabriDrix";
+        const courseId = "a12";
+        const userId = "gabri12";
+        const displayName = "Gabri";
         const email = "gabrieledrix@gmail.com";
 
         try {
             const response = await axios.post(
-                'http://localhost:3001/api/create-conversations',
+                `${import.meta.env.VITE_BACKEND_CHATBOT}/api/create-conversations`,
                 {
                     courseId,
+                    nomeChatbot,
                     userId,
                     displayName,
                     email,
@@ -267,15 +246,39 @@ function PianoLavoro() {
                 return;
             }
 
-            window.location.href = `http://localhost:3000?userId=${userId}&courseId=${courseId}&chatbot=${encodeURIComponent(nomeChatbot)}`;
+            window.location.href = `${import.meta.env.VITE_CHATBOT_CLOUDRUN}?userId=${userId}&courseId=${courseId}&chatbot=${encodeURIComponent(nomeChatbot)}`;
         } catch (error) {
             console.error('Errore durante l\'invio dei dati:', error);
         }
 
 
 
+        /*
+        try {
 
+            const uploadResult = await uploadFilesAndGetData(filesToUpload, jsonData);
 
+            //carica i dati su Moodle (draft area) , e ottiene i metadati
+            const result = await M.core_ajax.call([{
+                methodname: 'block_configuratore_save_chatbot_config',
+                args: {
+                    data: typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData),
+                    filedata: uploadResult.files
+                }
+            }])[0];
+
+            if (result && result.success === true) {
+                alert('Configurazione salvata con successo!');
+                navigate('/corsoChatbot');
+            } else {
+                setErrore('Errore durante il salvataggio della configurazione.');
+            }
+
+        } catch (error) {
+            setErrore(error.message || 'Errore durante l\'upload dei file o salvataggio dati')
+            console.error('Errore ', error);
+        }
+        */
 
 
 
