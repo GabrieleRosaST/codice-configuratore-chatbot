@@ -125,11 +125,11 @@ function Configurazione() {
 
 
 
-        <div className="w-full  flex flex-col items-center justify-center">
+        <div className="w-screen flex flex-col items-center justify-center">
 
 
 
-            <div className="w-[85vw] 2xl:w-[65vw] min-h-135 2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 ">
+            <div className="w-[85%] 2xl:w-[65%]  2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 ">
 
 
 
@@ -358,7 +358,7 @@ function Configurazione() {
             </div>
 
 
-            <div className="w-[85vw] 2xl:w-[65vw] h-30 mx-auto mt-2 flex justify-between items-center ">
+            <div className="w-[85%] 2xl:w-[65%] h-30 mx-auto mt-2 flex justify-between items-center ">
 
                 {/* Pulsante Esci e salva bozza */}
                 <button

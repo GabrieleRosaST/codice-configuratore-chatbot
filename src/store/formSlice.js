@@ -8,8 +8,8 @@ const formSlice = createSlice({
         corsoChatbot: 'Interazione Uomo-Macchina',
         descrizioneChatbot: ' Questo chatbot è progettato per assistere gli studenti nel corso di Interazione Uomo-Macchina, fornendo risorse e supporto personalizzato.',
         istruzioniChatbot: ' questo chatbot deve rispondere alle domande degli studenti riguardo al corso di Interazione Uomo-Macchina, fornendo risorse utili e supporto personalizzato.',
-        dataInizio: '2025-07-14', // Data concreta di esempio
-        dataFine: '2025-08-22',  // Data concreta di esempio
+        dataInizio: '2025-07-24', // Data concreta di esempio
+        dataFine: '2025-08-12',  // Data concreta di esempio
         newSuggerimento: '',
     },
     reducers: { // Funzioni per aggiornare lo stato

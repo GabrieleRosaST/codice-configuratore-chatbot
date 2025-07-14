@@ -62,7 +62,7 @@ function ArgomentiRiferimenti() {
 
 
             {mostraAiuto ? (
-                <div className="w-[85vw] 2xl:w-[65vw] mx-auto  flex flex-col items-center justify-">
+                <div className="w-[85%] 2xl:w-[65%] mx-auto  flex flex-col items-center justify-">
 
                     <div className="w-full h-14 mb-6  relative flex items-center justify-center md:justify-start " >
                         <button
@@ -78,7 +78,7 @@ function ArgomentiRiferimenti() {
                     </div>
 
 
-                    <div className="w-[50vw] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
+                    <div className="w-[50%] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
                         style={{ boxShadow: '0px 0px 6px 6px rgba(0,0,0,0.0)', outline: '1px solid #E5E5E7' }}>
 
                         <div className="w-[90%]  h-10  relative flex items-center  justify-center mt-4 gap-3 ">
@@ -135,7 +135,7 @@ function ArgomentiRiferimenti() {
 
             ) : (
                 <>
-                    <div className="w-[85vw] 2xl:w-[65vw] min-h-14  relative flex justify-start items-center flex-wrap ">
+                    <div className="w-[85%] 2xl:w-[65%] min-h-14  relative flex justify-start items-center flex-wrap ">
                         <div className="md:w-20 w-170  z-13 h-10  flex items-center justify-center "
                         >
                             <button
@@ -155,7 +155,7 @@ function ArgomentiRiferimenti() {
                         <div className='md:w-22 h-9 w-0'></div>
                     </div>
 
-                    <div className="w-[85vw] 2xl:w-[65vw] min-h-90 2xl:min-h-145 mt-5">
+                    <div className="w-[85%] 2xl:w-[65%] min-h-90 2xl:min-h-145 mt-5">
                         {/* Griglia per le card */}
 
                         <div className="w-full h-full flex  flex-wrap justify-start items-start gap-y-9 2xl:gap-x-12 gap-x-8  ">
@@ -193,7 +193,7 @@ function ArgomentiRiferimenti() {
 
 
                     {/* Pulsante Esci e salva bozza e Step successivo */}
-                    <div className="w-[85vw] 2xl:w-[65vw] h-30 mx-auto mt-2 flex justify-between items-center ">
+                    <div className="w-[85%] 2xl:w-[65%] h-30 mx-auto mt-2 flex justify-between items-center ">
 
 
                         <button

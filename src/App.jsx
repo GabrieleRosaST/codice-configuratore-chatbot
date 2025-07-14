@@ -25,7 +25,7 @@ function App() {
 
 
   return (
-    <div className="w-screen scroll-container2">
+    <div className="scroll-container2 min-h-screen px-4">
 
 
       <StepProvider>

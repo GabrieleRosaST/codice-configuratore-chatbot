@@ -66,7 +66,7 @@ function Navbar() {
                             alt={`${item.label} Icon`}
                             className="w-3.5 h-3.5 "
                         />
-                        <span className="text-[12px] hidden md:inline ml-2">{item.label}</span>
+                        <span className="text-[12px]  2xl:inline ml-2">{item.label}</span>
                     </Link>
                 ))}
             </div>

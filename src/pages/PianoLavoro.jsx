@@ -213,8 +213,8 @@ function PianoLavoro() {
         const dataFine = dati?.DatiIniziali?.dataFine;
 
 
-        const courseId = "a12";
-        const userId = "gabri12";
+        const courseId = "a123";
+        const userId = "gabri1234567";
         const displayName = "Gabri";
         const email = "gabrieledrix@gmail.com";
 
@@ -299,7 +299,7 @@ function PianoLavoro() {
 
                 {/* Mostra il div di aiuto se mostraAiuto è true */}
                 {mostraAiuto ? (
-                    <div className="w-[85vw] 2xl:w-[65vw] mx-auto  flex flex-col items-center justify-">
+                    <div className="w-[85%] 2xl:w-[65%] mx-auto  flex flex-col items-center justify-">
 
                         <div className="w-full h-14 mb-6  relative flex items-center justify-center md:justify-start " >
                             <button
@@ -315,7 +315,7 @@ function PianoLavoro() {
                         </div>
 
 
-                        <div className="w-[50vw] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
+                        <div className="w-[50%] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
                             style={{ boxShadow: '0px 0px 6px 6px rgba(0,0,0,0.0)', outline: '1px solid #E5E5E7' }}>
 
                             <div className="w-[90%]  h-10  relative flex items-center  justify-center mt-4 gap-3 mb-3 ">
@@ -390,7 +390,7 @@ function PianoLavoro() {
 
 
                         {/* Header con aiuto, mese e anno */}
-                        <div className="w-[85vw] 2xl:w-[65vw] min-h-14 flex justify-between items-center relative ">
+                        <div className="w-[85%] 2xl:w-[65%] min-h-14 flex justify-between items-center relative ">
 
                             <div className=" z-13 h-10  flex items-center justify-center "
                             >
@@ -446,7 +446,7 @@ function PianoLavoro() {
 
                         {/* CONTENITORE CALENDARIO */}
 
-                        <div className="w-[85vw] 2xl:w-[65vw] h-auto mt-6  bg-[#E5E5E7] rounded-[15px] overflow-hidden "
+                        <div className="w-[85%] 2xl:w-[65%] h-auto mt-6  bg-[#E5E5E7] rounded-[15px] overflow-hidden "
                             style={{
                                 boxShadow: '0px 2px 8.5px 10px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7'
                             }}>
@@ -500,7 +500,7 @@ function PianoLavoro() {
 
 
                         {/* Pulsante Esci e salva bozza e Step successivo */}
-                        <div className="w-[85vw] 2xl:w-[65vw] h-30 2xl:mt-4 mt-1 flex justify-between items-center ">
+                        <div className="w-[85%] 2xl:w-[65%] h-30 2xl:mt-4 mt-1 flex justify-between items-center ">
 
 
                             <button
