@@ -213,10 +213,11 @@ function PianoLavoro() {
         const dataFine = dati?.DatiIniziali?.dataFine;
 
 
-        const courseId = "a123";
-        const userId = "gabri1234567";
-        const displayName = "Gabri";
-        const email = "gabrieledrix@gmail.com";
+        //in questa versione non c'è il collegamento al db di moodle per semplificazione, quindi imposto i dati a mano
+        const courseId = "corso1234";
+        const userId = "GabriST";
+        const displayName = "GabriST";
+        const email = "gabriele@gmail.com";
 
         try {
             const response = await axios.post(
