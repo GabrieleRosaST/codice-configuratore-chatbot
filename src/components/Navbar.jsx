@@ -43,7 +43,7 @@ function Navbar() {
 
     return (
         <div className="h-18 w-full flex items-center justify-center mt-6">
-            <div className="w-[48%] 2xl:w-[35%] h-11 bg-white flex justify-center gap-[6%] items-center rounded-[50px] border-[1px] border-black/[0.08]"
+            <div className="w-[35%] sm:w-[35%] md:w-[58%] lg:w-[58%] xl:w-[58%] h-11 bg-white flex justify-center gap-[6%] xl:gap-[8%] items-center rounded-[50px] border-[1px] border-black/[0.08]"
                 style={{
                     boxShadow: '0px 3px 15.6px 6px rgba(0,0,0,0.015)'
                 }}>
@@ -52,7 +52,7 @@ function Navbar() {
                         key={item.id}
                         to={item.link}
                         className={`flex items-center px-4 py-2 rounded-[50px] h-full justify-center hover:scale-102 transition duration-180 ease-in-out
-                        ${currentPage === item.id ? 'text-black font-medium text-[#1D2125]' : 'text-[#1D2125]'} 
+                        ${currentPage === item.id ? 'text-black font-medium text-[#1D2125]' : 'text-[#1D2125]'}
                         ${item.disabled ? 'opacity-40 pointer-events-none' : ''}`}
                         onClick={(e) => {
                             if (item.disabled) {

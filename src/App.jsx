@@ -7,7 +7,7 @@ import PianoLavoro from './pages/PianoLavoro'
 import { StepProvider } from './context/StepContext';
 import Riepilogo from './pages/Riepilogo'
 
-function App() {
+function App({ sesskey, wwwroot }) {
 
   const navigate = useNavigate();
   const [isFirstLoad, setIsFirstLoad] = useState(true); // Stato per controllare il primo caricamento
@@ -25,7 +25,7 @@ function App() {
 
 
   return (
-    <div className="w-screen scroll-container2">
+    <div className="scroll-container2 min-h-screen px-4">
 
 
       <StepProvider>
@@ -33,7 +33,7 @@ function App() {
         <Routes>
           <Route path="/configurazione" element={<Configurazione />} />
           <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
-          <Route path="/pianoLavoro" element={<PianoLavoro />} />
+          <Route path="/pianoLavoro" element={<PianoLavoro sesskey={sesskey} wwwroot={wwwroot} />} />
           <Route path="/riepilogo" element={<Riepilogo />} />
           <Route path="*" element={<Configurazione />} />
         </Routes>

@@ -1,24 +1,30 @@
 @import "tailwindcss";
 
-.configuratore-block #root {
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
   text-align: center;
 }
 
-.configuratore-block .logo {
+.logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
 
-.configuratore-block .logo:hover {
+.logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
 
-.configuratore-block .logo.react:hover {
+.logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
@@ -33,15 +39,15 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .configuratore-block a:nth-of-type(2) .logo {
+  a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
 }
 
-.configuratore-block .card {
+.card {
   padding: 2em;
 }
 
-.configuratore-block .read-the-docs {
+.read-the-docs {
   color: #888;
 }

@@ -4,7 +4,7 @@
 
 
 
-.configuratore-block {
+:root {
   font-family: 'Jost', sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -14,132 +14,159 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /*BODY*/
-  min-width: 320px;
-  min-height: 100vh;
-  background-color: #F9FAFC;
 }
 
-.configuratore-block .scroll-container2 {
-  position: relative;
-  top: 0;
-  right: 0;
-  bottom: 0;
+.scroll-container2 {
   width: 100%;
-  overflow-y: scroll;
+  box-sizing: border-box;
 }
 
 
-.configuratore-block .scroll-container2::-webkit-scrollbar {
+.scroll-container2::-webkit-scrollbar {
   width: 8px;
 }
 
-.configuratore-block .scroll-container2::-webkit-scrollbar-track {
+.scroll-container2::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.configuratore-block .scroll-container2::-webkit-scrollbar-thumb {
+.scroll-container2::-webkit-scrollbar-thumb {
   background: #d0d0d9;
   border-radius: 4px;
 }
 
-.configuratore-block .scroll-container2::-webkit-scrollbar-thumb:hover {
+.scroll-container2::-webkit-scrollbar-thumb:hover {
   background: #aaaab4;
   cursor: pointer;
 }
 
 
 
-.configuratore-block .scroll-container {
+.scroll-container {
   direction: rtl;
   padding: 10px;
   overflow-y: scroll;
   /* Sposta la barra di scorrimento a sinistra */
 }
 
-.configuratore-block .scroll-container>* {
+.scroll-container>* {
   direction: ltr;
   /* Mantiene il contenuto nella direzione normale */
 }
 
 /* Aggiungi questo codice al tuo file CSS */
-.configuratore-block .scroll-container::-webkit-scrollbar {
+.scroll-container::-webkit-scrollbar {
   width: 4px;
   margin-right: 5px;
   /* Larghezza della barra */
 }
 
-.configuratore-block .scroll-container::-webkit-scrollbar-thumb {
+.scroll-container::-webkit-scrollbar-thumb {
   background-color: #cecedb6d;
   border-radius: 8px;
   cursor: pointer;
 }
 
-.configuratore-block .scroll-container::-webkit-scrollbar-thumb:hover {
+.scroll-container::-webkit-scrollbar-thumb:hover {
   background-color: #b8b8c58e;
 }
 
-.configuratore-block .scroll-container::-webkit-scrollbar-track {
+.scroll-container::-webkit-scrollbar-track {
   background-color: FCF9ED;
   /* Colore dello sfondo della barra */
 }
 
-.configuratore-block .inputTitolo {
+.inputTitolo {
   box-shadow: none !important;
   outline: none !important;
 }
 
-/*
+
 body {
   margin: 0;
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
-  background-color: #F9FAFC;
+  background-color: #FFFFFF;
 }
 
 html,
 body {
   overflow: overlay;
-}*/
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
 
 @layer utilities {
-  .configuratore-block .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
   }
 
-  .configuratore-block .custom-scrollbar::-webkit-scrollbar-track {
+  .custom-scrollbar::-webkit-scrollbar-track {
     background: none;
   }
 
-  .configuratore-block .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #6982ab6a;
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #ebedf2;
     border-radius: 10px;
   }
 
-  .configuratore-block .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #6982abb9;
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #cdd0db;
+  }
+
+
+
+
+  .custom-scrollbar2::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .custom-scrollbar2::-webkit-scrollbar-track {
+    background: none;
+  }
+
+  .custom-scrollbar2::-webkit-scrollbar-thumb {
+    background: #cbcfd9;
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a1a6b7;
   }
 }
 
 
 
-.configuratore-block input[type="date"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator {
   color: #495057;
   /* Cambia il colore dell'icona */
   opacity: 1;
   /* Assicurati che l'icona sia visibile */
 }
 
-.configuratore-block input[type="date"] {
+input[type="date"] {
   color-scheme: light;
   /* Assicura che il tema sia coerente */
 }
 
-.configuratore-block input:focus,
-.configuratore-block textarea:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border-color: #a6a6a6;
   box-shadow: 0 0 4px 2px rgba(184, 184, 184, 0.1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }

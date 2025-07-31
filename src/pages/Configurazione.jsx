@@ -56,6 +56,8 @@ function Configurazione() {
 
     }, [formState, setCompletedSteps, primaVisitaStep1]);
 
+    const MIN_DATE = new Date("2024-01-01");
+    const MAX_DATE = new Date("2030-12-31");
 
     // Funzione per gestire il submit del form
     const handleSubmit = (e) => {
@@ -85,7 +87,11 @@ function Configurazione() {
         if (!formState.dataInizio) {
             newErrors.dataInizio = true;
             hasError = true;
-        } else if (startDate <= today) {
+        } else if (
+            startDate <= today ||
+            startDate < MIN_DATE ||
+            startDate > MAX_DATE
+        ) {
             newErrors.dataInizio = true;
             hasError = true;
             alert("La data di inizio deve essere successiva al giorno attuale.");
@@ -95,7 +101,11 @@ function Configurazione() {
         if (!formState.dataFine) {
             newErrors.dataFine = true;
             hasError = true;
-        } else if (endDate <= startDate) {
+        } else if (
+            endDate <= startDate ||
+            endDate < MIN_DATE ||
+            endDate > MAX_DATE
+        ) {
             newErrors.dataFine = true;
             hasError = true;
             alert("La data di fine deve essere successiva di almeno un giorno alla data di inizio.");
@@ -125,11 +135,11 @@ function Configurazione() {
 
 
 
-        <div className="w-full  flex flex-col items-center justify-center">
+        <div className="w-full flex flex-col items-center justify-center">
 
 
 
-            <div className="mx-auto w-[85vw] 2xl:w-[65vw] min-h-135 2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 ">
+            <div className="w-[100%] xl:w-[86%]  2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 max-h-[800px] overflow-y-auto custom-scrollbar2">
 
 
 
@@ -144,7 +154,7 @@ function Configurazione() {
 
 
                             {/* Input per il NOME DEL CORSO */}
-                            <div className="mb-6 w-[88%]">
+                            <div className="mb-8 mt-1 w-[88%]">
                                 <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125]">Corso</p>
                                 <input
                                     id="input-corso"
@@ -158,7 +168,7 @@ function Configurazione() {
 
 
                             {/* Input per il NOME DEL CHATBOT */}
-                            <div className="mb-6 w-[88%]">
+                            <div className="mb-8 w-[88%]">
                                 <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125]">Assistente</p>
                                 <input
                                     id="input-nome"
@@ -180,7 +190,7 @@ function Configurazione() {
 
 
                             {/* Input per la DESCRIZIONE del chatbot */}
-                            <div className=" mb-0 w-[88%] ">
+                            <div className=" mb-2 w-[88%] ">
                                 <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Descrizione</p>
                                 <textarea
                                     id="input-descrizione"
@@ -198,7 +208,7 @@ function Configurazione() {
 
 
                             {/* Input per le ISTRUZIONI */}
-                            <div className="mb-3 w-[88%]">
+                            <div className="mb-4 w-[88%]">
                                 <p className="w-[205.51px] h-[29px] text-[13px] font-medium text-left text-[#1d2125] ">Istruzioni</p>
                                 <textarea
                                     id="input-4"
@@ -220,6 +230,8 @@ function Configurazione() {
                                         id="start-date"
                                         type="date"
                                         value={formState.dataInizio}
+                                        min="2024-01-01"
+                                        max="2100-12-31"
                                         onChange={(e) => dispatch(updateForm({ dataInizio: e.target.value }))}
                                         className={`"w-full h-9 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataInizio ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
                                             } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
@@ -233,6 +245,8 @@ function Configurazione() {
                                         id="end-date"
                                         type="date"
                                         value={formState.dataFine}
+                                        min="2024-01-01"
+                                        max="2100-12-31"
                                         onChange={(e) => {
                                             dispatch(updateForm({ dataFine: e.target.value }));
                                             setErrors((prev) => ({ ...prev, dataFine: false }));
@@ -358,9 +372,9 @@ function Configurazione() {
             </div>
 
 
-            <div className="w-[85vw] 2xl:w-[65vw] h-30 mx-auto mt-2 flex justify-between items-center ">
+            <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-end items-center ">
 
-                {/* Pulsante Esci e salva bozza */}
+                {/* Pulsante Esci e salva bozza
                 <button
                     type="submit"
                     className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7] "
@@ -383,6 +397,7 @@ function Configurazione() {
                     </div>
 
                 </button>
+                */}
 
                 {/* Pulsante Step Successivo */}
                 <button

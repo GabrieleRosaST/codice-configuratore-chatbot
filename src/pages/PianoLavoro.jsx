@@ -17,14 +17,18 @@ import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
 import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 import axios from 'axios'; // Importa axios per le richieste HTTP
+
+import { db } from '../firebase';
+import { doc, setDoc, collection } from "firebase/firestore";
 import { uploadFilesAndGetData } from '../utils/api';
+
 
 let dataInizioGlobal = null;
 let dataFineGlobal = null;
 let shouldRedistribute = false;
 
 
-function PianoLavoro() {
+function PianoLavoro({sesskey, wwwroot}) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const generateJson = useGenerateJson(); // Usa il custom hook
@@ -36,7 +40,7 @@ function PianoLavoro() {
 
     const dataInizioDate = new Date(dataInizio);
 
-    const [errore, setErrore] = useState(null);
+
 
     const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
     const giorniSettimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
@@ -182,81 +186,106 @@ function PianoLavoro() {
 
     //Funzione per inviare i dati al backend e creare FORMDATA
 
+    //BRANCH FINALE
+
     const handleTerminaConfigurazione = async () => {
 
-        setErrore(null);
         // Genera il JSON con i dati della pagina CONFIGURAZIONE
         const jsonData = generateJson();
 
         let filesToUpload = [];
 
         const dati = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-        const nomeCorso = dati?.DatiIniziali?.corsoChatbot;
+
 
         // Itera sugli argomenti e aggiungi i file al FormData
         argomenti.forEach((argomento) => {
             if (fileStorage[argomento.id]) {
-            fileStorage[argomento.id].forEach((file) => {
-                filesToUpload.push({ file, argomentoId: argomento.id });
-            });
+                fileStorage[argomento.id].forEach((file) => {
+                    filesToUpload.push({ file, argomentoId: argomento.id, titoloArgomento: argomento.titolo });
+                });
             }
         });
 
-        /*try {
-            // Invia i dati al backend Node/Express per creare il corso
-            const response = await axios.post(
-                'http://localhost:3001/api/demo-create-course',
-                { courseName: nomeCorso },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
+        let result;
 
-            // Controlla la risposta
-            if (response.data && response.data.courseId) {
-                // Salva i dati del corso per usarli dopo (es: in uno stato globale, context, o localStorage)
-                const { courseId, courseName, conversationId, chatId } = response.data;
-                // Esempio: salva in localStorage
-                localStorage.setItem('courseId', courseId);
-                localStorage.setItem('courseName', courseName);
-                // Puoi anche passarli come stato nella navigazione
-                navigate('/Riepilogo', { state: { courseId, courseName, conversationId, chatId } });
-            } else {
-                alert('Errore: risposta backend non valida');
-            }
-        } catch (error) {
-            console.error('Errore durante l\'invio dei dati:', error);
-            alert('Errore durante la creazione del corso');
-        }*/
+        try{
 
-        try {
+            const uploadResult = await uploadFilesAndGetData(filesToUpload, jsonData, {
+                sesskey: sesskey,
+                wwwroot: wwwroot
+            });
 
-            const uploadResult = await uploadFilesAndGetData(filesToUpload, jsonData);
-
-            //carica i dati su Moodle (draft area) , e ottiene i metadati
-            const result = await M.core_ajax.call([{
-                methodname: 'block_configuratore_save_chatbot_config',
+            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify([{
+                methodname: 'local_configuratore_save_chatbot_config',
                 args: {
-                    data:typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData),
+                    data: typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData),
                     filedata: uploadResult.files
                 }
-            }])[0];
+            }])
+            });
+            const json = await response.json();
+            console.log("Risposta fetch grezza:", json);
+            result = json[0]?.data;
 
-            if (result && result.success === true) {
-                alert('Configurazione salvata con successo!');
-                navigate('/corsoChatbot');
-            }else{
-                setErrore('Errore durante il salvataggio della configurazione.');
-            }
+            console.log('Risposta dal servizio:', result);
 
+
+
+            const nomeChatbot = dati?.DatiIniziali?.nomeChatbot;
+            const courseName = dati?.DatiIniziali?.corsoChatbot;
+            const descrizioneChatbot = dati?.DatiIniziali?.descrizioneChatbot;
+            const istruzioniChatbot = dati?.DatiIniziali?.istruzioniChatbot
+            const dataInizio = dati?.DatiIniziali?.dataInizio;
+            const dataFine = dati?.DatiIniziali?.dataFine;
+
+
+
+            const userId = String(result?.userid);
+            const displayName = result?.username;
+            const email = result?.email;
+            const courseId = String(result?.courseid);
+
+            //prova db
+            const userRef = doc(db, 'users', userId);
+
+            await setDoc(userRef, {
+                displayName: displayName || '',
+                email: email || '',
+                tipologia_studente: 'nessuna',
+                userId: userId
+            }, { merge: true });
+
+            console.log('Documento utente aggiornato:', userId);
+
+            // Crea la struttura: users/{userId}/courses/{courseId}
+            const courseRef = doc(db, 'users', userId, 'courses', courseId);
+
+            await setDoc(courseRef, {
+                courseName: courseName || '',
+                nomeChatbot: nomeChatbot || '',
+                descrizioneChatbot: descrizioneChatbot || '',
+                istruzioniChatbot: istruzioniChatbot || '',
+                dataInizio: dataInizio || '',
+                dataFine: dataFine || ''
+            }, { merge: true });
+
+            // Se vuoi aggiungere una conversazione (chat) sotto il corso:
+            const conversationsRef = collection(db, 'users', userId, 'courses', courseId, 'conversations');
         } catch (error) {
-            setErrore(error.message || 'Errore durante l\'upload dei file o salvataggio dati')
-            console.error('Errore ', error);
+            console.error('Errore durante l\'invio dei dati:', error);
         }
-
-
+        if (result && result.success === true) {
+            alert('Configurazione salvata con successo!');
+            window.parent.location.href = `${wwwroot}/course/view.php?id=${result.courseid}`;
+            return;
+        }
     };
 
 
@@ -264,11 +293,11 @@ function PianoLavoro() {
     return (
         <DndProvider backend={HTML5Backend}>
 
-            <div className=" flex flex-col items-center justify-start ">
+            <div className="w-full flex flex-col items-center justify-start ">
 
                 {/* Mostra il div di aiuto se mostraAiuto è true */}
                 {mostraAiuto ? (
-                    <div className="w-[85vw] 2xl:w-[65vw] mx-auto  flex flex-col items-center justify-">
+                    <div className="w-[100%] xl:w-[86%] mx-auto  flex flex-col items-center justify-">
 
                         <div className="w-full h-14 mb-6  relative flex items-center justify-center md:justify-start " >
                             <button
@@ -284,7 +313,7 @@ function PianoLavoro() {
                         </div>
 
 
-                        <div className="w-[50vw] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
+                        <div className="w-[65%] mx-auto mt-1 mb-3 p-5  bg-white rounded-[15px] flex justify-center items-center flex-col"
                             style={{ boxShadow: '0px 0px 6px 6px rgba(0,0,0,0.0)', outline: '1px solid #E5E5E7' }}>
 
                             <div className="w-[90%]  h-10  relative flex items-center  justify-center mt-4 gap-3 mb-3 ">
@@ -359,7 +388,7 @@ function PianoLavoro() {
 
 
                         {/* Header con aiuto, mese e anno */}
-                        <div className="w-[85vw] 2xl:w-[65vw] min-h-14 flex justify-between items-center relative ">
+                        <div className="w-[100%] xl:w-[86%] min-h-14 flex justify-between items-center relative ">
 
                             <div className=" z-13 h-10  flex items-center justify-center "
                             >
@@ -415,7 +444,7 @@ function PianoLavoro() {
 
                         {/* CONTENITORE CALENDARIO */}
 
-                        <div className="w-[85vw] 2xl:w-[65vw] h-auto mt-6  bg-[#E5E5E7] rounded-[15px] overflow-hidden "
+                        <div className="w-[100%] xl:w-[86%] h-auto mt-6  bg-[#E5E5E7] rounded-[15px] overflow-hidden "
                             style={{
                                 boxShadow: '0px 2px 8.5px 10px rgba(0,0,0,0.01)', outline: '1px solid #E5E5E7'
                             }}>
@@ -469,9 +498,9 @@ function PianoLavoro() {
 
 
                         {/* Pulsante Esci e salva bozza e Step successivo */}
-                        <div className="w-[85vw] 2xl:w-[65vw] h-30 2xl:mt-4 mt-1 flex justify-between items-center ">
+                        <div className="w-[100%] xl:w-[86%] h-30 2xl:mt-4 mt-1 flex justify-end items-center ">
 
-
+                            {/*
                             <button
                                 type="button"
                                 className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7] "
@@ -494,7 +523,7 @@ function PianoLavoro() {
                                 </div>
 
                             </button>
-
+                            */}
 
                             {/* Pulsante Step Successivo */}
                             <button
