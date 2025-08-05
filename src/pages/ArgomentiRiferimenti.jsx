@@ -62,7 +62,7 @@ function ArgomentiRiferimenti() {
 
 
             {mostraAiuto ? (
-                <div className="w-[86%] 2xl:w-[66%] mx-auto  flex flex-col items-center justify-">
+                <div className="w-[100%] xl:w-[86%] mx-auto  flex flex-col items-center justify-">
 
                     <div className="w-full h-14 mb-6  relative flex items-center justify-center md:justify-start " >
                         <button

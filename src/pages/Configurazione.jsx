@@ -294,6 +294,12 @@ function Configurazione({ sesskey, wwwroot }) {
 
         <div className="w-full flex flex-col items-center justify-center">
 
+            <div className="w-[100%] xl:w-[86%] min-h-12  relative flex justify-center items-center flex-wrap mt-2">
+                <p className="flex flex-grow text-[16px] font-bold justify-center text-center text-[#21225f] ">
+                    Configura il corso e l'assistente didattico associato
+                </p>
+            </div>
+
 
 
             <div className="w-[100%] xl:w-[86%]  2xl:min-h-175 bg-[#F2F3F7] rounded-[50px] flex md:flex-row flex-col mt-6 max-h-[800px] overflow-y-auto custom-scrollbar2">
@@ -448,9 +454,9 @@ function Configurazione({ sesskey, wwwroot }) {
                                 </div>
                                 {/* Tooltip */}
                                 <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-[#6982AB] text-white text-xs rounded px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 w-75 text-center">
-                                    Questa è l’interfaccia che gli studenti visualizzeranno all’avvio di ogni chat con il tuo assitente.
+                                    Questa è l’interfaccia che gli studenti visualizzeranno all’avvio di ogni chat con l'assitente.
                                     <br />
-                                    Contiene le sue informazioni principali e due pulsanti che guidano l'avvio della conversazione e lo studio degli argomenti programmati.
+                                    Contiene le informazioni principali e due pulsanti che guidano l'avvio della conversazione e lo studio degli argomenti programmati.
                                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-[#6982AB]"></div>
                                 </div>
                             </div>

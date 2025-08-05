@@ -43,7 +43,7 @@ function Navbar() {
 
     return (
         <div className="h-18 w-full flex items-center justify-center mt-6">
-            <div className="w-[35%] sm:w-[35%] md:w-[58%] lg:w-[58%] xl:w-[58%] h-11 bg-white flex justify-center gap-[6%] xl:gap-[8%] items-center rounded-[50px] border-[1px] border-black/[0.08]"
+            <div className="w-[35%] sm:w-[35%] md:w-[58%] lg:w-[58%] xl:w-[58%]  bg-[#f2f3f753] h-11  flex justify-center gap-[6%] xl:gap-[8%] items-center rounded-[50px] border-[1px] border-black/[0.08]"
                 style={{
                     boxShadow: '0px 3px 15.6px 6px rgba(0,0,0,0.015)'
                 }}>
