@@ -4,10 +4,10 @@ import { createSlice } from '@reduxjs/toolkit'; // Importa createSlice
 const formSlice = createSlice({
     name: 'form', // Nome della fetta di stato
     initialState: { // Stato iniziale
-        nomeChatbot: 'HCI TUTOR',
-        corsoChatbot: 'Interazione Uomo-Macchina',
-        descrizioneChatbot: ' Questo chatbot è progettato per assistere gli studenti nel corso di Interazione Uomo-Macchina, fornendo risorse e supporto personalizzato.',
-        istruzioniChatbot: ' questo chatbot deve rispondere alle domande degli studenti riguardo al corso di Interazione Uomo-Macchina, fornendo risorse utili e supporto personalizzato.',
+        nomeChatbot: '',
+        corsoChatbot: '',
+        descrizioneChatbot: '',
+        istruzioniChatbot: '',
         dataInizio: '2025-09-05', // Data concreta di esempio
         dataFine: '2025-09-16',  // Data concreta di esempio
         newSuggerimento: '',

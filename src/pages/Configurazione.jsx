@@ -8,6 +8,7 @@ import rewindSuggerimento from '../img/rewindSuggerimento.svg';
 
 import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import frecciaDestraButton from '../img/frecciaDestraButton.svg';
+import aitext from '../img/aitext.svg';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { updateForm } from '../store/formSlice';
@@ -41,6 +42,11 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Stato per tracciare se il nome del corso è stato modificato dopo una validazione
     const [courseNameChanged, setCourseNameChanged] = useState(false);
+
+    // Stato per il caricamento della generazione AI
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [isGeneratingName, setIsGeneratingName] = useState(false);
+    const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
 
     // Effetto per monitorare i campi del form
@@ -284,9 +290,177 @@ function Configurazione({ sesskey, wwwroot }) {
         }
     };
 
+    // Funzione per generare suggerimenti AI
+    const generateInstructions = async () => {
+        if (isGenerating) return;
 
+        setIsGenerating(true);
 
+        try {
+            // Debug: verifica se la chiave API è caricata
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+            console.log('API Key disponibile:', apiKey ? 'Sì' : 'No');
+            console.log('Primi caratteri della chiave:', apiKey ? apiKey.substring(0, 10) + '...' : 'Nessuna chiave');
 
+            if (!apiKey) {
+                throw new Error('Chiave API OpenAI non trovata. Verifica il file .env');
+            }
+
+            // Usa OpenAI API per generare le istruzioni
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [
+                        {
+                            role: "user",
+                            content: `Genera delle istruzioni brevi e professionali che il chatbot dovrà seguire. Il testo deve essere come scritto dal docente verso il configuratore.  Le istruzioni devono essere circa 50-80 parole, in italiano, e spiegare come il chatbot didattico dovrebbe comportarsi durante il corso per aiutare gli studenti e in che modo specifico può formulare le spiegazioni per gli studenti. Gli studenti utilizzerano il chatbot per studiare da casa non in aula, è fatto apposta per incentivare lo studio autonomo oltre alle lezioni, quindi non menzionare la presenza in aula. Devono essere istrizioni dirette e senza saluti. E' importante che ogni testo generato sia vario da quello precedente, quindi cerca sempre di variare con i concetti, devi essere originale, sia come contenuto del messaggio che come struttura. Le istruzioni non devono andare al di fuori di comportamenti nel tono della spiegazione che dovrà usare il chatbot, non devono considerare funzionalià aggiuntive, solo il modo in cui il chatbot risponderà testualmente.`
+                        }
+                    ],
+                    max_tokens: 150,
+                    temperature: 0.7
+                })
+            });
+
+            console.log('Risposta API status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Errore API:', errorText);
+                throw new Error(`Errore API (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            const generatedText = data.choices[0].message.content.trim();
+
+            // Aggiorna il campo istruzioni
+            dispatch(updateForm({ istruzioniChatbot: generatedText }));
+
+        } catch (error) {
+            console.error('Errore nella generazione:', error);
+            alert(`Errore nella generazione automatica: ${error.message}`);
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    // Funzione per generare nome assistente
+    const generateAssistantName = async () => {
+        if (isGeneratingName) return;
+
+        setIsGeneratingName(true);
+
+        try {
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+            if (!apiKey) {
+                throw new Error('Chiave API OpenAI non trovata. Verifica il file .env');
+            }
+
+            const courseName = formState.corsoChatbot || 'il corso';
+
+            console.log('Generazione nome assistente per il corso:', courseName);
+
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [
+                        {
+                            role: "user",
+                            content: `Genera un nome creativo e professionale per un chatbot assistente didattico AI che aiuterà gli studenti nel corso "${courseName}". Il nome deve essere: breve (massimo 3-4 parole), facile da ricordare, accogliente ma professionale, adatto al contesto educativo. Evita nomi troppo tecnici o robotici. Deve centrare con il nome del corso se ci riesci, altrimenti nome normale. Prova anche a prende l'acronimo del corso e aggiungerci tutor o assistant. Il nome deve anche essere simpatico se ci riesci. Restituisci solo il nome, senza spiegazioni.`
+                        }
+                    ],
+                    max_tokens: 50,
+                    temperature: 0.8
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Errore API (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            const generatedName = data.choices[0].message.content.trim().replace(/['"]/g, '');
+
+            // Aggiorna il campo nome
+            dispatch(updateForm({ nomeChatbot: generatedName }));
+
+        } catch (error) {
+            console.error('Errore nella generazione del nome:', error);
+            alert(`Errore nella generazione automatica: ${error.message}`);
+        } finally {
+            setIsGeneratingName(false);
+        }
+    };
+
+    // Funzione per generare descrizione
+    const generateDescription = async () => {
+        if (isGeneratingDescription) return;
+
+        setIsGeneratingDescription(true);
+
+        try {
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+            if (!apiKey) {
+                throw new Error('Chiave API OpenAI non trovata. Verifica il file .env');
+            }
+
+            const courseName = formState.corsoChatbot || '*NOME DEL CORSO*';
+            const assistantName = formState.nomeChatbot || 'l\'assistente';
+
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [
+                        {
+                            role: "user",
+                            content: `Scrivi una descrizione breve e accattivante per il chatbot assistente didattico AI per il corso "${courseName}". La descrizione deve essere di massimo 140 caratteri, scritta in italiano, coinvolgente e che spieghi come l'assistente può aiutare gli studenti nello studio. Usa un tono amichevole ma professionale. Il testo deve essere come scritto dal professore per la configurazione che sta svolgendo. Non inserire punti in mezzo alla frase e caratteri speciali. Il chatbot è programmato nello specifico per aiutare gli studenti in base al loro metodo di apprendimento e fornisce le risposte in base ai materiali caricati del professore, non può svolgere e generare quiz o altro, ma solo aiutare nello studio lo studente. La descrizione deve essere riferita allo studente singolo non plurale`
+                        }
+                    ],
+                    max_tokens: 100,
+                    temperature: 0.7
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Errore API (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            let generatedDescription = data.choices[0].message.content.trim().replace(/['"]/g, '');
+
+            // Limita a 200 caratteri se necessario
+            if (generatedDescription.length > 200) {
+                generatedDescription = generatedDescription.substring(0, 197) + '...';
+            }
+
+            // Aggiorna il campo descrizione
+            dispatch(updateForm({ descrizioneChatbot: generatedDescription }));
+
+        } catch (error) {
+            console.error('Errore nella generazione della descrizione:', error);
+            alert(`Errore nella generazione automatica: ${error.message}`);
+        } finally {
+            setIsGeneratingDescription(false);
+        }
+    };
 
     return (
 
@@ -336,21 +510,44 @@ function Configurazione({ sesskey, wwwroot }) {
 
 
                             {/* Input per il NOME DEL CHATBOT */}
-                            <div className="mb-8 w-[88%]">
+                            <div className="mb-8 w-[88%] relative">
                                 <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125]">Assistente</p>
-                                <input
-                                    id="input-nome"
-                                    type="text"
-                                    placeholder="Assegna un nome all'assistente"
-                                    value={formState.nomeChatbot}
-                                    onChange={(e) => {
-                                        if (e.target.value.length <= 55) { // Limite di 50 caratteri
-                                            dispatch(updateForm({ nomeChatbot: e.target.value }));
-                                        }
-                                    }}
-                                    maxLength={55} // Imposta il limite di caratteri
-                                    className={`w-full h-9 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56]  text-[13px] placeholder-[#A3A7AA] ${errors.nomeChatbot ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                        } placeholder-opacity-50 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`} />
+                                <div className="relative group">
+                                    <input
+                                        id="input-nome"
+                                        type="text"
+                                        placeholder="Assegna un nome all'assistente"
+                                        value={formState.nomeChatbot}
+                                        onChange={(e) => {
+                                            if (e.target.value.length <= 55) { // Limite di 50 caratteri
+                                                dispatch(updateForm({ nomeChatbot: e.target.value }));
+                                            }
+                                        }}
+                                        maxLength={55} // Imposta il limite di caratteri
+                                        className={`w-full h-9 p-2 pl-3 pr-9 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56]  text-[13px] placeholder-[#A3A7AA] ${errors.nomeChatbot ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
+                                            } placeholder-opacity-50 text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
+                                    />
+                                    {/* Pulsante AI overlay */}
+                                    <button
+                                        type="button"
+                                        onClick={generateAssistantName}
+                                        disabled={isGeneratingName}
+                                        className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 bg-gradient-to-br from-[#d793f2] to-[#FCC63D] ${isGeneratingName
+                                            ? 'opacity-100 cursor-auto'
+                                            : 'opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:scale-110 hover:cursor-pointer hover:shadow-[0px_0px_6px_3px_rgba(215,147,242,0.1)]'
+                                            }`}
+                                    >
+                                        {isGeneratingName ? (
+                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <img
+                                                src={aitext}
+                                                alt="AI Generate"
+                                                className="w-3 h-3 filter brightness-0 invert"
+                                            />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
 
@@ -358,33 +555,79 @@ function Configurazione({ sesskey, wwwroot }) {
 
 
                             {/* Input per la DESCRIZIONE del chatbot */}
-                            <div className=" mb-2 w-[88%] ">
+                            <div className=" mb-2 w-[88%] relative">
                                 <p className="w-[205.51px] h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Descrizione</p>
-                                <textarea
-                                    id="input-descrizione"
-                                    placeholder="Scrivi una descrizione per il tuo chatbot"
-                                    value={formState.descrizioneChatbot}
-                                    onChange={(e) => {
-                                        if (e.target.value.length <= 200) {
-                                            dispatch(updateForm({ descrizioneChatbot: e.target.value }))
-                                        }
-                                    }}
-                                    className="w-full h-20 2xl:h-28 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none custom-scrollbar"
-                                />
+                                <div className="relative group">
+                                    <textarea
+                                        id="input-descrizione"
+                                        placeholder="Scrivi una breve descrizione del chatbot"
+                                        value={formState.descrizioneChatbot || ''}
+                                        onChange={(e) => {
+                                            if (e.target.value.length <= 200) {
+                                                dispatch(updateForm({ descrizioneChatbot: e.target.value }))
+                                            }
+                                        }}
+                                        className="w-full h-20 2xl:h-28 p-2 pl-3 pr-9 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none custom-scrollbar"
+                                    />
+                                    {/* Pulsante AI overlay */}
+                                    <button
+                                        type="button"
+                                        onClick={generateDescription}
+                                        disabled={isGeneratingDescription}
+                                        className={`absolute bottom-4 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 bg-gradient-to-br from-[#d793f2] to-[#FCC63D] ${isGeneratingDescription
+                                            ? 'opacity-100 cursor-auto'
+                                            : 'opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:scale-110 hover:cursor-pointer hover:shadow-[0px_0px_6px_3px_rgba(215,147,242,0.1)]'
+                                            }`}
+                                    >
+                                        {isGeneratingDescription ? (
+                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <img
+                                                src={aitext}
+                                                alt="AI Generate"
+                                                className="w-3 h-3 filter brightness-0 invert"
+                                            />
+                                        )}
+                                    </button>
+                                </div>
+
                                 <p className="text-right text-xs text-gray-500 mt-1 opacity-60">{formState.descrizioneChatbot.length}/200</p>
                             </div>
 
 
                             {/* Input per le ISTRUZIONI */}
-                            <div className="mb-4 w-[88%]">
+                            <div className="mb-4 w-[88%] relative ">
                                 <p className="w-[205.51px] h-[29px] text-[13px] font-medium text-left text-[#1d2125] ">Istruzioni</p>
-                                <textarea
-                                    id="input-4"
-                                    placeholder="Scrivi delle brevi istruzioni che il chatbot dovrà seguire durante il corso."
-                                    className="w-full h-20 2xl:h-28 p-2 pl-3 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none custom-scrollbar"
-                                    value={formState.istruzioniChatbot}
-                                    onChange={(e) => dispatch(updateForm({ istruzioniChatbot: e.target.value }))}
-                                />
+                                <div className="relative group">
+                                    <textarea
+                                        id="input-4"
+                                        placeholder="Scrivi delle brevi istruzioni che il chatbot dovrà seguire durante il corso."
+                                        className="w-full h-20 2xl:h-28 p-2 pl-3 pr-9 rounded-[10px] bg-white border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)] resize-none custom-scrollbar"
+                                        value={formState.istruzioniChatbot}
+                                        style={{ direction: "ltr" }}
+                                        onChange={(e) => dispatch(updateForm({ istruzioniChatbot: e.target.value }))}
+                                    />
+                                    {/* Pulsante AI - Piccolo spazio laterale a destra */}
+                                    <button
+                                        type="button"
+                                        onClick={generateInstructions}
+                                        disabled={isGenerating}
+                                        className={`absolute bottom-4 right-3 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 bg-gradient-to-br from-[#d793f2] to-[#FCC63D] ${isGenerating
+                                            ? 'opacity-100 cursor-auto'
+                                            : 'opacity-0 group-hover:opacity-50 hover:!opacity-100 hover:scale-110 hover:cursor-pointer hover:shadow-[0px_0px_6px_3px_rgba(215,147,242,0.1)]'
+                                            }`}
+                                    >
+                                        {isGenerating ? (
+                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            <img
+                                                src={aitext}
+                                                alt="AI Generate"
+                                                className="w-3 h-3 filter brightness-0 invert"
+                                            />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
 

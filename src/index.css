@@ -107,8 +107,10 @@ body,
 }
 
 @layer utilities {
+
+
   .custom-scrollbar::-webkit-scrollbar {
-    width: 5px;
+    width: 4px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -116,12 +118,13 @@ body,
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #ebedf2;
+    background: #ebedf25e;
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #cdd0db;
+    background: #cdd0db30;
+    cursor: pointer;
   }
 
 
