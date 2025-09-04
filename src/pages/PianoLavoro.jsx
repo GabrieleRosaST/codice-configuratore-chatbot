@@ -4,6 +4,7 @@ import frecciaDestra from '../img/frecciaDestra.svg';
 import { useSelector, useDispatch } from 'react-redux';
 import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso, aggiornaTitoliGiorni } from '../store/calendarioSlice';
 import terminaConfigIcon from '../img/terminaConfigIcon.svg';
+import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Giorno from '../components/giorno.jsx';
@@ -224,20 +225,20 @@ function PianoLavoro({ sesskey, wwwroot }) {
                 return;
             }
             let response;
-            try{
+            try {
                 response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify([{
-                    methodname: 'local_configuratore_save_chatbot_config',
-                    args: {
-                        data: typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData),
-                        filedata: uploadResult.files
-                    }
-                }])
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify([{
+                        methodname: 'local_configuratore_save_chatbot_config',
+                        args: {
+                            data: typeof jsonData === "string" ? jsonData : JSON.stringify(jsonData),
+                            filedata: uploadResult.files
+                        }
+                    }])
                 });
             } catch (e) {
                 console.error('Errore rete WS:', e);
@@ -245,76 +246,76 @@ function PianoLavoro({ sesskey, wwwroot }) {
                 setIsLoading(false);
                 return;
             }
-                /*
-                const json = await response.json();
-                result = json[0]?.data;
+            /*
+            const json = await response.json();
+            result = json[0]?.data;
 
-                const nomeChatbot = dati?.DatiIniziali?.nomeChatbot;
-                const courseName = dati?.DatiIniziali?.corsoChatbot;
-                const descrizioneChatbot = dati?.DatiIniziali?.descrizioneChatbot;
-                const istruzioniChatbot = dati?.DatiIniziali?.istruzioniChatbot
-                const dataInizio = dati?.DatiIniziali?.dataInizio;
-                const dataFine = dati?.DatiIniziali?.dataFine;
+            const nomeChatbot = dati?.DatiIniziali?.nomeChatbot;
+            const courseName = dati?.DatiIniziali?.corsoChatbot;
+            const descrizioneChatbot = dati?.DatiIniziali?.descrizioneChatbot;
+            const istruzioniChatbot = dati?.DatiIniziali?.istruzioniChatbot
+            const dataInizio = dati?.DatiIniziali?.dataInizio;
+            const dataFine = dati?.DatiIniziali?.dataFine;
 
-                const userId = String(result?.userid);
-                const displayName = result?.username;
-                const email = result?.email;
-                const courseId = String(result?.courseid);
+            const userId = String(result?.userid);
+            const displayName = result?.username;
+            const email = result?.email;
+            const courseId = String(result?.courseid);
 
-                //prova db
-                const userRef = doc(db, 'users', userId);
+            //prova db
+            const userRef = doc(db, 'users', userId);
 
-                await setDoc(userRef, {
-                    displayName: displayName || '',
-                    email: email || '',
-                    tipologia_studente: 'nessuna',
-                    userId: userId
-                }, { merge: true });
+            await setDoc(userRef, {
+                displayName: displayName || '',
+                email: email || '',
+                tipologia_studente: 'nessuna',
+                userId: userId
+            }, { merge: true });
 
-                // Crea la struttura: users/{userId}/courses/{courseId}
-                const courseRef = doc(db, 'users', userId, 'courses', courseId);
+            // Crea la struttura: users/{userId}/courses/{courseId}
+            const courseRef = doc(db, 'users', userId, 'courses', courseId);
 
-                await setDoc(courseRef, {
-                    courseName: courseName || '',
-                    nomeChatbot: nomeChatbot || '',
-                    descrizioneChatbot: descrizioneChatbot || '',
-                    istruzioniChatbot: istruzioniChatbot || '',
-                    dataInizio: dataInizio || '',
-                    dataFine: dataFine || ''
-                }, { merge: true });
+            await setDoc(courseRef, {
+                courseName: courseName || '',
+                nomeChatbot: nomeChatbot || '',
+                descrizioneChatbot: descrizioneChatbot || '',
+                istruzioniChatbot: istruzioniChatbot || '',
+                dataInizio: dataInizio || '',
+                dataFine: dataFine || ''
+            }, { merge: true });
 
-                // Se vuoi aggiungere una conversazione (chat) sotto il corso:
-                const conversationsRef = collection(db, 'users', userId, 'courses', courseId, 'conversations');
-            } catch (error) {
-                console.error('Errore durante l\'invio dei dati:', error);
-                alert('Errore durante il salvataggio: ' + error.message);
-                // Disattiva il loading solo in caso di errore
-                setIsLoading(false);
-            }
-            if (result && result.success === true) {
-                // NON disattivare il loading qui, mantienilo attivo durante il redirect
-                window.parent.location.href = `${wwwroot}/course/view.php?id=${result.courseid}`;
-                return;
-            } else {
-                // Disattiva il loading se non c'è successo
-                setIsLoading(false);
-            }*/
+            // Se vuoi aggiungere una conversazione (chat) sotto il corso:
+            const conversationsRef = collection(db, 'users', userId, 'courses', courseId, 'conversations');
+        } catch (error) {
+            console.error('Errore durante l\'invio dei dati:', error);
+            alert('Errore durante il salvataggio: ' + error.message);
+            // Disattiva il loading solo in caso di errore
+            setIsLoading(false);
+        }
+        if (result && result.success === true) {
+            // NON disattivare il loading qui, mantienilo attivo durante il redirect
+            window.parent.location.href = `${wwwroot}/course/view.php?id=${result.courseid}`;
+            return;
+        } else {
+            // Disattiva il loading se non c'è successo
+            setIsLoading(false);
+        }*/
             let resp;
             try {
-            resp = await response.json();
+                resp = await response.json();
             } catch (e) {
-            console.error('JSON non valido dalla risposta WS:', e);
-            alert('Risposta non valida dal server.');
-            setIsLoading(false);
-            return;
+                console.error('JSON non valido dalla risposta WS:', e);
+                alert('Risposta non valida dal server.');
+                setIsLoading(false);
+                return;
             }
 
             const envelope = resp?.[0];
             if (envelope?.exception || envelope?.error) {
-            console.error('WS Error:', envelope);
-            alert(envelope?.message || 'Errore durante il salvataggio');
-            setIsLoading(false);
-            return;
+                console.error('WS Error:', envelope);
+                alert(envelope?.message || 'Errore durante il salvataggio');
+                setIsLoading(false);
+                return;
             }
 
             const data = envelope?.data;
@@ -324,44 +325,44 @@ function PianoLavoro({ sesskey, wwwroot }) {
             }
 
             try {
-            const userId = String(data?.userid || '');
-            const displayName = data?.username || '';
-            const email = data?.email || '';
-            const courseId = String(data?.courseid || '');
+                const userId = String(data?.userid || '');
+                const displayName = data?.username || '';
+                const email = data?.email || '';
+                const courseId = String(data?.courseid || '');
 
-            if (userId && courseId) {
-                const userRef = doc(db, 'users', userId);
-                await setDoc(userRef, {
-                displayName: displayName,
-                email: email,
-                tipologia_studente: 'nessuna',
-                userId: userId
-                }, { merge: true });
+                if (userId && courseId) {
+                    const userRef = doc(db, 'users', userId);
+                    await setDoc(userRef, {
+                        displayName: displayName,
+                        email: email,
+                        tipologia_studente: 'nessuna',
+                        userId: userId
+                    }, { merge: true });
 
-                const courseRef = doc(db, 'users', userId, 'courses', courseId);
-                await setDoc(courseRef, {
-                courseName: dati?.DatiIniziali?.corsoChatbot || '',
-                nomeChatbot: dati?.DatiIniziali?.nomeChatbot || '',
-                descrizioneChatbot: dati?.DatiIniziali?.descrizioneChatbot || '',
-                istruzioniChatbot: dati?.DatiIniziali?.istruzioniChatbot || '',
-                dataInizio: dati?.DatiIniziali?.dataInizio || '',
-                dataFine: dati?.DatiIniziali?.dataFine || ''
-                }, { merge: true });
+                    const courseRef = doc(db, 'users', userId, 'courses', courseId);
+                    await setDoc(courseRef, {
+                        courseName: dati?.DatiIniziali?.corsoChatbot || '',
+                        nomeChatbot: dati?.DatiIniziali?.nomeChatbot || '',
+                        descrizioneChatbot: dati?.DatiIniziali?.descrizioneChatbot || '',
+                        istruzioniChatbot: dati?.DatiIniziali?.istruzioniChatbot || '',
+                        dataInizio: dati?.DatiIniziali?.dataInizio || '',
+                        dataFine: dati?.DatiIniziali?.dataFine || ''
+                    }, { merge: true });
 
-                // facoltativo:
-                // const conversationsRef = collection(db, 'users', userId, 'courses', courseId, 'conversations');
-            }
+                    // facoltativo:
+                    // const conversationsRef = collection(db, 'users', userId, 'courses', courseId, 'conversations');
+                }
             } catch (e) {
-            // Non bloccare il redirect per errori Firestore
-            console.warn('Errore Firestore (non bloccante):', e);
+                // Non bloccare il redirect per errori Firestore
+                console.warn('Errore Firestore (non bloccante):', e);
             }
 
             // 7) Redirect forte
             const url = data.redirecturl || `${wwwroot}/course/view.php?id=${data.courseid}`;
             try {
-            window.top.location.replace(url);
+                window.top.location.replace(url);
             } catch (e) {
-            window.location.replace(url);
+                window.location.replace(url);
             }
             // non fare setIsLoading(false); lasciamo lo spinner fino al cambio pagina
 
@@ -372,11 +373,29 @@ function PianoLavoro({ sesskey, wwwroot }) {
         }
     };
 
+    // Funzione per salvare la bozza e uscire
+    const saveAsDraft = async () => {
+        console.log('💾 Salvataggio bozza piano lavoro in corso...');
+        // TODO: Implementare il salvataggio della bozza con piano lavoro
+        // Qui andrà la logica per salvare il piano lavoro come bozza
+
+        try {
+            // Per ora mostra un messaggio
+            alert("Funzione salvataggio bozza piano lavoro - da implementare");
+
+            // Dopo il salvataggio, torna alla dashboard
+            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+        } catch (error) {
+            console.error('❌ Errore nel salvataggio bozza:', error);
+            alert(`Errore nel salvataggio: ${error.message}`);
+        }
+    };
+
 
 
     return (
         <DndProvider backend={HTML5Backend}>
-                        {/* Overlay di loading che blocca tutta l'interfaccia */}
+            {/* Overlay di loading che blocca tutta l'interfaccia */}
             {isLoading && (
                 <div className="fixed inset-0 bg-white bg-opacity-80 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg p-8 flex flex-col items-center" style={{ boxShadow: '0px 0px 17px 0px rgba(0,0,0,0.17)' }}>
@@ -594,33 +613,33 @@ function PianoLavoro({ sesskey, wwwroot }) {
                         </div>
 
 
-                        {/* Pulsante Esci e salva bozza e Step successivo */}
-                        <div className="w-[100%] xl:w-[86%] h-30 2xl:mt-4 mt-1 flex justify-end items-center ">
+                        {/* Pulsanti Esci e salva bozza e Termina configurazione */}
+                        <div className="w-[100%] xl:w-[86%] h-30 2xl:mt-4 mt-1 flex justify-between items-center">
 
-                            {/*
+                            {/* Pulsante Esci e salva bozza */}
                             <button
                                 type="button"
-                                className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7] "
+                                onClick={saveAsDraft}
+                                disabled={isLoading}
+                                className={`w-40 h-11 transform rounded-[10px] transition-transform duration-200 ${isLoading
+                                    ? 'cursor-not-allowed opacity-50'
+                                    : 'cursor-pointer hover:scale-103 hover:bg-[#f2f3f7]'
+                                    }`}
                             >
                                 <div
-                                    className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
+                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
                                     style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                                 >
-
-                                    <div className=" h-full w-16 flex items-center justify-center ">
-                                        <img src={esciSalvaIcon} alt="" className="w-3.5 " />
+                                    <div className="h-full w-16 flex items-center justify-center">
+                                        <img src={esciSalvaIcon} alt="" className="w-3.5" />
                                     </div>
-
                                     <div className="h-full flex items-center w-full">
                                         <p className="text-[13px] text-left text-[#1d2125]">
                                             Esci e salva bozza
                                         </p>
                                     </div>
-
                                 </div>
-
                             </button>
-                            */}
 
                             {/* Pulsante Step Successivo */}
                             <button

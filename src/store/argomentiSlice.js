@@ -35,6 +35,9 @@ const argomentiSlice = createSlice({
 
         ],
         cambiatoTitolo: 0,
+        loading: false,
+        error: null,
+        editMode: false
 
     },
     reducers: {
@@ -71,9 +74,71 @@ const argomentiSlice = createSlice({
 
         rimuoviArgomento: (state, action) => {
             state.argomenti = state.argomenti.filter(argomento => argomento.id !== action.payload);
+        },
+
+        // Nuove azioni per il caricamento dal database
+        setLoadingArgomenti: (state, action) => {
+            state.loading = action.payload;
+        },
+
+        setEditMode: (state, action) => {
+            state.editMode = action.payload;
+        },
+
+        loadArgomentiSuccess: (state, action) => {
+            console.log('🎯 Redux: loadArgomentiSuccess chiamata con:', action.payload);
+
+            state.loading = false;
+            state.error = null;
+            state.editMode = true;
+
+            // Sostituisce completamente l'array argomenti con quelli dal DB
+            state.argomenti = action.payload.argomenti || [];
+
+            // Aggiorna i contatori globali per evitare conflitti ID
+            if (action.payload.argomenti && action.payload.argomenti.length > 0) {
+                const maxId = Math.max(...action.payload.argomenti.map(arg => arg.id || 0));
+                nextId = maxId + 1;
+            }
+
+            console.log('✅ Redux: Argomenti caricati, nuovo state:', {
+                argomenti: state.argomenti,
+                count: state.argomenti.length,
+                nextId: nextId,
+                editMode: state.editMode
+            });
+        },
+
+        loadArgomentiError: (state, action) => {
+            console.error('❌ Redux: loadArgomentiError:', action.payload);
+
+            state.loading = false;
+            state.error = action.payload;
+            state.editMode = false;
+        },
+
+        resetArgomenti: (state) => {
+            console.log('🔄 Redux: Reset argomenti');
+
+            state.argomenti = [];
+            state.loading = false;
+            state.error = null;
+            state.editMode = false;
+            nextId = 1;
+            colorIndex = 0;
         }
     }
 });
 
-export const { aggiungiArgomento, aggiornaFileArgomento, aggiornaTitoloArgomento, rimuoviArgomento } = argomentiSlice.actions;
+export const {
+    aggiungiArgomento,
+    aggiornaFileArgomento,
+    aggiornaTitoloArgomento,
+    rimuoviArgomento,
+    setLoadingArgomenti,
+    setEditMode,
+    loadArgomentiSuccess,
+    loadArgomentiError,
+    resetArgomenti
+} = argomentiSlice.actions;
 export default argomentiSlice.reducer;

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
-import { aggiungiArgomento } from '../store/argomentiSlice'; // Usa il slice corretto
+import { aggiungiArgomento, setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError } from '../store/argomentiSlice';
+import { loadArgomentiForEdit, getMoodleSesskey } from '../utils/loadUtils';
 import CardArgomento from '../components/cardArgomento';
 import domandaIcon from '../img/domandaIcon.svg';
 import plusArgomentoCard from '../img/plusArgomentoCard.svg';
-//import esciSalvaIcon from '../img/esciSalvaIcon.svg';
+import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import frecciaDestraButton from '../img/frecciaDestraButton.svg';
 import { useStepContext } from '../context/StepContext';
 import closeAiutoIcon from '../img/closeAiutoIcon.svg';
@@ -15,11 +16,19 @@ import bookIcon from '../img/bookIcon.svg';
 
 function ArgomentiRiferimenti() {
     const dispatch = useDispatch();
-    const argomenti = useSelector((state) => state.argomenti.argomenti); // Usa il slice corretto
     const navigate = useNavigate();
-    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2 } = useStepContext(); // Usa il contesto
 
-    const [mostraAiuto, setMostraAiuto] = useState(false); // Stato per gestire la visibilità del div di aiuto
+    // Redux state
+    const argomenti = useSelector((state) => state.argomenti.argomenti);
+    const formState = useSelector((state) => state.form); // Per accedere a configId
+    const isLoadingArgomenti = useSelector((state) => state.argomenti.loading);
+    const editMode = useSelector((state) => state.argomenti.editMode);
+
+    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2 } = useStepContext();
+
+    // Component state
+    const [mostraAiuto, setMostraAiuto] = useState(false);
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
 
 
@@ -43,6 +52,80 @@ function ArgomentiRiferimenti() {
         }
     }, [argomenti, primaVisitaStep2, setCompletedSteps]);
 
+    // 🔄 CARICAMENTO ARGOMENTI IN MODALITÀ EDIT
+    useEffect(() => {
+        const loadArgomentiIfEdit = async () => {
+            console.log('🔍 Debug - Checking edit mode:', {
+                configId: formState.configId,
+                initialLoadComplete,
+                editMode,
+                hasConfigId: !!formState.configId
+            });
+
+            // Se siamo in modalità edit e abbiamo un configId
+            if (formState.configId && !initialLoadComplete && !editMode) {
+                console.log('📥 Modalità Edit rilevata - Caricamento argomenti per chatbot ID:', formState.configId);
+
+                try {
+                    dispatch(setLoadingArgomenti(true));
+
+                    // Ottieni sesskey e wwwroot
+                    const sesskey = getMoodleSesskey();
+                    // Usa l'URL corrente completo invece di window.location.origin
+                    const wwwroot = window.location.origin + '/moodle/moodle';
+
+                    console.log('🔗 Parametri per chiamata API:', {
+                        configId: formState.configId,
+                        sesskey: sesskey ? 'OK' : 'MISSING',
+                        wwwroot
+                    });
+
+                    // Carica argomenti dal database Moodle
+                    const result = await loadArgomentiForEdit(formState.configId, sesskey, wwwroot);
+
+                    console.log('📊 Risultato chiamata loadArgomentiForEdit:', {
+                        success: result.success,
+                        count: result.count,
+                        argomenti: result.argomenti
+                    });
+
+                    if (result.success) {
+                        console.log('✅ Argomenti recuperati dal database:', result.argomenti);
+                        console.log(`📈 Totale argomenti caricati: ${result.count}`);
+
+                        // Ora usa la nuova azione Redux per caricare gli argomenti
+                        dispatch(loadArgomentiSuccess({
+                            argomenti: result.argomenti,
+                            count: result.count
+                        }));
+                    } else {
+                        console.warn('⚠️ Nessun argomento trovato o errore:', result.message);
+                        dispatch(loadArgomentiError(result.message || 'Errore nel caricamento argomenti'));
+                    }
+
+                } catch (error) {
+                    console.error('❌ Errore caricamento argomenti:', error);
+                    console.error('❌ Stack trace:', error.stack);
+                    dispatch(loadArgomentiError(error.message));
+                } finally {
+                    dispatch(setLoadingArgomenti(false));
+                    setInitialLoadComplete(true);
+                }
+            } else {
+                console.log('ℹ️ Skip caricamento argomenti:', {
+                    hasConfigId: !!formState.configId,
+                    initialLoadComplete,
+                    editMode,
+                    reason: !formState.configId ? 'No configId' :
+                        initialLoadComplete ? 'Already loaded' :
+                            editMode ? 'Already in edit mode' : 'Unknown'
+                });
+            }
+        };
+
+        loadArgomentiIfEdit();
+    }, [formState.configId, initialLoadComplete, editMode, dispatch]);
+
 
     const handleStepSuccessivo = () => {
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
@@ -53,6 +136,24 @@ function ArgomentiRiferimenti() {
             navigate('/pianoLavoro');
         } else {
             alert('Assicurati di aver aggiunto almeno un argomento e che tutti gli argomenti abbiano un titolo.');
+        }
+    };
+
+    // Funzione per salvare la bozza e uscire
+    const saveAsDraft = async () => {
+        console.log('💾 Salvataggio bozza argomenti in corso...');
+        // TODO: Implementare il salvataggio della bozza con argomenti
+        // Qui andrà la logica per salvare gli argomenti come bozza
+
+        try {
+            // Per ora mostra un messaggio
+            alert("Funzione salvataggio bozza argomenti - da implementare");
+
+            // Dopo il salvataggio, torna alla dashboard
+            window.parent.location.href = `${window.location.origin}/local/configuratore/onboarding.php`;
+        } catch (error) {
+            console.error('❌ Errore nel salvataggio bozza:', error);
+            alert(`Errore nel salvataggio: ${error.message}`);
         }
     };
 
@@ -187,33 +288,29 @@ function ArgomentiRiferimenti() {
 
 
 
-                    {/* Pulsante Esci e salva bozza e Step successivo */}
-                    <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-end items-center ">
+                    {/* Pulsanti Esci e salva bozza e Step successivo */}
+                    <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-between items-center">
 
-                        {/*
+                        {/* Pulsante Esci e salva bozza */}
                         <button
                             type="button"
-                            className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7] "
+                            onClick={saveAsDraft}
+                            className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
                         >
                             <div
-                                className="w-full h-full left-[-0.85px] top-[-0.85px] rounded-[10px] border-[0.7px] border-[#1d2125]/30 flex justify-stretch"
+                                className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
                                 style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                             >
-
-                                <div className=" h-full w-16 flex items-center justify-center ">
-                                    <img src={esciSalvaIcon} alt="" className="w-3.5 " />
+                                <div className="h-full w-16 flex items-center justify-center">
+                                    <img src={esciSalvaIcon} alt="" className="w-3.5" />
                                 </div>
-
                                 <div className="h-full flex items-center w-full">
                                     <p className="text-[13px] text-left text-[#1d2125]">
                                         Esci e salva bozza
                                     </p>
                                 </div>
-
                             </div>
-
                         </button>
-                        */}
 
                         {/* Pulsante Step Successivo */}
                         <button
