@@ -1,0 +1,13 @@
+{
+  "name": "embedding-backend",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "commonjs",
+  "dependencies": {
+    "@google-cloud/storage": "^6.9.0",
+    "dotenv": "^16.0.0",
+    "express": "^4.17.0",
+    "google-auth-library": "^10.1.0",
+    "node-fetch": "^2.7.0"
+  }
+}
