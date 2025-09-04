@@ -69,6 +69,18 @@ function Configurazione({ sesskey, wwwroot }) {
     // Stato per gestire la visibilità del div di aiuto
     const [mostraAiuto, setMostraAiuto] = useState(false);
 
+    // Funzione per verificare se ci sono campi compilati (modalità CREATE)
+    const hasFieldsCompiled = () => {
+        return (
+            formState.corsoChatbot.trim() !== '' ||
+            formState.nomeChatbot.trim() !== '' ||
+            formState.descrizioneChatbot.trim() !== '' ||
+            formState.istruzioniChatbot.trim() !== '' ||
+            formState.dataInizio !== '' ||
+            formState.dataFine !== ''
+        );
+    };
+
     // Funzione per verificare se la data di inizio può essere modificata
     const canEditStartDate = () => {
         if (!isEditMode || !formState.dataInizio) return true;
@@ -812,6 +824,24 @@ function Configurazione({ sesskey, wwwroot }) {
         window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
     };
 
+    // Funzione per salvare la bozza (modalità CREATE)
+    const saveAsDraft = async () => {
+        console.log('💾 Salvataggio bozza in corso...');
+        // TODO: Implementare il salvataggio della bozza
+        // Qui andrà la logica per salvare i dati come bozza
+
+        try {
+            // Per ora mostra un messaggio
+            alert("Funzione salvataggio bozza - da implementare");
+
+            // Dopo il salvataggio, torna alla dashboard
+            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+        } catch (error) {
+            console.error('❌ Errore nel salvataggio bozza:', error);
+            alert(`Errore nel salvataggio: ${error.message}`);
+        }
+    };
+
     return (
 
         <div className="w-full flex flex-col items-center justify-center">
@@ -1205,17 +1235,17 @@ function Configurazione({ sesskey, wwwroot }) {
                                 )}
 
                                 {/* Pulsanti suggerimenti VARK */}
-                                <div className="w-full min-h-20 flex items-center justify-center gap-2 flex-wrap px-4 mt-3 mb-2">
+                                <div className="w-full min-h-20 flex items-center justify-center gap-3 flex-wrap px-4 mt-3 mb-2">
 
                                     {/* Visivo */}
-                                    <div className="w-[42%] min-w-[130px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
+                                    <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
                                             console.log('Selected: Apprendimento Visivo');
                                             setSelectedVarkButton('visual');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'visual'
-                                            ? 'border-[#6982ab]/[0.2] bg-[#6982ab]/[0.08]'
-                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.25] hover:bg-[#6982ab]/[0.02]'
+                                            ? 'border-[#6982ab]/[0.15] bg-[#6982ab]/[0.08]'
+                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.15] hover:bg-[#6982ab]/[0.02]'
                                             }`}>
                                             <img
                                                 src={visivoIcon}
@@ -1229,14 +1259,14 @@ function Configurazione({ sesskey, wwwroot }) {
                                     </div>
 
                                     {/* Uditivo */}
-                                    <div className="w-[42%] min-w-[130px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
+                                    <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
                                             console.log('Selected: Apprendimento Uditivo');
                                             setSelectedVarkButton('auditory');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'auditory'
-                                            ? 'border-[#6982ab]/[0.2] bg-[#6982ab]/[0.08]'
-                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.25] hover:bg-[#6982ab]/[0.02]'
+                                            ? 'border-[#6982ab]/[0.15] bg-[#6982ab]/[0.08]'
+                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.15] hover:bg-[#6982ab]/[0.02]'
                                             }`}>
                                             <img
                                                 src={auraleIcon}
@@ -1250,14 +1280,14 @@ function Configurazione({ sesskey, wwwroot }) {
                                     </div>
 
                                     {/* Lettura/Scrittura */}
-                                    <div className="w-[42%] min-w-[130px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
+                                    <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
                                             console.log('Selected: Apprendimento Lettura/Scrittura');
                                             setSelectedVarkButton('reading');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'reading'
-                                            ? 'border-[#6982ab]/[0.2] bg-[#6982ab]/[0.08]'
-                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.25] hover:bg-[#6982ab]/[0.02]'
+                                            ? 'border-[#6982ab]/[0.15] bg-[#6982ab]/[0.08]'
+                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.15] hover:bg-[#6982ab]/[0.02]'
                                             }`}>
                                             <img
                                                 src={libroSuggerimento}
@@ -1271,14 +1301,14 @@ function Configurazione({ sesskey, wwwroot }) {
                                     </div>
 
                                     {/* Cinestetico */}
-                                    <div className="w-[42%] min-w-[130px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
+                                    <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
                                             console.log('Selected: Apprendimento Cinestetico');
                                             setSelectedVarkButton('kinesthetic');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'kinesthetic'
-                                            ? 'border-[#6982ab]/[0.2] bg-[#6982ab]/[0.08]'
-                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.25] hover:bg-[#6982ab]/[0.02]'
+                                            ? 'border-[#6982ab]/[0.15] bg-[#6982ab]/[0.08]'
+                                            : 'border-[#6982ab]/[0.12] hover:border-[#6982ab]/[0.15] hover:bg-[#6982ab]/[0.02]'
                                             }`}>
                                             <img
                                                 src={cinesteticoIcon}
@@ -1319,7 +1349,7 @@ function Configurazione({ sesskey, wwwroot }) {
 
                         {/* Pulsante Sinistro - DINAMICO */}
                         {isEditMode && hasChanges ? (
-                            // MODALITÀ EDIT CON MODIFICHE: Mostra "Annulla modifiche"
+                            // CASO 1: MODALITÀ EDIT CON MODIFICHE - Mostra "Ripristina campi"
                             <button
                                 type="button"
                                 onClick={resetToOriginalValues}
@@ -1339,8 +1369,29 @@ function Configurazione({ sesskey, wwwroot }) {
                                     </div>
                                 </div>
                             </button>
+                        ) : !isEditMode && hasFieldsCompiled() ? (
+                            // CASO 2: MODALITÀ CREATE CON CAMPI COMPILATI - Mostra "Esci e salva bozza"
+                            <button
+                                type="button"
+                                onClick={saveAsDraft}
+                                className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
+                            >
+                                <div
+                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
+                                    style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
+                                >
+                                    <div className="h-full w-16 flex items-center justify-center">
+                                        <img src={esciSalvaIcon} alt="" className="w-3.5" />
+                                    </div>
+                                    <div className="h-full flex items-center w-full">
+                                        <p className="text-[13px] text-left text-[#1d2125]">
+                                            Esci e salva bozza
+                                        </p>
+                                    </div>
+                                </div>
+                            </button>
                         ) : (
-                            // MODALITÀ CREATE O EDIT SENZA MODIFICHE: Mostra "Torna ai corsi"
+                            // CASO 3: MODALITÀ CREATE SENZA CAMPI O EDIT SENZA MODIFICHE - Mostra "Torna ai corsi"
                             <button
                                 type="button"
                                 onClick={goBackToCourses}
@@ -1365,7 +1416,7 @@ function Configurazione({ sesskey, wwwroot }) {
                         {/* Pulsante Destro - STEP SUCCESSIVO */}
                         <button
                             type="button"
-                            className={`w-35 h-11 cursor-pointer transform transition-transform duration-200 ${isCheckingCourse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'
+                            className={`${isEditMode && hasChanges ? 'w-37' : 'w-35'} h-11 cursor-pointer transform transition-transform duration-200 ${isCheckingCourse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'
                                 }`}
                             onClick={handleSubmit}
                             disabled={isCheckingCourse}
