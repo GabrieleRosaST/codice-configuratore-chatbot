@@ -14,7 +14,7 @@ import obiettivoIcon from '../img/obiettivoIcon.svg';
 import bookIcon from '../img/bookIcon.svg';
 
 
-function ArgomentiRiferimenti() {
+function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -29,19 +29,36 @@ function ArgomentiRiferimenti() {
     // Component state
     const [mostraAiuto, setMostraAiuto] = useState(false);
     const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+    const [isSalvaEContinua, setIsSalvaEContinua] = useState(false); // Stato per gestire il pulsante
+    const [initialArgomentiCount, setInitialArgomentiCount] = useState(0); // Stato per il numero iniziale di argomenti
+    const [initialArgomentiSnapshot, setInitialArgomentiSnapshot] = useState([]); // Stato per lo snapshot iniziale degli argomenti
 
 
+
+    useEffect(() => {
+        // Imposta il numero iniziale di argomenti solo dopo il caricamento completo
+        if (argomenti.length > 0 && initialArgomentiCount === 0) {
+            setInitialArgomentiCount(argomenti.length);
+        }
+    }, [argomenti]); // Esegui ogni volta che gli argomenti cambiano
+
+    useEffect(() => {
+        // Imposta lo snapshot iniziale degli argomenti solo dopo il caricamento completo
+        if (argomenti.length > 0 && initialArgomentiSnapshot.length === 0) {
+            setInitialArgomentiSnapshot(JSON.stringify(argomenti)); // Salva uno snapshot come stringa JSON
+        }
+    }, [argomenti]); // Esegui ogni volta che gli argomenti cambiano
 
     const handleAggiungiArgomento = () => {
 
         const nuovoArgomento = {
             titolo: '', // Titolo vuoto iniziale
             colore: '', // Colore predefinito
-            file: [] // Nessun file iniziale
+            file: [], // Nessun file iniziale
+            isNew: true // Flag per identificare che è un nuovo argomento
         };
         dispatch(aggiungiArgomento(nuovoArgomento));
     };
-
 
     useEffect(() => {
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
@@ -157,6 +174,105 @@ function ArgomentiRiferimenti() {
         }
     };
 
+    const handleSalvaEContinua = async () => {
+        console.log('💾 handleSalvaEContinua chiamato...');
+        console.log('🔍 Parametri:', {
+            formStateConfigId: formState.configId,
+            argomentiCount: argomenti.length,
+            sesskey: sesskey,
+            wwwroot: wwwroot
+        });
+
+        try {
+            // Ottieni sesskey dinamicamente
+            const currentSesskey = getMoodleSesskey();
+            const currentWwwroot = window.location.origin + '/moodle/moodle';
+
+            console.log('📤 Parametri inviati al web service:', {
+                chatbotid: formState.configId,
+                argomenti: argomenti.map(argomento => ({
+                    id: argomento.isNew ? null : argomento.id,
+                    titolo: argomento.titolo,
+                    isNew: argomento.isNew || false
+                }))
+            });
+
+
+
+            console.log('argomentoID e titolo', argomenti.map(argomento => ({
+                id: argomento.id,
+                titolo: argomento.titolo,
+                isNew: argomento.isNew
+            })));
+
+            const requestData = {
+                chatbotid: formState.configId,
+                argomenti: argomenti.map(argomento => ({
+                    id: argomento.id, // Usa l'ID reale se esiste, altrimenti null
+                    titolo: argomento.titolo,
+                    isNew: argomento.isNew || false
+                }))
+            };
+
+            const requestBody = [{
+                methodname: 'local_configuratore_save_argomenti',
+                args: {
+                    data: requestData  // ← Wrappa requestData dentro 'data'
+                }
+            }];
+
+            console.log('📤 Request body completo:', JSON.stringify(requestBody, null, 2));
+
+            const response = await fetch(`${currentWwwroot}/lib/ajax/service.php?sesskey=${currentSesskey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin', // ← IMPORTANTE per Moodle!
+                body: JSON.stringify(requestBody)
+            });
+
+            console.log('📥 Response status:', response.status);
+            console.log('📥 Response statusText:', response.statusText);
+
+            if (!response.ok) {
+                console.error('❌ HTTP Error:', response.status, response.statusText);
+                const errorText = await response.text();
+                console.error('❌ Error response text:', errorText);
+                alert(`Errore HTTP: ${response.status} - ${response.statusText}`);
+                return;
+            }
+
+            const result = await response.json();
+            console.log('📥 Risultato completo dal web service:', JSON.stringify(result, null, 2));
+
+            if (result[0]?.data?.success) {
+                console.log('✅ Salvataggio completato con successo!');
+                alert('Argomenti salvati con successo!');
+
+                // Aggiorna lo stato Redux: marca tutti gli argomenti come non nuovi
+                const updatedArgomenti = argomenti.map(argomento => ({
+                    ...argomento,
+                    isNew: false // Dopo il salvataggio, non sono più nuovi
+                }));
+
+                setInitialArgomentiSnapshot(JSON.stringify(updatedArgomenti));
+            } else {
+                console.error('❌ Errore nel salvataggio:', result[0]?.data?.message || 'Messaggio non disponibile');
+                console.error('❌ Risultato completo:', result[0]);
+                alert(`Errore nel salvataggio: ${result[0]?.data?.message || 'Errore sconosciuto'}`);
+            }
+        } catch (error) {
+            console.error('❌ Errore nella richiesta:', error);
+            console.error('❌ Stack trace:', error.stack);
+            alert('Errore nella comunicazione con il server.');
+        }
+    };
+
+    // Funzione per verificare se gli argomenti sono cambiati rispetto allo snapshot iniziale
+    const hasArgomentiChanged = () => {
+        return JSON.stringify(argomenti) !== initialArgomentiSnapshot; // Confronta lo stato attuale con lo snapshot iniziale
+    };
 
     return (
         <div className="w-full flex flex-col items-center justify-center">
@@ -264,6 +380,8 @@ function ArgomentiRiferimenti() {
                                     titolo={argomento.titolo}
                                     colore={argomento.colore}
                                     file={argomento.file}
+                                    giorno={argomento.giorno} // Passa il giorno dell'argomento
+                                    editMode={editMode} // Passa lo stato di editMode
                                 />
                             ))}
 
@@ -315,7 +433,7 @@ function ArgomentiRiferimenti() {
                         {/* Pulsante Step Successivo */}
                         <button
                             className="w-35 h-11 right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
-                            onClick={handleStepSuccessivo} // Usa la funzione per verificare le condizioni
+                            onClick={editMode && hasArgomentiChanged() ? handleSalvaEContinua : handleStepSuccessivo}
                         >
 
                             <div
@@ -324,11 +442,11 @@ function ArgomentiRiferimenti() {
 
                                 <div className="h-full flex items-center justify-end w-full">
                                     <p className="text-[13px]  text-[#1d2125] flex items-center justify-center">
-                                        Step successivo
+                                        {editMode && hasArgomentiChanged() ? 'Salva e continua' : 'Step successivo'}
                                     </p>
                                 </div>
 
-                                <div className=" h-full w-12 flex items-center justify-center ">
+                                <div className="h-full w-12 flex items-center justify-center ">
                                     <img src={frecciaDestraButton} alt="" className="w-2 " />
                                 </div>
 

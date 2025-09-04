@@ -46,7 +46,8 @@ const argomentiSlice = createSlice({
                 id: nextId++, // Usa il contatore globale per generare un ID univoco
                 titolo: action.payload.titolo || '',
                 colore: colors[colorIndex], // Assegna il colore in base all'indice globale
-                file: action.payload.file || []
+                file: action.payload.file || [],
+                isNew: action.payload.isNew !== undefined ? action.payload.isNew : true // Default true per nuovi argomenti
             };
             state.argomenti.push(nuovoArgomento);
 
@@ -93,7 +94,11 @@ const argomentiSlice = createSlice({
             state.editMode = true;
 
             // Sostituisce completamente l'array argomenti con quelli dal DB
-            state.argomenti = action.payload.argomenti || [];
+            // Gli argomenti dal DB non sono nuovi, quindi impostano isNew: false
+            state.argomenti = (action.payload.argomenti || []).map(argomento => ({
+                ...argomento,
+                isNew: false // Gli argomenti caricati dal DB non sono nuovi
+            }));
 
             // Aggiorna i contatori globali per evitare conflitti ID
             if (action.payload.argomenti && action.payload.argomenti.length > 0) {

@@ -32,7 +32,7 @@ function App({ sesskey, wwwroot }) {
         <Navbar> </Navbar>
         <Routes>
           <Route path="/configurazione" element={<Configurazione sesskey={sesskey} wwwroot={wwwroot} />} />
-          <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti />} />
+          <Route path="/argomentiRiferimenti" element={<ArgomentiRiferimenti sesskey={sesskey} wwwroot={wwwroot} />} />
           <Route path="/pianoLavoro" element={<PianoLavoro sesskey={sesskey} wwwroot={wwwroot} />} />
           <Route path="/riepilogo" element={<Riepilogo />} />
           <Route path="*" element={<Configurazione sesskey={sesskey} wwwroot={wwwroot} />} />

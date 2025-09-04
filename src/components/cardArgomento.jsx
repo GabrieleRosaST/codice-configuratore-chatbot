@@ -11,17 +11,33 @@ import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 
 
 
-function CardArgomento({ id, titolo, colore, file }) {
+function CardArgomento({ id, titolo, colore, file, giorno, editMode }) {
     const dispatch = useDispatch();
     const [isHovered, setIsHovered] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
+    // Calcola se l'argomento è già passato (solo in modalità edit)
+    const oggi = new Date();
+    const giornoSuccessivo = new Date(oggi);
+    giornoSuccessivo.setDate(oggi.getDate() + 1); // Calcola il giorno successivo considerando i cambi di mese
+
+    // Converti il timestamp di 'giorno' in un oggetto Date
+    const giornoDate = giorno ? new Date(giorno * 1000) : null;
+
+    const isArgomentoPassato = editMode && giornoDate && giornoDate.getDate() <= giornoSuccessivo.getDate();
+
+
 
     const handleDelete = () => {
+        if (isArgomentoPassato) {
+            console.warn('⚠️ Impossibile eliminare argomento già passato:', { titolo, giorno });
+            return;
+        }
+
         if (id) {
             dispatch(rimuoviArgomento(id));
         } else {
-            console.error('ID non valido per l’eliminazione');
+            console.error('ID non valido per l\'eliminazione');
         }
     };
 
@@ -31,8 +47,13 @@ function CardArgomento({ id, titolo, colore, file }) {
     };
 
     const handleFileUpload = async (e) => {
+        if (isArgomentoPassato) {
+            console.warn('⚠️ Impossibile caricare file per argomento già passato:', { titolo, giorno });
+            return;
+        }
+
         const selectedFiles = Array.from(e.target.files);
-        const validFiles = selectedFiles.filter((file) => file.type === 'application/pdf'); // Filtra solo i PDF
+        const validFiles = selectedFiles.filter((file) => file.type === 'application/pdf');
         const invalidFiles = selectedFiles.filter((file) => file.type !== 'application/pdf'); // File non validi
 
         if (invalidFiles.length > 0) {
@@ -43,8 +64,6 @@ function CardArgomento({ id, titolo, colore, file }) {
 
         if (validFiles.length > 0) {
             const existingFileNames = new Set(file.map((fileObj) => fileObj.fileName));
-
-            // Filtra i nuovi file
             const newFiles = validFiles.filter((file) => !existingFileNames.has(file.name));
 
 
@@ -88,7 +107,7 @@ function CardArgomento({ id, titolo, colore, file }) {
 
 
     const handleDrop = async (event) => {
-        event.preventDefault();
+        event.preventDefault(); // Impedisce l'apertura del file in una nuova scheda
         const droppedFiles = Array.from(event.dataTransfer.files);
         const validFiles = droppedFiles.filter((file) => file.type === 'application/pdf');
         const invalidFiles = droppedFiles.filter((file) => file.type !== 'application/pdf');
@@ -137,10 +156,12 @@ function CardArgomento({ id, titolo, colore, file }) {
     return (
         <div className='w-85 2xl:w-96 '>
 
-            <div className="relative w-full  rounded-[5px] border-[1px] border-[#DEDEDE] flex flex-col justify-start bg-[#F2F3F7]">
+            <div
+                className={`relative w-full rounded-[5px] border-[1px] border-[#DEDEDE] flex flex-col justify-start bg-[#F2F3F7] ${isArgomentoPassato ? 'opacity-50 cursor-default' : ''}`}
+            >
 
                 {/* Header della card */}
-                <div className="w-full h-13 bg-white border-b-[1px] border-[#DEDEDE] rounded-t-[5px] flex justify-between items-center">
+                <div className={`w-full h-13 bg-white border-b-[1px] border-[#DEDEDE] rounded-t-[5px] flex justify-between items-center ${isArgomentoPassato ? 'pointer-events-none' : ''}`}>
                     <div className="w-13 h-full flex items-center justify-center">
                         <div
                             className="w-6 h-8 absolute left-3 rounded"
@@ -148,22 +169,24 @@ function CardArgomento({ id, titolo, colore, file }) {
                         ></div>
                     </div>
 
-                    <div className="w-70 flex items-center justify-center shadow-none  focus:shadow-none focus:outline-none focus:ring-0">
+                    <div className="w-70 flex items-center justify-center shadow-none focus:shadow-none focus:outline-none focus:ring-0">
                         <input
                             type="text"
                             value={titolo}
                             placeholder="Titolo dell'argomento"
-                            className="text-[13px] z-11 text-[#495057] text-center flex-grow bg-transparent  focus:shadow-none focus:outline-none focus:ring-0 shadow-none inputTitolo"
+                            className="text-[13px] z-11 text-[#495057] text-center flex-grow bg-transparent focus:shadow-none focus:outline-none focus:ring-0 shadow-none inputTitolo"
                             title={titolo}
                             onChange={handleTitleChange}
+                            disabled={isArgomentoPassato} // Disabilita l'input se l'argomento è passato
                         />
                     </div>
 
                     <button
-                        className="z-10 w-12 h-full cursor-pointer flex opacity-70 hover:opacity-100 items-center justify-center transform transition-transform duration-200 hover:scale-105"
+                        className={`z-10 w-12 h-full flex items-center justify-center transform transition-transform duration-200 ${isArgomentoPassato ? 'opacity-65 cursor-default' : 'opacity-70 cursor-pointer hover:opacity-100 hover:scale-105'}`}
                         onClick={handleDelete}
-                        onMouseEnter={() => setIsHovered(true)}
-                        onMouseLeave={() => setIsHovered(false)}
+                        onMouseEnter={() => !isArgomentoPassato && setIsHovered(true)}
+                        onMouseLeave={() => !isArgomentoPassato && setIsHovered(false)}
+                        disabled={isArgomentoPassato}
                     >
                         <img
                             src={isHovered ? cestinoIconRed : cestinoIcon}
@@ -181,9 +204,16 @@ function CardArgomento({ id, titolo, colore, file }) {
                     {/* Area di caricamento file */}
                     <div
                         className="w-full h-54  flex items-center justify-center"
-                        onDrop={handleDrop}
+                        onDrop={(event) => {
+                            event.preventDefault(); // Impedisce l'apertura del file in una nuova scheda
+                            if (!isArgomentoPassato) {
+                                handleDrop(event);
+                            } else {
+                                setErrorMessage('Non puoi caricare file per un argomento già passato!');
+                                setTimeout(() => setErrorMessage(''), 4000); // Mostra il messaggio di errore per 4 secondi
+                            }
+                        }}
                         onDragOver={(e) => e.preventDefault()} // Necessario per consentire il drop
-
                     >
                         {errorMessage && file.length > 0 && (
                             <div className="absolute h-14 2xl:h-16 w-full bottom-17 bg-[#F2F3F7] flex items-center justify-center z-20">
@@ -226,9 +256,10 @@ function CardArgomento({ id, titolo, colore, file }) {
                     {/* Pulsante Carica */}
                     <div className="w-full h-21 2xl:h-23 absolute bottom-0 left-0 flex justify-center items-center">
                         <div
-                            className="w-22 h-9 pr-1.5 flex items-center justify-center bg-white border border-gray-300 rounded-[25px] cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                            className={`w-22 h-9 pr-1.5 flex items-center justify-center bg-white border border-gray-300 rounded-[25px] transform transition-transform duration-200 ${isArgomentoPassato ? 'opacity-50 cursor-default' : 'cursor-pointer hover:scale-103'}`}
                             style={{ boxShadow: '0px 2px 8.5px 3px rgba(0,0,0,0.03)' }}
-                            onClick={openFileSelector}
+                            onClick={!isArgomentoPassato ? openFileSelector : undefined}
+                            disabled={isArgomentoPassato} // Disabilita il pulsante Carica se l'argomento è passato
                         >
                             <div className="h-full w-7 flex items-center justify-center">
                                 <img
@@ -248,9 +279,26 @@ function CardArgomento({ id, titolo, colore, file }) {
                             accept="*"
                             className="hidden"
                             onChange={handleFileUpload}
+                            disabled={isArgomentoPassato} // Disabilita l'input file se l'argomento è passato
                         />
+
+                        {/* Tooltip informativo */}
+                        {isArgomentoPassato && (
+                            <div className="absolute bottom-2 right-2 group">
+                                <div className="w-4 h-4 rounded-full bg-[#6982AB] text-white text-xs flex items-center justify-center cursor-help opacity-90 hover:opacity-100 transition-opacity duration-200">
+                                    i
+                                </div>
+                                {/* Tooltip */}
+                                <div className="absolute bottom-4 right-3 bg-[#6982AB] text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                                    Non modificabile: argomento
+                                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-[#6982AB]"></div>
+                                </div>
+                            </div>
+                        )}\
                     </div>
                 </div>
+
+
             </div>
         </div>
     );

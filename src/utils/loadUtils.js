@@ -80,10 +80,25 @@ export const loadArgomentiForEdit = async (configId, sesskey, wwwroot) => {
 // Utility per assegnare colori casuali agli argomenti
 const getRandomColor = () => {
     const colors = [
-        '#F3A6A7', '#F6D987', '#CAE3FE', '#CBB2FA', '#8EC398',
-        '#A3B5DE', '#B6EEF5', '#E7B090', '#E8A7BE', '#B8E4B5',
-        '#F0C87E', '#8DB3DA', '#D591AD', '#E3A8A3', '#FFB6C1',
-        '#A8D8B9', '#F2C94C', '#C1C3EC'
+        '#F3A6A7',
+        '#F6D987',
+        '#CAE3FE',
+        '#CBB2FA',
+        '#8EC398',
+        '#A3B5DE',
+        '#B6EEF5',
+        '#E7B090',
+        '#E8A7BE',
+        '#B8E4B5',
+        '#F0C87E',
+        '#8DB3DA',
+        '#D591AD',
+        '#E3A8A3',
+        '#A3B5DE',
+        '#FFB6C1',
+        '#A8D8B9',
+        '#F2C94C',
+        '#C1C3EC',
     ];
     return colors[Math.floor(Math.random() * colors.length)];
 };
