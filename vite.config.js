@@ -38,5 +38,8 @@ export default defineConfig({
   build: {
     minify: false,
   },
+  define: {
+    'process.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY)
+  }
 
 })
