@@ -12,7 +12,7 @@ import { useStepContext } from '../context/StepContext';
 function Navbar() {
     const location = useLocation();
     const currentPage = location.pathname.slice(1);
-    const { completedSteps } = useStepContext(); // Usa il contesto per accedere allo stato
+    const { completedSteps, isEditMode, hasUnsavedChanges } = useStepContext(); // Usa il contesto per accedere allo stato
 
     const navItems = [
         {
@@ -29,7 +29,9 @@ function Navbar() {
             icon: argomentiIcon,
             iconActive: argomentiIconActive,
             link: '/argomentiRiferimenti',
-            disabled: !completedSteps.step1,
+            // In modalità edit: abilitato se non ci sono modifiche non salvate
+            // In modalità create: abilitato solo se step1 è completato
+            disabled: isEditMode ? hasUnsavedChanges : !completedSteps.step1,
         },
         {
             id: 'pianoLavoro',
@@ -37,7 +39,9 @@ function Navbar() {
             icon: pianoIcon,
             iconActive: pianoIconActive,
             link: '/pianoLavoro',
-            disabled: !completedSteps.step2 || !completedSteps.step1,
+            // In modalità edit: abilitato se non ci sono modifiche non salvate
+            // In modalità create: abilitato solo se step1 e step2 sono completati
+            disabled: isEditMode ? hasUnsavedChanges : (!completedSteps.step2 || !completedSteps.step1),
         },
     ];
 

@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react';
 import Navbar from './components/Navbar'
 import Configurazione from './pages/Configurazione'
@@ -10,6 +10,7 @@ import Riepilogo from './pages/Riepilogo'
 function App({ sesskey, wwwroot }) {
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [isFirstLoad, setIsFirstLoad] = useState(true); // Stato per controllare il primo caricamento
 
   useEffect(() => {
@@ -20,7 +21,6 @@ function App({ sesskey, wwwroot }) {
       }
     }
   }, [isFirstLoad, navigate]);
-
 
 
 

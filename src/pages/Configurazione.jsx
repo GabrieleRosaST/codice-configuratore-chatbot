@@ -32,7 +32,15 @@ function Configurazione({ sesskey, wwwroot }) {
     const formState = useSelector((state) => state.form);
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
-    const { setCompletedSteps, primaVisitaStep1, setPrimaVisitaStep1 } = useStepContext(); // Usa il contesto per aggiornare lo stato
+    const {
+        setCompletedSteps,
+        primaVisitaStep1,
+        setPrimaVisitaStep1,
+        isEditMode,
+        setIsEditMode,
+        hasUnsavedChanges,
+        setHasUnsavedChanges
+    } = useStepContext(); // Usa il contesto per aggiornare lo stato
 
 
     // Stato per tracciare gli errori
@@ -54,12 +62,6 @@ function Configurazione({ sesskey, wwwroot }) {
     const [isGeneratingName, setIsGeneratingName] = useState(false);
     const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
 
-    // Stato per tracciare se siamo in modalità edit
-    const [isEditMode, setIsEditMode] = useState(false);
-
-    // Stato per tracciare se ci sono modifiche non salvate
-    const [hasChanges, setHasChanges] = useState(false);
-
     // Stato per memorizzare i dati originali in modalità edit
     const [originalData, setOriginalData] = useState(null);
 
@@ -68,6 +70,8 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Stato per gestire la visibilità del div di aiuto
     const [mostraAiuto, setMostraAiuto] = useState(false);
+
+
 
     // Funzione per verificare se ci sono campi compilati (modalità CREATE)
     const hasFieldsCompiled = () => {
@@ -200,7 +204,7 @@ function Configurazione({ sesskey, wwwroot }) {
                 formState.dataFine !== originalData.dataFine
             );
 
-            setHasChanges(hasFormChanges);
+            setHasUnsavedChanges(hasFormChanges);
         }
     }, [formState, originalData, isEditMode]);
 
@@ -507,7 +511,7 @@ function Configurazione({ sesskey, wwwroot }) {
                 return;
             }
 
-            if (isEditMode && hasChanges) {
+            if (isEditMode && hasUnsavedChanges) {
                 // CASO 1: MODALITÀ EDIT CON MODIFICHE - Salva le modifiche
                 // VERIFICA DUPLICATI SOLO SE IL NOME DEL CORSO È CAMBIATO
                 if (formState.corsoChatbot !== originalData.corsoChatbot) {
@@ -527,7 +531,7 @@ function Configurazione({ sesskey, wwwroot }) {
 
                 // Solo se il controllo duplicati passa, salva
                 await updateExistingConfiguration();
-            } else if (isEditMode && !hasChanges) {
+            } else if (isEditMode && !hasUnsavedChanges) {
                 // CASO 2: MODALITÀ EDIT SENZA MODIFICHE - Vai direttamente al prossimo step
                 console.log('✅ CASO 2: Edit mode senza modifiche - passo direttamente al prossimo step');
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
@@ -551,6 +555,7 @@ function Configurazione({ sesskey, wwwroot }) {
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
                 setCourseNameChanged(false);
                 setPrimaVisitaStep1(false);
+                setHasUnsavedChanges(false);
                 navigate("/argomentiRiferimenti");
             }
         } catch (error) {
@@ -685,7 +690,7 @@ function Configurazione({ sesskey, wwwroot }) {
                 });
 
                 // 5. RESET DELLO STATO MODIFICHE
-                setHasChanges(false);
+                setHasUnsavedChanges(false);
 
                 // 6. COMPLETA LO STEP 1 NEL CONTESTO
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
@@ -734,7 +739,7 @@ function Configurazione({ sesskey, wwwroot }) {
                     messages: [
                         {
                             role: "user",
-                            content: `Genera delle istruzioni brevi e professionali che il chatbot dovrà seguire. Il testo deve essere come scritto dal docente verso il configuratore.  Le istruzioni devono essere circa 50-80 parole, in italiano, e spiegare come il chatbot didattico dovrebbe comportarsi durante il corso per aiutare gli studenti e in che modo specifico può formulare le spiegazioni per gli studenti. Gli studenti utilizzerano il chatbot per studiare da casa non in aula, è fatto apposta per incentivare lo studio autonomo oltre alle lezioni, quindi non menzionare la presenza in aula. Devono essere istrizioni dirette e senza saluti. E' importante che ogni testo generato sia vario da quello precedente, quindi cerca sempre di variare con i concetti, devi essere originale, sia come contenuto del messaggio che come struttura. Le istruzioni non devono andare al di fuori di comportamenti nel tono della spiegazione che dovrà usare il chatbot, non devono considerare funzionalià aggiuntive, solo il modo in cui il chatbot risponderà testualmente.`
+                            content: `Genera delle istruzioni brevi e professionali che il chatbot dovrà seguire. Il testo deve essere come scritto dal docente verso il configuratore.  Le istruzioni devono essere circa 50-80 parole, in italiano, e spiegare come il chatbot didattico dovrebbe comportarsi durante il corso per aiutare gli studenti e in che modo specifico può formulare le spiegazioni per gli studenti. Gli studenti utilizzerano il chatbot per studiare da casa non in aula, è fatto apposta per incentivare lo studio autonomo oltre alle lezioni, quindi non menzionare la presenza in aula. Devono essere istruzioni dirette e senza saluti. E' importante che ogni testo generato sia vario da quello precedente, quindi cerca sempre di variare con i concetti, devi essere originale, sia come contenuto del messaggio che come struttura. Le istruzioni non devono andare al di fuori di comportamenti nel tono della spiegazione che dovrà usare il chatbot, non devono considerare funzionalià aggiuntive, solo il modo in cui il chatbot risponderà testualmente.`
                         }
                     ],
                     max_tokens: 150,
@@ -870,6 +875,7 @@ function Configurazione({ sesskey, wwwroot }) {
             // Aggiorna il campo descrizione
             dispatch(updateForm({ descrizioneChatbot: generatedDescription }));
 
+
         } catch (error) {
             console.error('Errore nella generazione della descrizione:', error);
             alert(`Errore nella generazione automatica: ${error.message}`);
@@ -883,7 +889,7 @@ function Configurazione({ sesskey, wwwroot }) {
         if (originalData) {
             console.log('🔄 Ripristinando ai valori originali:', originalData);
             dispatch(updateForm(originalData));
-            setHasChanges(false);
+            setHasUnsavedChanges(false);
             setErrors({
                 nomeChatbot: false,
                 corsoChatbot: false,
@@ -895,7 +901,7 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Funzione per tornare alla dashboard
     const goBackToCourses = () => {
-        if (hasChanges) {
+        if (hasUnsavedChanges) {
             const confirmLeave = window.confirm("Hai modifiche non salvate. Vuoi davvero uscire senza salvare?");
             if (!confirmLeave) return;
         }
@@ -921,6 +927,45 @@ function Configurazione({ sesskey, wwwroot }) {
             alert(`Errore nel salvataggio: ${error.message}`);
         }
     };
+
+    // Stato per gestire il blocco della navigazione
+
+
+
+
+    // Effetto per gestire l'alert di navigazione
+    useEffect(() => {
+
+        const handlePopState = (event) => {
+            console.log('🔙 Navigazione indietro rilevata');
+            console.log('📝 Campi compilati:', hasFieldsCompiled());
+
+            if (hasFieldsCompiled()) {
+                console.log('⚠️ Mostro alert per modifiche non salvate');
+                const confirmLeave = window.confirm('Hai modifiche non salvate. Vuoi davvero uscire?');
+                if (!confirmLeave) {
+                    console.log('❌ Utente ha cancellato, rimango sulla pagina');
+                    // Se l'utente cancella, rimani sulla pagina attuale
+                    window.history.pushState(null, '', window.location.href);
+                    return;
+                }
+                console.log('✅ Utente ha confermato, esco dalla pagina');
+
+            }
+            // Reindirizza alla pagina onboarding usando il parametro wwwroot
+            console.log('🔄 Reindirizzo a onboarding');
+            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+        };        // Aggiungi un entry nella cronologia per intercettare il back
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [formState, wwwroot]); // Aggiunte le dipendenze per rilevare i cambiamenti
+
+
+
 
     return (
 
@@ -1428,7 +1473,7 @@ function Configurazione({ sesskey, wwwroot }) {
                     <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-between items-center">
 
                         {/* Pulsante Sinistro - DINAMICO */}
-                        {isEditMode && hasChanges ? (
+                        {isEditMode && hasUnsavedChanges ? (
                             // CASO 1: MODALITÀ EDIT CON MODIFICHE - Mostra "Ripristina campi"
                             <button
                                 type="button"
@@ -1496,7 +1541,7 @@ function Configurazione({ sesskey, wwwroot }) {
                         {/* Pulsante Destro - STEP SUCCESSIVO */}
                         <button
                             type="button"
-                            className={`${isEditMode && hasChanges ? 'w-37' : 'w-35'} h-11 cursor-pointer transform transition-transform duration-200 ${isCheckingCourse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'
+                            className={`${isEditMode && hasUnsavedChanges ? 'w-37' : 'w-35'} h-11 cursor-pointer transform transition-transform duration-200 ${isCheckingCourse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'
                                 }`}
                             onClick={handleSubmit}
                             disabled={isCheckingCourse}
@@ -1511,7 +1556,7 @@ function Configurazione({ sesskey, wwwroot }) {
                                     <>
                                         <div className="h-full flex items-center justify-end w-full">
                                             <p className="text-[13px] text-[#1d2125] flex items-center justify-center">
-                                                {isEditMode && hasChanges ? 'Salva e continua' : 'Step successivo'}
+                                                {isEditMode && hasUnsavedChanges ? 'Salva e continua' : 'Step successivo'}
                                             </p>
                                         </div>
                                         <div className="h-full w-12 flex items-center justify-center">
