@@ -9,6 +9,7 @@ import fileStorage from '../utils/fileStorage.js'; // Importa l'oggetto fileStor
 function FileCaricato({ fileCaricato, id, files }) {
     const dispatch = useDispatch();
 
+    console.log('📄 FileCaricato renderizzato con:', fileCaricato.fileName);
 
     const handleDeleteFile = () => {
         // Rimuovi il file dalla memoria temporanea

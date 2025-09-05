@@ -12,9 +12,18 @@ import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 
 
 function CardArgomento({ id, titolo, colore, file, giorno, editMode }) {
+
     const dispatch = useDispatch();
     const [isHovered, setIsHovered] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    React.useEffect(() => {
+        if (file && Array.isArray(file)) {
+            file.forEach((f, idx) => {
+                console.log(`File ${idx}:`, f.fileName);
+            });
+        }
+    }, [file]);
 
     // Calcola se l'argomento è già passato (solo in modalità edit)
     const oggi = new Date();

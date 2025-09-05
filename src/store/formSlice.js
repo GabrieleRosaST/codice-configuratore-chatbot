@@ -10,7 +10,6 @@ const formSlice = createSlice({
         istruzioniChatbot: '',
         dataInizio: '', // Data concreta di esempio
         dataFine: '',  // Data concreta di esempio
-        newSuggerimento: '',
         configId: '', // ID della configurazione per modalità edit
         courseId: '', // ID del corso Moodle
         userId: '', // ID dell'utente

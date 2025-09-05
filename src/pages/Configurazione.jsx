@@ -81,19 +81,43 @@ function Configurazione({ sesskey, wwwroot }) {
         );
     };
 
-    // Funzione per verificare se la data di inizio può essere modificata
+    // =====================================================
+    // FUNZIONE: Determina se la data di inizio può essere modificata
+    // =====================================================
     const canEditStartDate = () => {
-        if (!isEditMode || !formState.dataInizio) return true;
+        // MODALITÀ CREATE: Sempre modificabile
+        if (!isEditMode) {
+            return true;
+        }
 
+        // MODALITÀ EDIT: Dipende dalla data originale e dalle modifiche dell'utente
+        if (!formState.dataInizio || !originalData) {
+            return true; // Nessuna data o dati originali = modificabile
+        }
+
+        // ✅ CASO 1: Se c'è un errore di validazione sulla data di inizio,
+        // DEVE essere modificabile per permettere la correzione
+        if (errors.dataInizio) {
+            return true;
+        }
+
+        // ✅ CASO 2: Se l'utente ha già modificato la data rispetto all'originale,
+        // DEVE rimanere modificabile (anche se ora è passata)
+        if (formState.dataInizio !== originalData.dataInizio) {
+            return true;
+        }
+
+        // ✅ CASO 3: Data non modificata - controlla se l'originale era futura
+        // Solo il valore iniziale dal database conta per il blocco
         const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        today.setHours(0, 0, 0, 0);
 
-        const startDate = new Date(formState.dataInizio);
+        const originalStartDate = new Date(originalData.dataInizio);
+        originalStartDate.setHours(0, 0, 0, 0);
 
-        // Per ora: non può modificare se la data è domani
-        // Nel finale: cambierà in startDate <= today (se uguale o passata rispetto a oggi)
-        return startDate > tomorrow;
+        // Può modificare SOLO se la data ORIGINALE era FUTURA
+        // Se data originale <= oggi → corso già iniziato → NON modificabile
+        return originalStartDate > today;
     };
 
     // Effetto per leggere i parametri URL e popolare il form in modalità edit
@@ -190,7 +214,14 @@ function Configurazione({ sesskey, wwwroot }) {
         // Verifica se tutti i campi sono validi
         const isNomeChatbotValid = formState.nomeChatbot.trim() !== '';
         const isCorsoChatbotValid = formState.corsoChatbot.trim() !== '';
-        const isDataInizioValid = formState.dataInizio && startDate > today;
+
+        // Per la data di inizio:
+        // - In modalità CREATE: deve essere futura
+        // - In modalità EDIT: sempre valida se presente (anche se passata)
+        const isDataInizioValid = formState.dataInizio && (
+            !isEditMode ? startDate > today : true
+        );
+
         const isDataFineValid = formState.dataFine && endDate > startDate;
 
         const isStep1Valid = isNomeChatbotValid && isCorsoChatbotValid && isDataInizioValid && isDataFineValid;
@@ -201,7 +232,7 @@ function Configurazione({ sesskey, wwwroot }) {
         }
         // Aggiorna lo stato step1
 
-    }, [formState, setCompletedSteps, primaVisitaStep1, courseNameChanged]);
+    }, [formState, setCompletedSteps, primaVisitaStep1, courseNameChanged, isEditMode]);
 
 
     const MIN_DATE = new Date("2024-01-01");
@@ -379,32 +410,81 @@ function Configurazione({ sesskey, wwwroot }) {
             hasError = true;
         }
 
-        // Controllo della data di inizio
+        // =====================================================
+        // CONTROLLO DATA DI INIZIO - Logica basata sulla modalità
+        // =====================================================
         if (!formState.dataInizio) {
+            // Data di inizio mancante - sempre errore
             newErrors.dataInizio = true;
             hasError = true;
-        } else if (
-            startDate <= today ||
-            startDate < MIN_DATE ||
-            startDate > MAX_DATE
-        ) {
-            newErrors.dataInizio = true;
-            hasError = true;
-            alert("La data di inizio deve essere successiva al giorno attuale.");
+        } else if (isEditMode) {
+            // *** MODALITÀ EDIT ***
+            const canModifyStartDate = canEditStartDate(); // true se data futura, false se passata
+
+            if (!canModifyStartDate) {
+                // CASO 1: Data inizio PASSATA/UGUALE a oggi
+                // → NON modificabile → NON controllata → Passa sempre
+                console.log('📅 EDIT: Data passata - non modificabile, controlli saltati');
+                // Nessun errore, procedi
+            } else {
+                // CASO 2: Data inizio FUTURA
+                // → Modificabile → Deve essere controllata
+                console.log('📅 EDIT: Data futura - modificabile, applico controlli');
+
+                if (startDate <= today) {
+                    // Data modificata ma ora è passata/uguale a oggi
+                    newErrors.dataInizio = true;
+                    hasError = true;
+                    alert("La data di inizio deve essere successiva al giorno attuale.");
+                } else if (startDate < MIN_DATE || startDate > MAX_DATE) {
+                    // Data fuori range consentito
+                    newErrors.dataInizio = true;
+                    hasError = true;
+                    alert("La data di inizio deve essere compresa tra il 2024 e il 2030.");
+                }
+                // Se passa tutti i controlli, è valida
+            }
+        } else {
+            // *** MODALITÀ CREAZIONE ***
+            console.log('📅 CREATE: Applico controlli standard');
+
+            if (startDate <= today) {
+                // Data uguale o precedente a oggi
+                newErrors.dataInizio = true;
+                hasError = true;
+                alert("La data di inizio deve essere successiva al giorno attuale.");
+            } else if (startDate < MIN_DATE || startDate > MAX_DATE) {
+                // Data fuori range consentito
+                newErrors.dataInizio = true;
+                hasError = true;
+                alert("La data di inizio deve essere compresa tra il 2024 e il 2030.");
+            }
+            // Se passa tutti i controlli, è valida
         }
 
-        // Controllo della data di fine
+        // =====================================================
+        // CONTROLLO DATA DI FINE
+        // =====================================================
         if (!formState.dataFine) {
+            // Data di fine mancante - sempre errore
             newErrors.dataFine = true;
             hasError = true;
-        } else if (
-            endDate <= startDate ||
-            endDate < MIN_DATE ||
-            endDate > MAX_DATE
-        ) {
-            newErrors.dataFine = true;
-            hasError = true;
-            alert("La data di fine deve essere successiva di almeno un giorno alla data di inizio.");
+        } else {
+            console.log('📅 Controllo data fine');
+
+            // Controlli comuni per entrambe le modalità
+            if (endDate <= startDate) {
+                // Data fine deve essere successiva alla data inizio
+                newErrors.dataFine = true;
+                hasError = true;
+                alert("La data di fine deve essere successiva di almeno un giorno alla data di inizio.");
+            } else if (endDate < MIN_DATE || endDate > MAX_DATE) {
+                // Data fuori range consentito
+                newErrors.dataFine = true;
+                hasError = true;
+                alert("La data di fine deve essere compresa tra il 2024 e il 2030.");
+            }
+            // Se passa tutti i controlli, è valida
         }
 
         // Aggiorna lo stato degli errori

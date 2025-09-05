@@ -32,6 +32,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const [isSalvaEContinua, setIsSalvaEContinua] = useState(false); // Stato per gestire il pulsante
     const [initialArgomentiCount, setInitialArgomentiCount] = useState(0); // Stato per il numero iniziale di argomenti
     const [initialArgomentiSnapshot, setInitialArgomentiSnapshot] = useState([]); // Stato per lo snapshot iniziale degli argomenti
+    const [filesLoaded, setFilesLoaded] = useState(false);
 
 
 
@@ -144,6 +145,61 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     }, [formState.configId, initialLoadComplete, editMode, dispatch]);
 
 
+    // Nuovo useEffect per caricare i file di ogni argomento in modalità edit
+    useEffect(() => {
+        const loadFilesForArgomenti = async () => {
+            if (!editMode || !formState.configId || filesLoaded) return;
+
+            try {
+                const updatedArgomenti = await Promise.all(argomenti.map(async (argomento) => {
+                    if (!argomento.id) return argomento; // Salta argomenti senza ID
+
+                    const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'same-origin',
+                        body: JSON.stringify([
+                            {
+                                methodname: 'local_configuratore_get_files_by_argomento',
+                                args: { argomentoid: argomento.id }
+                            }
+                        ])
+                    });
+
+                    if (!response.ok) {
+                        console.error(`Errore nel caricamento dei file per l'argomento ${argomento.id}`);
+                        return argomento;
+                    }
+
+                    const result = await response.json();
+                    const files = result[0]?.data || [];
+
+                    console.log('📂 File caricati per argomento:', {
+                        argomentoId: argomento.id,
+                        files: files,
+                        filenames: files.map(file => file.filename)
+                    });
+
+                    return {
+                        ...argomento,
+                        file: files.map(file => ({ id: file.id, fileName: file.filename })) // Modifica il nome in fileName
+                    };
+                }));
+
+                dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
+                setFilesLoaded(true); // Imposta lo stato per evitare ricaricamenti
+            } catch (error) {
+                console.error('Errore nel caricamento dei file per gli argomenti:', error);
+            }
+        };
+
+        // Usa un controllo per evitare il ciclo infinito
+        if (!filesLoaded) {
+            loadFilesForArgomenti();
+        }
+    }, [editMode, formState.configId, dispatch, argomenti, sesskey, wwwroot]);
+
+
     const handleStepSuccessivo = () => {
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
 
@@ -176,6 +232,15 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
     const handleSalvaEContinua = async () => {
         console.log('💾 handleSalvaEContinua chiamato...');
+
+        // Controlla se tutti gli argomenti hanno titoli validi
+        const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
+
+        if (!tuttiArgomentiValidi) {
+            alert('Assicurati di aver aggiunto almeno un argomento e che tutti gli argomenti abbiano un titolo valido.');
+            return; // Blocca l'azione se ci sono argomenti non validi
+        }
+
         console.log('🔍 Parametri:', {
             formStateConfigId: formState.configId,
             argomentiCount: argomenti.length,
