@@ -17,7 +17,7 @@ import aitext from '../img/aitext.svg';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { updateForm } from '../store/formSlice';
-import { setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError } from '../store/argomentiSlice';
+import { setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
 import { loadArgomentiForEdit, getMoodleSesskey } from '../utils/loadUtils';
 import { useStepContext } from '../context/StepContext.jsx';
 import { db } from '../firebase';
@@ -323,11 +323,13 @@ function Configurazione({ sesskey, wwwroot }) {
                         console.log('✅ Argomenti recuperati dal database:', result.argomenti);
                         console.log(`📈 Totale argomenti caricati: ${result.count}`);
 
-                        // Ora usa la nuova azione Redux per caricare gli argomenti
+                        // Carica gli argomenti in Redux
                         dispatch(loadArgomentiSuccess({
                             argomenti: result.argomenti,
                             count: result.count
                         }));
+
+
 
                         // Imposta la modalità edit per gli argomenti
                         dispatch(setEditMode(true));
@@ -359,7 +361,11 @@ function Configurazione({ sesskey, wwwroot }) {
         };
 
         loadArgomentiIfEdit();
-    }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, dispatch]); // ✅ SI ATTIVA quando questi valori cambiano    // 📂 CARICAMENTO FILES PER ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO editModeArgomenti È TRUE
+    }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, dispatch]); // ✅ SI ATTIVA quando questi valori cambiano   
+
+
+
+    // 📂 CARICAMENTO FILES PER ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO editModeArgomenti È TRUE
     useEffect(() => {
         const loadFilesForArgomenti = async () => {
             console.log('📂 Controllo caricamento file:', {
@@ -414,6 +420,10 @@ function Configurazione({ sesskey, wwwroot }) {
 
                     console.log('📂 Aggiornamento argomenti con file caricati');
                     dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
+
+                    // Imposta lo snapshot iniziale per il ripristino
+                    dispatch(setInitialArgomentiSnapshot());
+
                     setFilesLoaded(true); // Imposta lo stato per evitare ricaricamenti
                 } catch (error) {
                     console.error('Errore nel caricamento dei file per gli argomenti:', error);

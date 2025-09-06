@@ -47,6 +47,7 @@ const argomentiSlice = createSlice({
         argomenti: [
 
         ],
+        initialArgomenti: [], // Stato iniziale memorizzato per il reset
         cambiatoTitolo: 0,
         loading: false,
         error: null,
@@ -132,15 +133,29 @@ const argomentiSlice = createSlice({
             state.editMode = false;
         },
 
-        resetArgomenti: (state) => {
-            console.log('🔄 Redux: Reset argomenti');
+        // Imposta lo snapshot iniziale degli argomenti per il ripristino
+        setInitialArgomentiSnapshot: (state) => {
+            console.log('📸 Redux: Salvando snapshot iniziale degli argomenti');
+            state.initialArgomenti = JSON.parse(JSON.stringify(state.argomenti)); // Deep copy
+        },
 
-            state.argomenti = [];
+        resetArgomenti: (state) => {
+            console.log('🔄 Redux: Ripristinando argomenti allo stato iniziale');
+
+            if (state.initialArgomenti.length > 0) {
+                // Ripristina agli argomenti iniziali memorizzati
+                state.argomenti = JSON.parse(JSON.stringify(state.initialArgomenti)); // Deep copy
+                console.log('✅ Redux: Argomenti ripristinati:', state.argomenti);
+            } else {
+                // Fallback: reset completo se non c'è snapshot
+                state.argomenti = [];
+                console.log('⚠️ Redux: Nessuno snapshot disponibile, reset completo');
+                nextId = 1;
+                colorIndex = 0;
+            }
+
             state.loading = false;
             state.error = null;
-            state.editMode = false;
-            nextId = 1;
-            colorIndex = 0;
         }
     }
 });
@@ -154,6 +169,7 @@ export const {
     setEditMode,
     loadArgomentiSuccess,
     loadArgomentiError,
+    setInitialArgomentiSnapshot,
     resetArgomenti
 } = argomentiSlice.actions;
 export default argomentiSlice.reducer;

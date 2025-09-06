@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
-import { aggiungiArgomento } from '../store/argomentiSlice';
+import { aggiungiArgomento, resetArgomenti, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
 import CardArgomento from '../components/cardArgomento';
 import domandaIcon from '../img/domandaIcon.svg';
 import plusArgomentoCard from '../img/plusArgomentoCard.svg';
 import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import frecciaDestraButton from '../img/frecciaDestraButton.svg';
+import restoreIcon from '../img/restore.svg';
 import { useStepContext } from '../context/StepContext';
 import closeAiutoIcon from '../img/closeAiutoIcon.svg';
 import obiettivoIcon from '../img/obiettivoIcon.svg';
@@ -19,6 +20,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
     // Redux state
     const argomenti = useSelector((state) => state.argomenti.argomenti);
+    const initialArgomenti = useSelector((state) => state.argomenti.initialArgomenti);
     const formState = useSelector((state) => state.form); // Per accedere a configId
     const isLoadingArgomenti = useSelector((state) => state.argomenti.loading);
     const editMode = useSelector((state) => state.argomenti.editMode);
@@ -28,8 +30,8 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     // Component state
     const [mostraAiuto, setMostraAiuto] = useState(false);
     const [isSalvaEContinua, setIsSalvaEContinua] = useState(false); // Stato per gestire il pulsante
+    const [isSaving, setIsSaving] = useState(false); // Stato per il caricamento del salvataggio
     const [initialArgomentiCount, setInitialArgomentiCount] = useState(0); // Stato per il numero iniziale di argomenti
-    const [initialArgomentiSnapshot, setInitialArgomentiSnapshot] = useState([]); // Stato per lo snapshot iniziale degli argomenti
 
 
 
@@ -41,11 +43,12 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     }, [argomenti]); // Esegui ogni volta che gli argomenti cambiano
 
     useEffect(() => {
-        // Imposta lo snapshot iniziale degli argomenti solo dopo il caricamento completo
-        if (argomenti.length > 0 && initialArgomentiSnapshot.length === 0) {
-            setInitialArgomentiSnapshot(JSON.stringify(argomenti)); // Salva uno snapshot come stringa JSON
+        // Imposta lo snapshot iniziale degli argomenti nel Redux store dopo il caricamento completo
+        if (argomenti.length > 0 && initialArgomenti.length === 0) {
+            console.log('📸 Impostazione snapshot iniziale degli argomenti in Redux');
+            dispatch(setInitialArgomentiSnapshot());
         }
-    }, [argomenti]); // Esegui ogni volta che gli argomenti cambiano
+    }, [argomenti, initialArgomenti.length, dispatch]); // Esegui ogni volta che gli argomenti o initialArgomenti cambiano
 
     const handleAggiungiArgomento = () => {
 
@@ -97,14 +100,32 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
         }
     };
 
+    // Funzione per ripristinare gli argomenti allo stato iniziale
+    const resetArgomentiToInitial = () => {
+        console.log('🔄 Ripristinando argomenti allo stato iniziale...');
+        dispatch(resetArgomenti());
+    };    // Funzione per tornare alla dashboard
+    const goBackToCourses = () => {
+        // Torna alla dashboard dei corsi
+        window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+    };
+
     const handleSalvaEContinua = async () => {
         console.log('💾 handleSalvaEContinua chiamato...');
+
+        // Previeni esecuzioni multiple
+        if (isSaving) {
+            return;
+        }
+
+        setIsSaving(true);
 
         // Controlla se tutti gli argomenti hanno titoli validi
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
 
         if (!tuttiArgomentiValidi) {
             alert('Assicurati di aver aggiunto almeno un argomento e che tutti gli argomenti abbiano un titolo valido.');
+            setIsSaving(false);
             return; // Blocca l'azione se ci sono argomenti non validi
         }
 
@@ -117,7 +138,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
         try {
             // Ottieni sesskey dinamicamente
-            const currentSesskey = getMoodleSesskey();
+            const currentSesskey = sesskey;
             const currentWwwroot = window.location.origin + '/moodle/moodle';
 
             console.log('📤 Parametri inviati al web service:', {
@@ -180,15 +201,10 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
             if (result[0]?.data?.success) {
                 console.log('✅ Salvataggio completato con successo!');
-                alert('Argomenti salvati con successo!');
 
-                // Aggiorna lo stato Redux: marca tutti gli argomenti come non nuovi
-                const updatedArgomenti = argomenti.map(argomento => ({
-                    ...argomento,
-                    isNew: false // Dopo il salvataggio, non sono più nuovi
-                }));
-
-                setInitialArgomentiSnapshot(JSON.stringify(updatedArgomenti));
+                // Aggiorna lo snapshot iniziale in Redux dopo il salvataggio
+                dispatch(setInitialArgomentiSnapshot());
+                navigate("/pianoLavoro");
             } else {
                 console.error('❌ Errore nel salvataggio:', result[0]?.data?.message || 'Messaggio non disponibile');
                 console.error('❌ Risultato completo:', result[0]);
@@ -198,12 +214,15 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             console.error('❌ Errore nella richiesta:', error);
             console.error('❌ Stack trace:', error.stack);
             alert('Errore nella comunicazione con il server.');
+        } finally {
+            setIsSaving(false);
         }
     };
 
     // Funzione per verificare se gli argomenti sono cambiati rispetto allo snapshot iniziale
     const hasArgomentiChanged = () => {
-        return JSON.stringify(argomenti) !== initialArgomentiSnapshot; // Confronta lo stato attuale con lo snapshot iniziale
+        // Confronta lo stato attuale con gli argomenti iniziali dal Redux store
+        return JSON.stringify(argomenti) !== JSON.stringify(initialArgomenti);
     };
 
     return (
@@ -338,52 +357,100 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
 
 
-                    {/* Pulsanti Esci e salva bozza e Step successivo */}
+                    {/* Pulsanti dinamici */}
                     <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-between items-center">
 
-                        {/* Pulsante Esci e salva bozza */}
-                        <button
-                            type="button"
-                            onClick={saveAsDraft}
-                            className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
-                        >
-                            <div
-                                className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
-                                style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
+                        {/* Pulsante Sinistro - DINAMICO */}
+                        {editMode && hasArgomentiChanged() ? (
+                            // CASO 1: MODALITÀ EDIT CON MODIFICHE - Mostra "Ripristina argomenti"
+                            <button
+                                type="button"
+                                onClick={resetArgomentiToInitial}
+                                className="w-43 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
                             >
-                                <div className="h-full w-16 flex items-center justify-center">
-                                    <img src={esciSalvaIcon} alt="" className="w-3.5" />
+                                <div
+                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
+                                    style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
+                                >
+                                    <div className="h-full w-14 flex items-center justify-center ml-1">
+                                        <img src={restoreIcon} alt="" className="w-4" />
+                                    </div>
+                                    <div className="h-full flex items-center w-full">
+                                        <p className="text-[13px] text-left text-[#1d2125]">
+                                            Ripristina argomenti
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="h-full flex items-center w-full">
-                                    <p className="text-[13px] text-left text-[#1d2125]">
-                                        Esci e salva bozza
-                                    </p>
+                            </button>
+                        ) : !editMode && argomenti.length > 0 ? (
+                            // CASO 2: MODALITÀ CREATE CON ARGOMENTI - Mostra "Esci e salva bozza"
+                            <button
+                                type="button"
+                                onClick={saveAsDraft}
+                                className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
+                            >
+                                <div
+                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
+                                    style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
+                                >
+                                    <div className="h-full w-16 flex items-center justify-center">
+                                        <img src={esciSalvaIcon} alt="" className="w-3.5" />
+                                    </div>
+                                    <div className="h-full flex items-center w-full">
+                                        <p className="text-[13px] text-left text-[#1d2125]">
+                                            Esci e salva bozza
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </button>
+                            </button>
+                        ) : (
+                            // CASO 3: MODALITÀ CREATE SENZA ARGOMENTI O EDIT SENZA MODIFICHE - Mostra "Torna ai corsi"
+                            <button
+                                type="button"
+                                onClick={goBackToCourses}
+                                className="w-34 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
+                            >
+                                <div
+                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
+                                    style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
+                                >
+                                    <div className="h-full w-16 flex items-center justify-center">
+                                        <img src={esciSalvaIcon} alt="" className="w-3.5" />
+                                    </div>
+                                    <div className="h-full flex items-center w-full">
+                                        <p className="text-[13px] text-left text-[#1d2125]">
+                                            Torna ai corsi
+                                        </p>
+                                    </div>
+                                </div>
+                            </button>
+                        )}
 
                         {/* Pulsante Step Successivo */}
                         <button
-                            className="w-35 h-11 right-0 cursor-pointer transform transition-transform duration-200 hover:scale-103"
+                            className={`w-35 h-11 right-0 cursor-pointer transform transition-transform duration-200 ${isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'}`}
                             onClick={editMode && hasArgomentiChanged() ? handleSalvaEContinua : handleStepSuccessivo}
+                            disabled={isSaving}
                         >
-
                             <div
-                                className="w-full h-full rounded-[10px] bg-[#fcc63d] flex justify-stretch"
-                                style={{ boxShadow: "0px 0px 8.5px 3px rgba(0,0,0,0.02)" }}>
-
-                                <div className="h-full flex items-center justify-end w-full">
-                                    <p className="text-[13px]  text-[#1d2125] flex items-center justify-center">
-                                        {editMode && hasArgomentiChanged() ? 'Salva e continua' : 'Step successivo'}
-                                    </p>
-                                </div>
-
-                                <div className="h-full w-12 flex items-center justify-center ">
-                                    <img src={frecciaDestraButton} alt="" className="w-2 " />
-                                </div>
-
+                                className="w-full h-full rounded-[10px] bg-[#fcc63d] flex justify-center items-center"
+                                style={{ boxShadow: "0px 0px 8.5px 3px rgba(0,0,0,0.02)" }}
+                            >
+                                {isSaving && (editMode && hasArgomentiChanged()) ? (
+                                    <div className="w-4 h-4 border-2 border-[#1d2125] border-t-transparent rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        <div className="h-full flex items-center justify-end w-full">
+                                            <p className="text-[13px] text-[#1d2125] flex items-center justify-center">
+                                                {editMode && hasArgomentiChanged() ? 'Salva e continua' : 'Step successivo'}
+                                            </p>
+                                        </div>
+                                        <div className="h-full w-12 flex items-center justify-center">
+                                            <img src={frecciaDestraButton} alt="" className="w-2" />
+                                        </div>
+                                    </>
+                                )}
                             </div>
-
                         </button>
                     </div>
 
