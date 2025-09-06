@@ -8,7 +8,7 @@ import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Giorno from '../components/giorno.jsx';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGenerateJson } from '../utils/generateJson';
 import { useState } from 'react';
@@ -33,7 +33,14 @@ function PianoLavoro({ sesskey, wwwroot }) {
     const generateJson = useGenerateJson(); // Usa il custom hook
     const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti, primaVisita } = useSelector((state) => state.calendario);
     const { dataInizio, dataFine } = useSelector((state) => state.form);
-    const { argomenti, cambiatoTitolo } = useSelector((state) => state.argomenti);
+
+    // Ordina gli argomenti per ID crescente usando useMemo per evitare ricreare l'array ad ogni render
+    const argomentiRaw = useSelector((state) => state.argomenti.argomenti);
+    const argomenti = useMemo(() => {
+        return [...argomentiRaw].sort((a, b) => a.id - b.id);
+    }, [argomentiRaw]);
+
+    const { cambiatoTitolo } = useSelector((state) => state.argomenti);
 
     const [mostraAiuto, setMostraAiuto] = useState(false); // Stato per gestire la visibilità del div di aiuto
     const [isLoading, setIsLoading] = useState(false); // Stato per il loading del pulsante

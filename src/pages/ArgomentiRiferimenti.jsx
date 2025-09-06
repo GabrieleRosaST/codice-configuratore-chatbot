@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 import { aggiungiArgomento, resetArgomenti, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
@@ -18,8 +18,11 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Redux state
-    const argomenti = useSelector((state) => state.argomenti.argomenti);
+    // Redux state con ordinamento automatico per ID
+    const argomentiRaw = useSelector((state) => state.argomenti.argomenti);
+    const argomenti = useMemo(() => {
+        return [...argomentiRaw].sort((a, b) => a.id - b.id);
+    }, [argomentiRaw]);
     const initialArgomenti = useSelector((state) => state.argomenti.initialArgomenti);
     const formState = useSelector((state) => state.form); // Per accedere a configId
     const isLoadingArgomenti = useSelector((state) => state.argomenti.loading);

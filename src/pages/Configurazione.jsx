@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import invioButton from '../img/invioButton.svg';
 import fotoPlaceholder from '../img/fotoBot.svg';
@@ -77,8 +77,11 @@ function Configurazione({ sesskey, wwwroot }) {
     const [initialLoadComplete, setInitialLoadComplete] = useState(false);
     const [filesLoaded, setFilesLoaded] = useState(false);
 
-    // Redux state per gli argomenti
-    const argomenti = useSelector((state) => state.argomenti.argomenti);
+    // Redux state per gli argomenti ordinati per ID
+    const argomentiRaw = useSelector((state) => state.argomenti.argomenti);
+    const argomenti = useMemo(() => {
+        return [...argomentiRaw].sort((a, b) => a.id - b.id);
+    }, [argomentiRaw]);
     const editModeArgomenti = useSelector((state) => state.argomenti.editMode);
 
 

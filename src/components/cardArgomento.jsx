@@ -303,7 +303,7 @@ function CardArgomento({ id, titolo, colore, file, giorno, editMode }) {
                                     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-[#6982AB]"></div>
                                 </div>
                             </div>
-                        )}\
+                        )}
                     </div>
                 </div>
 

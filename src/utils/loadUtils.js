@@ -54,11 +54,14 @@ export const loadArgomentiForEdit = async (configId, sesskey, wwwroot) => {
                 file: [] // I file verranno caricati separatamente se necessario
             }));
 
-            console.log('✨ Argomenti formattati per Redux:', argomentiFormatted);
+            // Ordina gli argomenti per ID crescente
+            const argomentiOrdered = argomentiFormatted.sort((a, b) => a.id - b.id);
+
+            console.log('✨ Argomenti formattati e ordinati per Redux:', argomentiOrdered);
 
             return {
                 success: true,
-                argomenti: argomentiFormatted,
+                argomenti: argomentiOrdered,
                 count: result.count
             };
         } else {
