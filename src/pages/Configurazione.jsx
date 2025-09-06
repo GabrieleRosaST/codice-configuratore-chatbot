@@ -17,6 +17,8 @@ import aitext from '../img/aitext.svg';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { updateForm } from '../store/formSlice';
+import { setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError } from '../store/argomentiSlice';
+import { loadArgomentiForEdit, getMoodleSesskey } from '../utils/loadUtils';
 import { useStepContext } from '../context/StepContext.jsx';
 import { db } from '../firebase';
 import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
@@ -70,6 +72,14 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Stato per gestire la visibilità del div di aiuto
     const [mostraAiuto, setMostraAiuto] = useState(false);
+
+    // Stati per la gestione del caricamento argomenti
+    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+    const [filesLoaded, setFilesLoaded] = useState(false);
+
+    // Redux state per gli argomenti
+    const argomenti = useSelector((state) => state.argomenti.argomenti);
+    const editModeArgomenti = useSelector((state) => state.argomenti.editMode);
 
 
 
@@ -129,12 +139,13 @@ function Configurazione({ sesskey, wwwroot }) {
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get('mode');
 
-        console.log('🔍 Configurazione.jsx - URL params check:', {
+        console.log('🔍 Configurazioneeee.jsx - URL params check:', {
             mode: mode,
             configIdFromURL: urlParams.get('configId'),
             configIdFromRedux: formState.configId,
             allParams: Object.fromEntries(urlParams.entries()),
-            currentFormState: formState
+            currentFormState: formState,
+            currentIsEditMode: isEditMode
         });
 
         // CASO 1: Primo accesso da card (mode=edit + parametri URL)
@@ -142,6 +153,7 @@ function Configurazione({ sesskey, wwwroot }) {
         if (mode === 'edit' && urlParams.get('configId') && !formState.configId) {
             console.log('✅ CASO 1: Primo accesso in modalità edit (Redux vuoto)');
             setIsEditMode(true);
+            console.log('🔄 Impostato isEditMode a true');
 
             // Leggi tutti i parametri della configurazione
             const configData = {
@@ -168,6 +180,7 @@ function Configurazione({ sesskey, wwwroot }) {
         else if (mode === 'edit' && urlParams.get('configId') && formState.configId) {
             console.log('✅ CASO 2: Ritorno dalla navigazione (Redux ha già i dati)');
             setIsEditMode(true);
+            console.log('🔄 Impostato isEditMode a true');
 
             // ✅ IMPOSTA originalData con i valori attuali del Redux
             // Questi sono i valori "salvati" che diventano il nuovo punto di riferimento
@@ -188,7 +201,29 @@ function Configurazione({ sesskey, wwwroot }) {
 
             // Ora l'useEffect per monitorare le modifiche funzionerà correttamente
         }
+        // CASO 3: Mode edit ma senza configId
+        else if (mode === 'edit') {
+            console.log('⚠️ CASO 3: Mode edit ma senza configId nei parametri URL');
+            setIsEditMode(true);
+            console.log('🔄 Impostato isEditMode a true comunque');
+        }
+        else {
+            console.log('ℹ️ Non in modalità edit, mode =', mode);
+        }
     }, []); // Esegui solo al mount del componente
+
+    // 🐛 DEBUG: Monitora i cambiamenti dei valori critici
+    useEffect(() => {
+        console.log('🔍 DEBUG - Valori critici cambiati:', {
+            isEditMode: isEditMode,
+            configId: formState.configId,
+            initialLoadComplete: initialLoadComplete,
+            editModeArgomenti: editModeArgomenti,
+            argomentiLength: argomenti.length,
+            filesLoaded: filesLoaded,
+            timestamp: new Date().toLocaleTimeString()
+        });
+    }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, argomenti.length, filesLoaded]);
 
 
     // Effetto per monitorare le modifiche ai campi del form (modalità EDIT) e modificare pulsante in "Salva e continua"
@@ -237,6 +272,168 @@ function Configurazione({ sesskey, wwwroot }) {
         // Aggiorna lo stato step1
 
     }, [formState, setCompletedSteps, primaVisitaStep1, courseNameChanged, isEditMode]);
+
+    // 🔄 CARICAMENTO ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO configId È DISPONIBILE
+    useEffect(() => {
+        console.log('🚀 useEffect CARICAMENTO ARGOMENTI attivato!', {
+            isEditMode,
+            configId: formState.configId,
+            initialLoadComplete,
+            editModeArgomenti,
+            timestamp: new Date().toLocaleTimeString()
+        });
+
+        const loadArgomentiIfEdit = async () => {
+            console.log('🔍 Debug - Checking edit mode:', {
+                configId: formState.configId,
+                initialLoadComplete,
+                editModeArgomenti,
+                hasConfigId: !!formState.configId,
+                isEditMode
+            });
+
+            // Se siamo in modalità edit e abbiamo un configId e non abbiamo già caricato
+            if (isEditMode && formState.configId && !initialLoadComplete && !editModeArgomenti) {
+                console.log('📥 Modalità Edit rilevata - Caricamento argomenti per chatbot ID:', formState.configId);
+
+                try {
+                    dispatch(setLoadingArgomenti(true));
+
+                    // Ottieni sesskey e wwwroot
+                    const sessionKey = getMoodleSesskey();
+                    // Usa l'URL corrente completo invece di window.location.origin
+                    const currentWwwroot = window.location.origin + '/moodle/moodle';
+
+                    console.log('🔗 Parametri per chiamata API:', {
+                        configId: formState.configId,
+                        sesskey: sessionKey ? 'OK' : 'MISSING',
+                        wwwroot: currentWwwroot
+                    });
+
+                    // Carica argomenti dal database Moodle
+                    const result = await loadArgomentiForEdit(formState.configId, sessionKey, currentWwwroot);
+
+                    console.log('📊 Risultato chiamata loadArgomentiForEdit:', {
+                        success: result.success,
+                        count: result.count,
+                        argomenti: result.argomenti
+                    });
+
+                    if (result.success) {
+                        console.log('✅ Argomenti recuperati dal database:', result.argomenti);
+                        console.log(`📈 Totale argomenti caricati: ${result.count}`);
+
+                        // Ora usa la nuova azione Redux per caricare gli argomenti
+                        dispatch(loadArgomentiSuccess({
+                            argomenti: result.argomenti,
+                            count: result.count
+                        }));
+
+                        // Imposta la modalità edit per gli argomenti
+                        dispatch(setEditMode(true));
+                    } else {
+                        console.warn('⚠️ Nessun argomento trovato o errore:', result.message);
+                        dispatch(loadArgomentiError(result.message || 'Errore nel caricamento argomenti'));
+                    }
+
+                } catch (error) {
+                    console.error('❌ Errore caricamento argomenti:', error);
+                    console.error('❌ Stack trace:', error.stack);
+                    dispatch(loadArgomentiError(error.message));
+                } finally {
+                    dispatch(setLoadingArgomenti(false));
+                    setInitialLoadComplete(true);
+                }
+            } else {
+                console.log('ℹ️ Skip caricamento argomenti:', {
+                    isEditMode,
+                    hasConfigId: !!formState.configId,
+                    initialLoadComplete,
+                    editModeArgomenti,
+                    reason: !isEditMode ? 'Not in edit mode' :
+                        !formState.configId ? 'No configId' :
+                            initialLoadComplete ? 'Already loaded' :
+                                editModeArgomenti ? 'Already in edit mode' : 'Unknown'
+                });
+            }
+        };
+
+        loadArgomentiIfEdit();
+    }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, dispatch]); // ✅ SI ATTIVA quando questi valori cambiano    // 📂 CARICAMENTO FILES PER ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO editModeArgomenti È TRUE
+    useEffect(() => {
+        const loadFilesForArgomenti = async () => {
+            console.log('📂 Controllo caricamento file:', {
+                editModeArgomenti,
+                hasConfigId: !!formState.configId,
+                filesLoaded,
+                argomentiCount: argomenti.length
+            });
+
+            // Carica file solo se abbiamo argomenti e non li abbiamo già caricati
+            if (editModeArgomenti && formState.configId && !filesLoaded && argomenti.length > 0) {
+                console.log('📂 Inizio caricamento file per argomenti:', {
+                    argomentiCount: argomenti.length,
+                    filesLoaded
+                });
+
+                try {
+                    const updatedArgomenti = await Promise.all(argomenti.map(async (argomento) => {
+                        if (!argomento.id) return argomento; // Salta argomenti senza ID
+
+                        const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify([
+                                {
+                                    methodname: 'local_configuratore_get_files_by_argomento',
+                                    args: { argomentoid: argomento.id }
+                                }
+                            ])
+                        });
+
+                        if (!response.ok) {
+                            console.error(`Errore nel caricamento dei file per l'argomento ${argomento.id}`);
+                            return argomento;
+                        }
+
+                        const result = await response.json();
+                        const files = result[0]?.data || [];
+
+                        console.log('📂 File caricati per argomento:', {
+                            argomentoId: argomento.id,
+                            files: files,
+                            filenames: files.map(file => file.filename)
+                        });
+
+                        return {
+                            ...argomento,
+                            file: files.map(file => ({ id: file.id, fileName: file.filename }))
+                        };
+                    }));
+
+                    console.log('📂 Aggiornamento argomenti con file caricati');
+                    dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
+                    setFilesLoaded(true); // Imposta lo stato per evitare ricaricamenti
+                } catch (error) {
+                    console.error('Errore nel caricamento dei file per gli argomenti:', error);
+                }
+            } else {
+                console.log('📂 Skip caricamento file:', {
+                    editModeArgomenti,
+                    hasConfigId: !!formState.configId,
+                    filesLoaded,
+                    argomentiLength: argomenti.length,
+                    reason: !editModeArgomenti ? 'Not in edit mode' :
+                        !formState.configId ? 'No configId' :
+                            filesLoaded ? 'Already loaded' :
+                                argomenti.length === 0 ? 'No argomenti' : 'Unknown'
+                });
+            }
+        };
+
+        loadFilesForArgomenti();
+    }, [editModeArgomenti, formState.configId, argomenti.length, filesLoaded, sesskey, wwwroot]); // ✅ SI ATTIVA quando editModeArgomenti diventa true e ci sono argomenti
 
 
     const MIN_DATE = new Date("2024-01-01");

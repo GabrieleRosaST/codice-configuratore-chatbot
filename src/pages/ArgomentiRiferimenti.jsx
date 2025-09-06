@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
-import { aggiungiArgomento, setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError } from '../store/argomentiSlice';
-import { loadArgomentiForEdit, getMoodleSesskey } from '../utils/loadUtils';
+import { aggiungiArgomento } from '../store/argomentiSlice';
 import CardArgomento from '../components/cardArgomento';
 import domandaIcon from '../img/domandaIcon.svg';
 import plusArgomentoCard from '../img/plusArgomentoCard.svg';
@@ -28,11 +27,9 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
     // Component state
     const [mostraAiuto, setMostraAiuto] = useState(false);
-    const [initialLoadComplete, setInitialLoadComplete] = useState(false);
     const [isSalvaEContinua, setIsSalvaEContinua] = useState(false); // Stato per gestire il pulsante
     const [initialArgomentiCount, setInitialArgomentiCount] = useState(0); // Stato per il numero iniziale di argomenti
     const [initialArgomentiSnapshot, setInitialArgomentiSnapshot] = useState([]); // Stato per lo snapshot iniziale degli argomenti
-    const [filesLoaded, setFilesLoaded] = useState(false);
 
 
 
@@ -69,136 +66,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             setCompletedSteps((prev) => ({ ...prev, step2: tuttiArgomentiValidi }));
         }
     }, [argomenti, primaVisitaStep2, setCompletedSteps]);
-
-    // 🔄 CARICAMENTO ARGOMENTI IN MODALITÀ EDIT
-    useEffect(() => {
-        const loadArgomentiIfEdit = async () => {
-            console.log('🔍 Debug - Checking edit mode:', {
-                configId: formState.configId,
-                initialLoadComplete,
-                editMode,
-                hasConfigId: !!formState.configId
-            });
-
-            // Se siamo in modalità edit e abbiamo un configId
-            if (formState.configId && !initialLoadComplete && !editMode) {
-                console.log('📥 Modalità Edit rilevata - Caricamento argomenti per chatbot ID:', formState.configId);
-
-                try {
-                    dispatch(setLoadingArgomenti(true));
-
-                    // Ottieni sesskey e wwwroot
-                    const sesskey = getMoodleSesskey();
-                    // Usa l'URL corrente completo invece di window.location.origin
-                    const wwwroot = window.location.origin + '/moodle/moodle';
-
-                    console.log('🔗 Parametri per chiamata API:', {
-                        configId: formState.configId,
-                        sesskey: sesskey ? 'OK' : 'MISSING',
-                        wwwroot
-                    });
-
-                    // Carica argomenti dal database Moodle
-                    const result = await loadArgomentiForEdit(formState.configId, sesskey, wwwroot);
-
-                    console.log('📊 Risultato chiamata loadArgomentiForEdit:', {
-                        success: result.success,
-                        count: result.count,
-                        argomenti: result.argomenti
-                    });
-
-                    if (result.success) {
-                        console.log('✅ Argomenti recuperati dal database:', result.argomenti);
-                        console.log(`📈 Totale argomenti caricati: ${result.count}`);
-
-                        // Ora usa la nuova azione Redux per caricare gli argomenti
-                        dispatch(loadArgomentiSuccess({
-                            argomenti: result.argomenti,
-                            count: result.count
-                        }));
-                    } else {
-                        console.warn('⚠️ Nessun argomento trovato o errore:', result.message);
-                        dispatch(loadArgomentiError(result.message || 'Errore nel caricamento argomenti'));
-                    }
-
-                } catch (error) {
-                    console.error('❌ Errore caricamento argomenti:', error);
-                    console.error('❌ Stack trace:', error.stack);
-                    dispatch(loadArgomentiError(error.message));
-                } finally {
-                    dispatch(setLoadingArgomenti(false));
-                    setInitialLoadComplete(true);
-                }
-            } else {
-                console.log('ℹ️ Skip caricamento argomenti:', {
-                    hasConfigId: !!formState.configId,
-                    initialLoadComplete,
-                    editMode,
-                    reason: !formState.configId ? 'No configId' :
-                        initialLoadComplete ? 'Already loaded' :
-                            editMode ? 'Already in edit mode' : 'Unknown'
-                });
-            }
-        };
-
-        loadArgomentiIfEdit();
-    }, [formState.configId, initialLoadComplete, editMode, dispatch]);
-
-
-    // Nuovo useEffect per caricare i file di ogni argomento in modalità edit
-    useEffect(() => {
-        const loadFilesForArgomenti = async () => {
-            if (!editMode || !formState.configId || filesLoaded) return;
-
-            try {
-                const updatedArgomenti = await Promise.all(argomenti.map(async (argomento) => {
-                    if (!argomento.id) return argomento; // Salta argomenti senza ID
-
-                    const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'same-origin',
-                        body: JSON.stringify([
-                            {
-                                methodname: 'local_configuratore_get_files_by_argomento',
-                                args: { argomentoid: argomento.id }
-                            }
-                        ])
-                    });
-
-                    if (!response.ok) {
-                        console.error(`Errore nel caricamento dei file per l'argomento ${argomento.id}`);
-                        return argomento;
-                    }
-
-                    const result = await response.json();
-                    const files = result[0]?.data || [];
-
-                    console.log('📂 File caricati per argomento:', {
-                        argomentoId: argomento.id,
-                        files: files,
-                        filenames: files.map(file => file.filename)
-                    });
-
-                    return {
-                        ...argomento,
-                        file: files.map(file => ({ id: file.id, fileName: file.filename })) // Modifica il nome in fileName
-                    };
-                }));
-
-                dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
-                setFilesLoaded(true); // Imposta lo stato per evitare ricaricamenti
-            } catch (error) {
-                console.error('Errore nel caricamento dei file per gli argomenti:', error);
-            }
-        };
-
-        // Usa un controllo per evitare il ciclo infinito
-        if (!filesLoaded) {
-            loadFilesForArgomenti();
-        }
-    }, [editMode, formState.configId, dispatch, argomenti, sesskey, wwwroot]);
-
 
     const handleStepSuccessivo = () => {
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');

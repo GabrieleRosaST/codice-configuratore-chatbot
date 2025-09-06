@@ -1,6 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const colors = [
+// Esporta l'array di colori per essere utilizzato anche in altri file
+export const colors = [
     '#F3A6A7',
     '#F6D987',
     '#CAE3FE',
@@ -28,6 +29,18 @@ const colors = [
 let nextId = 1; // Contatore globale per ID univoci
 let colorIndex = 0; // Indice globale per il colore
 
+// Funzione per ottenere il prossimo colore in sequenza
+export const getNextColor = () => {
+    const color = colors[colorIndex];
+    colorIndex = (colorIndex + 1) % colors.length;
+    return color;
+};
+
+// Funzione per resettare l'indice del colore
+export const resetColorIndex = () => {
+    colorIndex = 0;
+};
+
 const argomentiSlice = createSlice({
     name: 'argomenti',
     initialState: {
@@ -45,14 +58,11 @@ const argomentiSlice = createSlice({
             const nuovoArgomento = {
                 id: nextId++, // Usa il contatore globale per generare un ID univoco
                 titolo: action.payload.titolo || '',
-                colore: colors[colorIndex], // Assegna il colore in base all'indice globale
+                colore: getNextColor(), // Usa la funzione esportata per consistenza
                 file: action.payload.file || [],
                 isNew: action.payload.isNew !== undefined ? action.payload.isNew : true // Default true per nuovi argomenti
             };
             state.argomenti.push(nuovoArgomento);
-
-            // Incrementa l'indice del colore e resetta se necessario
-            colorIndex = (colorIndex + 1) % colors.length;
         },
 
         aggiornaFileArgomento: (state, action) => {
