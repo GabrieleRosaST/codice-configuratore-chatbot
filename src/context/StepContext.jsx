@@ -14,6 +14,9 @@ export const StepProvider = ({ children }) => {
     const [primaVisitaStep1, setPrimaVisitaStep1] = useState(true); // Stato per tracciare la prima visita allo step 1
     const [isEditMode, setIsEditMode] = useState(false); // Stato per tracciare se siamo in modalità edit
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // Stato per tracciare modifiche non salvate
+    const [hasUnsavedChangesPianoLavoro, setHasUnsavedChangesPianoLavoro] = useState(false); // Stato per tracciare modifiche non salvate
+    const [hasUnsavedChangesConfigurazione, setHasUnsavedChangesConfigurazione] = useState(false); // Stato per tracciare modifiche non salvate
+
 
     return (
         <StepContext.Provider value={{
@@ -26,7 +29,11 @@ export const StepProvider = ({ children }) => {
             isEditMode,
             setIsEditMode,
             hasUnsavedChanges,
-            setHasUnsavedChanges
+            setHasUnsavedChanges,
+            hasUnsavedChangesPianoLavoro,
+            setHasUnsavedChangesPianoLavoro,
+            hasUnsavedChangesConfigurazione,
+            setHasUnsavedChangesConfigurazione
         }}>
             {children}
         </StepContext.Provider>

@@ -12,7 +12,8 @@ import { useStepContext } from '../context/StepContext';
 function Navbar() {
     const location = useLocation();
     const currentPage = location.pathname.slice(1);
-    const { completedSteps, isEditMode, hasUnsavedChanges } = useStepContext(); // Usa il contesto per accedere allo stato
+    const { completedSteps, isEditMode, hasUnsavedChanges, hasUnsavedChangesPianoLavoro, hasUnsavedChangesConfigurazione } = useStepContext(); // Usa il contesto per accedere allo stato
+
 
     const navItems = [
         {
@@ -21,7 +22,7 @@ function Navbar() {
             icon: configurazioneIcon,
             iconActive: configurazioneIconActive,
             link: '/configurazione',
-            disabled: false,
+            disabled: hasUnsavedChangesConfigurazione ? hasUnsavedChangesConfigurazione : false,
         },
         {
             id: 'argomentiRiferimenti',
@@ -41,7 +42,7 @@ function Navbar() {
             link: '/pianoLavoro',
             // In modalità edit: abilitato se non ci sono modifiche non salvate
             // In modalità create: abilitato solo se step1 e step2 sono completati
-            disabled: isEditMode ? hasUnsavedChanges : (!completedSteps.step2 || !completedSteps.step1),
+            disabled: isEditMode ? hasUnsavedChangesPianoLavoro : (!completedSteps.step2 || !completedSteps.step1),
         },
     ];
 

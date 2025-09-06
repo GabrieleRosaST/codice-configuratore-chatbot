@@ -28,7 +28,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const isLoadingArgomenti = useSelector((state) => state.argomenti.loading);
     const editMode = useSelector((state) => state.argomenti.editMode);
 
-    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2 } = useStepContext();
+    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2, setHasUnsavedChangesPianoLavoro, setHasUnsavedChangesConfigurazione, isEditMode } = useStepContext();
 
     // Component state
     const [mostraAiuto, setMostraAiuto] = useState(false);
@@ -52,6 +52,15 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             dispatch(setInitialArgomentiSnapshot());
         }
     }, [argomenti, initialArgomenti.length, dispatch]); // Esegui ogni volta che gli argomenti o initialArgomenti cambiano
+
+    // useEffect per gestire hasUnsavedChanges in modalità edit
+    useEffect(() => {
+        if (isEditMode && initialArgomenti.length > 0) {
+            const hasChanges = hasArgomentiChanged();
+            setHasUnsavedChangesPianoLavoro(hasChanges);
+            setHasUnsavedChangesConfigurazione(hasChanges);
+        }
+    }, [argomenti, initialArgomenti, isEditMode, setHasUnsavedChangesPianoLavoro, setHasUnsavedChangesConfigurazione]);
 
     const handleAggiungiArgomento = () => {
 
@@ -207,6 +216,10 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
                 // Aggiorna lo snapshot iniziale in Redux dopo il salvataggio
                 dispatch(setInitialArgomentiSnapshot());
+                // Reset hasUnsavedChanges dopo il salvataggio
+                setHasUnsavedChangesPianoLavoro(false);
+                setHasUnsavedChangesConfigurazione(false);
+
                 navigate("/pianoLavoro");
             } else {
                 console.error('❌ Errore nel salvataggio:', result[0]?.data?.message || 'Messaggio non disponibile');

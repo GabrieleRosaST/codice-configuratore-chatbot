@@ -41,7 +41,8 @@ function Configurazione({ sesskey, wwwroot }) {
         isEditMode,
         setIsEditMode,
         hasUnsavedChanges,
-        setHasUnsavedChanges
+        setHasUnsavedChanges,
+        setHasUnsavedChangesPianoLavoro
     } = useStepContext(); // Usa il contesto per aggiornare lo stato
 
 
@@ -243,6 +244,7 @@ function Configurazione({ sesskey, wwwroot }) {
             );
 
             setHasUnsavedChanges(hasFormChanges);
+            setHasUnsavedChangesPianoLavoro(hasFormChanges);
         }
     }, [formState, originalData, isEditMode]);
 
@@ -766,6 +768,7 @@ function Configurazione({ sesskey, wwwroot }) {
                 setCourseNameChanged(false);
                 setPrimaVisitaStep1(false);
                 setHasUnsavedChanges(false);
+                setHasUnsavedChangesPianoLavoro(false);
                 navigate("/argomentiRiferimenti");
             }
         } catch (error) {
@@ -901,6 +904,7 @@ function Configurazione({ sesskey, wwwroot }) {
 
                 // 5. RESET DELLO STATO MODIFICHE
                 setHasUnsavedChanges(false);
+                setHasUnsavedChangesPianoLavoro(false);
 
                 // 6. COMPLETA LO STEP 1 NEL CONTESTO
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
@@ -1100,6 +1104,7 @@ function Configurazione({ sesskey, wwwroot }) {
             console.log('🔄 Ripristinando ai valori originali:', originalData);
             dispatch(updateForm(originalData));
             setHasUnsavedChanges(false);
+            setHasUnsavedChangesPianoLavoro(false);
             setErrors({
                 nomeChatbot: false,
                 corsoChatbot: false,
