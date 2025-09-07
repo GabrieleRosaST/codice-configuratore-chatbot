@@ -3,11 +3,12 @@ import { useDrop } from 'react-dnd';
 import Argomento from "./argomentoDrag";
 
 
-export default function Giorno({ giorno, isInCorso, isAltroMese, spostaArgomento }) {
+export default function Giorno({ giorno, isInCorso, isAltroMese, isPast, spostaArgomento }) {
     const [{ isOver }, drop] = useDrop({
         accept: 'ARGOMENTO',
         canDrop: () => {
-            return isInCorso;
+            // Permetti il drop solo se il giorno è nel corso E non è un giorno passato
+            return isInCorso && !isPast;
         },
         drop: (item) => {
             spostaArgomento(item.argomento, item.giornoOrigine, giorno);
@@ -17,9 +18,9 @@ export default function Giorno({ giorno, isInCorso, isAltroMese, spostaArgomento
         }),
     });
 
-    // Determina la classe CSS in base a isInCorso, isAltroMese e isOver
+    // Determina la classe CSS in base a isInCorso, isAltroMese, isPast e isOver
     const giornoClasse = isInCorso
-        ? isOver
+        ? isOver && !isPast // Non mostrare l'effetto hover sui giorni passati
             ? isAltroMese
                 ? "bg-[#FAF4DB] opacity-64" // Colore più scuro per giorni del corso di altri mesi quando isOver
                 : "bg-[#FAF4DB] opacity-98" // Colore più scuro per giorni del corso del mese corrente quando isOver
@@ -30,10 +31,13 @@ export default function Giorno({ giorno, isInCorso, isAltroMese, spostaArgomento
             ? "bg-[#FFFFFF]" // Bianco per giorni del mese corrente non nel corso
             : "bg-[#F9FAFC]"; // Grigio chiaro per giorni di altri mesi non nel corso
 
+    // Applica opacità ridotta ai giorni passati
+    const opacitaGiorno = isPast ? "opacity-50" : "";
+
     return (
         <div
             ref={drop}
-            className={`text-center h-25 2xl:h-25 p-1 ${giornoClasse} transition duration-10  `}
+            className={`text-center h-25 2xl:h-25 p-1 ${giornoClasse} ${opacitaGiorno} transition duration-10`}
         >
             <p className={`text-[10px] mt-[3px] text-[#1D2125] ${!isInCorso && giorno.tipo !== "corrente" ? "opacity-30" : "opacity-90"}`}>
                 {giorno.giorno}
@@ -46,8 +50,7 @@ export default function Giorno({ giorno, isInCorso, isAltroMese, spostaArgomento
                 }}
             >
                 {giorno.argomenti.map((argomento) => (
-
-                    < Argomento key={argomento.id} argomento={argomento} giornoOrigine={giorno} />
+                    < Argomento key={argomento.id} argomento={argomento} giornoOrigine={giorno} isPast={isPast} />
                 ))}
             </div>
         </div>

@@ -16,6 +16,7 @@ import closeAiutoIcon from '../img/closeAiutoIcon.svg';
 import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
 import fileStorage from '../utils/fileStorage'; // Importa fileStorage
+import { useStepContext } from '../context/StepContext';
 
 import { db } from '../firebase';
 import { doc, setDoc, collection } from "firebase/firestore";
@@ -31,6 +32,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const generateJson = useGenerateJson(); // Usa il custom hook
+    const { isEditMode } = useStepContext(); // Recupera la modalità edit
     const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti, primaVisita } = useSelector((state) => state.calendario);
     const { dataInizio, dataFine } = useSelector((state) => state.form);
 
@@ -45,6 +47,19 @@ function PianoLavoro({ sesskey, wwwroot }) {
     const [mostraAiuto, setMostraAiuto] = useState(false); // Stato per gestire la visibilità del div di aiuto
     const [isLoading, setIsLoading] = useState(false); // Stato per il loading del pulsante
     const dataInizioDate = new Date(dataInizio);
+
+    // Funzione per determinare se un giorno è passato
+    const isDayPast = (giorno, mese, anno) => {
+        if (!isEditMode) return false; // Se non siamo in modalità edit, nessun giorno è "passato"
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Imposta l'ora a mezzanotte per confronto solo per data
+
+        const dayDate = new Date(anno, mese, giorno);
+        dayDate.setHours(0, 0, 0, 0);
+
+        return dayDate < today;
+    };
 
 
 
@@ -152,6 +167,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
                 argomenti,
                 dataInizio,
                 dataFine,
+                isEditMode, // Passa la modalità edit per filtrare i giorni passati
             }));
             shouldRedistribute = false;
         }
@@ -164,10 +180,11 @@ function PianoLavoro({ sesskey, wwwroot }) {
                 argomenti,
                 dataInizio,
                 dataFine,
+                isEditMode, // Passa la modalità edit per filtrare i giorni passati
             }));
         }
         // eslint-disable-next-line
-    }, [dispatch, argomenti, shouldRedistribute, giorniCorso, argomentiDistribuiti]);
+    }, [dispatch, argomenti, shouldRedistribute, giorniCorso, argomentiDistribuiti, isEditMode]);
 
 
 
@@ -597,13 +614,15 @@ function PianoLavoro({ sesskey, wwwroot }) {
                                     // Determina se il giorno è nel corso
                                     const isInCorso = !!giornoCorso;
 
-
+                                    // Determina se il giorno è passato (solo in modalità edit)
+                                    const isPast = isDayPast(giornoCorrente.giorno, giornoCorrente.mese, giornoCorrente.anno);
 
                                     return (
                                         <Giorno
                                             key={index}
                                             giorno={isInCorso ? giornoCorso : giornoCorrente} // Passa il giorno del corso se esiste, altrimenti il giorno normale
                                             isInCorso={isInCorso}
+                                            isPast={isPast} // Passa l'informazione se il giorno è passato
                                             isAltroMese={giornoCorrente.tipo !== "corrente"} // Determina se il giorno appartiene a un altro mese
                                             spostaArgomento={(argomento, giornoOrigine, giornoDestinazione) => {
                                                 // Dispatch per spostare l'argomento

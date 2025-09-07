@@ -138,6 +138,43 @@ function Configurazione({ sesskey, wwwroot }) {
         return originalStartDate > today;
     };
 
+    // Funzione per determinare se la data di fine può essere modificata liberamente
+    const canEditEndDate = () => {
+        // MODALITÀ CREATE: Sempre modificabile
+        if (!isEditMode) {
+            return true;
+        }
+
+        // MODALITÀ EDIT: Dipende dalla data originale e dalle modifiche dell'utente
+        if (!formState.dataFine || !originalData) {
+            return true; // Nessuna data o dati originali = modificabile
+        }
+
+        // ✅ CASO 1: Se c'è un errore di validazione sulla data di fine,
+        // DEVE essere modificabile per permettere la correzione
+        if (errors.dataFine) {
+            return true;
+        }
+
+        // ✅ CASO 2: Se l'utente ha già modificato la data rispetto all'originale,
+        // DEVE rimanere modificabile (anche se ora è passata)
+        if (formState.dataFine !== originalData.dataFine) {
+            return true;
+        }
+
+        // ✅ CASO 3: Data non modificata - controlla se l'originale era futura
+        // Solo il valore iniziale dal database conta per il blocco
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const originalEndDate = new Date(originalData.dataFine);
+        originalEndDate.setHours(0, 0, 0, 0);
+
+        // Può modificare SOLO se la data ORIGINALE era FUTURA
+        // Se data originale <= oggi → corso già finito/finisce oggi → NON modificabile
+        return originalEndDate > today;
+    };
+
     // Effetto per leggere i parametri URL e popolare il form in modalità edit
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -699,8 +736,32 @@ function Configurazione({ sesskey, wwwroot }) {
                 newErrors.dataFine = true;
                 hasError = true;
                 alert("La data di fine deve essere compresa tra il 2024 e il 2030.");
+            } else if (isEditMode) {
+                // *** MODALITÀ EDIT - CONTROLLI AGGIUNTIVI ***
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const endDateCheck = new Date(formState.dataFine);
+                endDateCheck.setHours(0, 0, 0, 0);
+
+                // Controlla se la data di fine originale era futura
+                const originalEndDate = originalData ? new Date(originalData.dataFine) : null;
+                if (originalEndDate) {
+                    originalEndDate.setHours(0, 0, 0, 0);
+                }
+
+                // Se la data originale era futura e ora si tenta di metterla passata/oggi, blocca
+                if (originalEndDate && originalEndDate > today && endDateCheck <= today) {
+                    console.log('📅 EDIT: Tentativo di impostare data fine passata quando originale era futura');
+                    newErrors.dataFine = true;
+                    hasError = true;
+                    alert("Non è possibile impostare una data di fine passata o uguale a oggi quando la data originale era futura.");
+                } else {
+                    console.log('📅 EDIT: Data fine valida per modalità edit');
+                }
+            } else {
+                // *** MODALITÀ CREAZIONE ***
+                console.log('📅 CREATE: Data fine valida per modalità creazione');
             }
-            // Se passa tutti i controlli, è valida
         }
 
         // Aggiorna lo stato degli errori
@@ -1495,19 +1556,38 @@ function Configurazione({ sesskey, wwwroot }) {
 
                                         {/* data di fine */}
                                         <div className="min-w-[40%]  flex flex-col">
-                                            <p className="w-full h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Data fine corso</p>
+                                            <div className="flex items-center">
+                                                <p className="w-full h-[28.77px] text-[13px] font-medium text-left text-[#1d2125] ">Data fine corso</p>
+                                                {!canEditEndDate() && (
+                                                    <div className="relative ml-2 group">
+                                                        <div className="w-3 h-3 rounded-full bg-[#6982AB] text-white text-xs flex items-center justify-center cursor-help opacity-60 hover:opacity-100 transition-opacity duration-200">
+                                                            i
+                                                        </div>
+                                                        {/* Tooltip */}
+                                                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-[#6982AB] text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 whitespace-nowrap">
+                                                            Non modificabile: corso già terminato
+                                                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-b-2 border-transparent border-b-[#6982AB]"></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                             <input
                                                 id="end-date"
                                                 type="date"
                                                 value={formState.dataFine}
                                                 min="2024-01-01"
                                                 max="2100-12-31"
+                                                disabled={!canEditEndDate()}
                                                 onChange={(e) => {
                                                     dispatch(updateForm({ dataFine: e.target.value }));
                                                     setErrors((prev) => ({ ...prev, dataFine: false }));
                                                 }}
-                                                className={`w-full h-9 p-2 pl-3 rounded-[10px]  bg-white ${errors.dataFine ? "border-red-500 bg-red-50" : "border-[#bfbfbf]/[0.56]"
-                                                    } border border-[#bfbfbf]/[0.56] placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
+                                                className={`w-full h-9 p-2 pl-3 rounded-[10px] bg-white ${!canEditEndDate()
+                                                    ? "border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
+                                                    : errors.dataFine
+                                                        ? "border-red-500 bg-red-50"
+                                                        : "border-[#bfbfbf]/[0.56]"
+                                                    } border placeholder-[#A3A7AA] placeholder-opacity-51 text-[13px] text-[#495057] shadow-[0px_0px_6.7px_4px_rgba(0,0,0,0.02)]`}
                                             />
                                         </div>
                                     </div>
