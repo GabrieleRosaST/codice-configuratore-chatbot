@@ -8,7 +8,6 @@ async function getIdToken(targetAudience) {
     const headers = await client.getRequestHeaders();
 
     // LOG!
-    console.log('[auth.js] Headers ricevuti da getRequestHeaders:', headers);
 
     // Accetta sia .authorization (string) sia ["authorization"] (in Headers object)
     let authHeader;

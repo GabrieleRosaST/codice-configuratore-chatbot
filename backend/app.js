@@ -29,17 +29,13 @@ app.use(express.json());
 
 app.post('/trigger-embeddings', async (req, res) => {
     const apiToken = req.body.token;
-    console.log('[trigger-embeddings] Ricevuto chiamata!'); // <-- LOG
     if (!apiToken) {
-        console.log('[trigger-embeddings] Token mancante!'); // <-- LOG
-        return res.status(400).json({success: false, error: 'Token mancante'});
+        return res.status(400).json({ success: false, error: 'Token mancante' });
     }
     process.env.MOODLE_API_TOKEN = apiToken;
     updateEnvFileToken(apiToken); // <-- AGGIORNA  .env! da togliere quando deployato
-    console.log('[trigger-embeddings] Token ricevuto e salvato, avvio main()'); // <-- LOG
     try {
         await main();
-        console.log('[trigger-embeddings] main() completato con successo!');
         res.json({ success: true });
     } catch (e) {
         console.error('[trigger-embeddings] main() errore:', e);

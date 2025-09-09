@@ -16,8 +16,9 @@ import frecciaDestraButton from '../img/frecciaDestraButton.svg';
 import aitext from '../img/aitext.svg';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { updateForm } from '../store/formSlice';
+import { updateForm, setInitialStateSnapshot, selectInitialStateSnapshot } from '../store/formSlice';
 import { setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
+import { distribuisciArgomentiGiorniCorso } from '../store/calendarioSlice';
 import { loadArgomentiForEdit, getMoodleSesskey } from '../utils/loadUtils';
 import { useStepContext } from '../context/StepContext.jsx';
 import { db } from '../firebase';
@@ -180,21 +181,10 @@ function Configurazione({ sesskey, wwwroot }) {
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get('mode');
 
-        console.log('🔍 Configurazioneeee.jsx - URL params check:', {
-            mode: mode,
-            configIdFromURL: urlParams.get('configId'),
-            configIdFromRedux: formState.configId,
-            allParams: Object.fromEntries(urlParams.entries()),
-            currentFormState: formState,
-            currentIsEditMode: isEditMode
-        });
-
         // CASO 1: Primo accesso da card (mode=edit + parametri URL)
         // Ma solo se Redux non ha già i dati!
         if (mode === 'edit' && urlParams.get('configId') && !formState.configId) {
-            console.log('✅ CASO 1: Primo accesso in modalità edit (Redux vuoto)');
             setIsEditMode(true);
-            console.log('🔄 Impostato isEditMode a true');
 
             // Leggi tutti i parametri della configurazione
             const configData = {
@@ -209,19 +199,17 @@ function Configurazione({ sesskey, wwwroot }) {
                 userId: urlParams.get('userId') || ''
             };
 
-            console.log('📊 Populating form with URL data:', configData);
-
             // Salva i dati originali per il confronto
             setOriginalData(configData);
 
             // Popola il Redux store con i dati della configurazione
             dispatch(updateForm(configData));
+            dispatch(setInitialStateSnapshot(configData));
+
         }
         // CASO 2: Ritorno dalla navigazione (Redux ha già i dati)
         else if (mode === 'edit' && urlParams.get('configId') && formState.configId) {
-            console.log('✅ CASO 2: Ritorno dalla navigazione (Redux ha già i dati)');
             setIsEditMode(true);
-            console.log('🔄 Impostato isEditMode a true');
 
             // ✅ IMPOSTA originalData con i valori attuali del Redux
             // Questi sono i valori "salvati" che diventano il nuovo punto di riferimento
@@ -237,33 +225,19 @@ function Configurazione({ sesskey, wwwroot }) {
                 userId: formState.userId
             };
 
-            console.log('📊 Setting originalData from current Redux state:', currentDataAsOriginal);
             setOriginalData(currentDataAsOriginal);
 
             // Ora l'useEffect per monitorare le modifiche funzionerà correttamente
         }
         // CASO 3: Mode edit ma senza configId
         else if (mode === 'edit') {
-            console.log('⚠️ CASO 3: Mode edit ma senza configId nei parametri URL');
             setIsEditMode(true);
-            console.log('🔄 Impostato isEditMode a true comunque');
-        }
-        else {
-            console.log('ℹ️ Non in modalità edit, mode =', mode);
         }
     }, []); // Esegui solo al mount del componente
 
     // 🐛 DEBUG: Monitora i cambiamenti dei valori critici
     useEffect(() => {
-        console.log('🔍 DEBUG - Valori critici cambiati:', {
-            isEditMode: isEditMode,
-            configId: formState.configId,
-            initialLoadComplete: initialLoadComplete,
-            editModeArgomenti: editModeArgomenti,
-            argomentiLength: argomenti.length,
-            filesLoaded: filesLoaded,
-            timestamp: new Date().toLocaleTimeString()
-        });
+
     }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, argomenti.length, filesLoaded]);
 
 
@@ -317,26 +291,13 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // 🔄 CARICAMENTO ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO configId È DISPONIBILE
     useEffect(() => {
-        console.log('🚀 useEffect CARICAMENTO ARGOMENTI attivato!', {
-            isEditMode,
-            configId: formState.configId,
-            initialLoadComplete,
-            editModeArgomenti,
-            timestamp: new Date().toLocaleTimeString()
-        });
+
 
         const loadArgomentiIfEdit = async () => {
-            console.log('🔍 Debug - Checking edit mode:', {
-                configId: formState.configId,
-                initialLoadComplete,
-                editModeArgomenti,
-                hasConfigId: !!formState.configId,
-                isEditMode
-            });
+
 
             // Se siamo in modalità edit e abbiamo un configId e non abbiamo già caricato
             if (isEditMode && formState.configId && !initialLoadComplete && !editModeArgomenti) {
-                console.log('📥 Modalità Edit rilevata - Caricamento argomenti per chatbot ID:', formState.configId);
 
                 try {
                     dispatch(setLoadingArgomenti(true));
@@ -346,24 +307,12 @@ function Configurazione({ sesskey, wwwroot }) {
                     // Usa l'URL corrente completo invece di window.location.origin
                     const currentWwwroot = window.location.origin + '/moodle/moodle';
 
-                    console.log('🔗 Parametri per chiamata API:', {
-                        configId: formState.configId,
-                        sesskey: sessionKey ? 'OK' : 'MISSING',
-                        wwwroot: currentWwwroot
-                    });
 
                     // Carica argomenti dal database Moodle
                     const result = await loadArgomentiForEdit(formState.configId, sessionKey, currentWwwroot);
 
-                    console.log('📊 Risultato chiamata loadArgomentiForEdit:', {
-                        success: result.success,
-                        count: result.count,
-                        argomenti: result.argomenti
-                    });
 
                     if (result.success) {
-                        console.log('✅ Argomenti recuperati dal database:', result.argomenti);
-                        console.log(`📈 Totale argomenti caricati: ${result.count}`);
 
                         // Carica gli argomenti in Redux
                         dispatch(loadArgomentiSuccess({
@@ -388,17 +337,6 @@ function Configurazione({ sesskey, wwwroot }) {
                     dispatch(setLoadingArgomenti(false));
                     setInitialLoadComplete(true);
                 }
-            } else {
-                console.log('ℹ️ Skip caricamento argomenti:', {
-                    isEditMode,
-                    hasConfigId: !!formState.configId,
-                    initialLoadComplete,
-                    editModeArgomenti,
-                    reason: !isEditMode ? 'Not in edit mode' :
-                        !formState.configId ? 'No configId' :
-                            initialLoadComplete ? 'Already loaded' :
-                                editModeArgomenti ? 'Already in edit mode' : 'Unknown'
-                });
             }
         };
 
@@ -410,19 +348,11 @@ function Configurazione({ sesskey, wwwroot }) {
     // 📂 CARICAMENTO FILES PER ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO editModeArgomenti È TRUE
     useEffect(() => {
         const loadFilesForArgomenti = async () => {
-            console.log('📂 Controllo caricamento file:', {
-                editModeArgomenti,
-                hasConfigId: !!formState.configId,
-                filesLoaded,
-                argomentiCount: argomenti.length
-            });
+
 
             // Carica file solo se abbiamo argomenti e non li abbiamo già caricati
             if (editModeArgomenti && formState.configId && !filesLoaded && argomenti.length > 0) {
-                console.log('📂 Inizio caricamento file per argomenti:', {
-                    argomentiCount: argomenti.length,
-                    filesLoaded
-                });
+
 
                 try {
                     const updatedArgomenti = await Promise.all(argomenti.map(async (argomento) => {
@@ -448,11 +378,7 @@ function Configurazione({ sesskey, wwwroot }) {
                         const result = await response.json();
                         const files = result[0]?.data || [];
 
-                        console.log('📂 File caricati per argomento:', {
-                            argomentoId: argomento.id,
-                            files: files,
-                            filenames: files.map(file => file.filename)
-                        });
+
 
                         return {
                             ...argomento,
@@ -460,7 +386,6 @@ function Configurazione({ sesskey, wwwroot }) {
                         };
                     }));
 
-                    console.log('📂 Aggiornamento argomenti con file caricati');
                     dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
 
                     // Imposta lo snapshot iniziale per il ripristino
@@ -471,21 +396,33 @@ function Configurazione({ sesskey, wwwroot }) {
                     console.error('Errore nel caricamento dei file per gli argomenti:', error);
                 }
             } else {
-                console.log('📂 Skip caricamento file:', {
-                    editModeArgomenti,
-                    hasConfigId: !!formState.configId,
-                    filesLoaded,
-                    argomentiLength: argomenti.length,
-                    reason: !editModeArgomenti ? 'Not in edit mode' :
-                        !formState.configId ? 'No configId' :
-                            filesLoaded ? 'Already loaded' :
-                                argomenti.length === 0 ? 'No argomenti' : 'Unknown'
-                });
+
             }
         };
 
         loadFilesForArgomenti();
     }, [editModeArgomenti, formState.configId, argomenti.length, filesLoaded, sesskey, wwwroot]); // ✅ SI ATTIVA quando editModeArgomenti diventa true e ci sono argomenti
+
+
+
+    useEffect(() => {
+        // Chiamare la funzione di distribuzione con i dati iniziali
+        if (isEditMode) {
+            dispatch(
+                distribuisciArgomentiGiorniCorso({
+                    argomenti: argomenti,
+                    dataInizio: formState.dataInizio,
+                    dataFine: formState.dataFine,
+                })
+            );
+        }
+
+    }, [dispatch, argomenti, isEditMode]);
+
+
+
+
+
 
 
     const MIN_DATE = new Date("2024-01-01");
@@ -598,7 +535,6 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Funzione per verificare se esiste già un corso con lo stesso nome
     const checkCourseExists = async (courseName, excludeConfigId = null) => {
-        console.log('🔍 Verifica duplicati per corso:', courseName, 'escludi ID:', excludeConfigId);
         try {
             const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
                 method: 'POST',
@@ -618,14 +554,12 @@ function Configurazione({ sesskey, wwwroot }) {
             }
 
             const json = await response.json();
-            console.log('📊 Risposta controllo duplicati:', json);
 
             if (json[0] && json[0].error) {
                 throw new Error(json[0].exception?.message || 'Errore nel controllo duplicati');
             }
 
             const result = json[0]?.data;
-            console.log('✅ Risultato controllo:', result);
 
             return result?.exists || false;
         } catch (error) {
@@ -677,13 +611,10 @@ function Configurazione({ sesskey, wwwroot }) {
             if (!canModifyStartDate) {
                 // CASO 1: Data inizio PASSATA/UGUALE a oggi
                 // → NON modificabile → NON controllata → Passa sempre
-                console.log('📅 EDIT: Data passata - non modificabile, controlli saltati');
                 // Nessun errore, procedi
             } else {
                 // CASO 2: Data inizio FUTURA
                 // → Modificabile → Deve essere controllata
-                console.log('📅 EDIT: Data futura - modificabile, applico controlli');
-
                 if (startDate <= today) {
                     // Data modificata ma ora è passata/uguale a oggi
                     newErrors.dataInizio = true;
@@ -699,8 +630,6 @@ function Configurazione({ sesskey, wwwroot }) {
             }
         } else {
             // *** MODALITÀ CREAZIONE ***
-            console.log('📅 CREATE: Applico controlli standard');
-
             if (startDate <= today) {
                 // Data uguale o precedente a oggi
                 newErrors.dataInizio = true;
@@ -723,8 +652,6 @@ function Configurazione({ sesskey, wwwroot }) {
             newErrors.dataFine = true;
             hasError = true;
         } else {
-            console.log('📅 Controllo data fine');
-
             // Controlli comuni per entrambe le modalità
             if (endDate <= startDate) {
                 // Data fine deve essere successiva alla data inizio
@@ -751,16 +678,15 @@ function Configurazione({ sesskey, wwwroot }) {
 
                 // Se la data originale era futura e ora si tenta di metterla passata/oggi, blocca
                 if (originalEndDate && originalEndDate > today && endDateCheck <= today) {
-                    console.log('📅 EDIT: Tentativo di impostare data fine passata quando originale era futura');
                     newErrors.dataFine = true;
                     hasError = true;
                     alert("Non è possibile impostare una data di fine passata o uguale a oggi quando la data originale era futura.");
                 } else {
-                    console.log('📅 EDIT: Data fine valida per modalità edit');
+                    // Data fine valida
                 }
             } else {
                 // *** MODALITÀ CREAZIONE ***
-                console.log('📅 CREATE: Data fine valida per modalità creazione');
+                // Data fine valida
             }
         }
 
@@ -788,12 +714,8 @@ function Configurazione({ sesskey, wwwroot }) {
                 // CASO 1: MODALITÀ EDIT CON MODIFICHE - Salva le modifiche
                 // VERIFICA DUPLICATI SOLO SE IL NOME DEL CORSO È CAMBIATO
                 if (formState.corsoChatbot !== originalData.corsoChatbot) {
-                    console.log('🔍 Nome corso cambiato, verifico duplicati...', formState.corsoChatbot, originalData.corsoChatbot);
-
                     // Passa l'ID della configurazione corrente per escluderla dal controllo
                     const courseExists = await checkCourseExists(formState.corsoChatbot, originalData.configId);
-
-                    console.log('🔍 Risultato verifica duplicati:', courseExists);
 
                     if (courseExists) {
                         alert(`Esiste già un corso con il nome "${formState.corsoChatbot}". Scegli un nome diverso.`);
@@ -806,15 +728,12 @@ function Configurazione({ sesskey, wwwroot }) {
                 await updateExistingConfiguration();
             } else if (isEditMode && !hasUnsavedChanges) {
                 // CASO 2: MODALITÀ EDIT SENZA MODIFICHE - Vai direttamente al prossimo step
-                console.log('✅ CASO 2: Edit mode senza modifiche - passo direttamente al prossimo step');
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
                 setCourseNameChanged(false);
                 setPrimaVisitaStep1(false);
                 navigate("/argomentiRiferimenti");
             } else {
                 // CASO 3: MODALITÀ CREATE - Verifica duplicati e procedi al prossimo step
-                console.log('✅ CASO 3: Create mode - verifico duplicati');
-
                 // Non passare excludeId perché stiamo creando un nuovo corso
                 const courseExists = await checkCourseExists(formState.corsoChatbot, null);
 
@@ -845,17 +764,6 @@ function Configurazione({ sesskey, wwwroot }) {
     // Funzione per aggiornare la configurazione esistente
     const updateExistingConfiguration = async () => {
         try {
-            console.log('🔄 Inizio aggiornamento configurazione...');
-            console.log('📊 originalData:', originalData);
-            console.log('📝 formState attuale:', {
-                corsoChatbot: formState.corsoChatbot,
-                nomeChatbot: formState.nomeChatbot,
-                descrizioneChatbot: formState.descrizioneChatbot,
-                istruzioniChatbot: formState.istruzioniChatbot,
-                dataInizio: formState.dataInizio,
-                dataFine: formState.dataFine
-            });
-
             const configData = {
                 corsoChatbot: formState.corsoChatbot,
                 nomeChatbot: formState.nomeChatbot,
@@ -864,8 +772,6 @@ function Configurazione({ sesskey, wwwroot }) {
                 dataInizio: formState.dataInizio,
                 dataFine: formState.dataFine
             };
-
-            console.log('📦 configData preparato:', configData);
 
             const requestBody = [{
                 methodname: 'local_configuratore_update_chatbot_basic',
@@ -876,8 +782,6 @@ function Configurazione({ sesskey, wwwroot }) {
                 }
             }];
 
-            console.log('📨 Request body:', JSON.stringify(requestBody, null, 2));
-
             // 1. AGGIORNA IL DATABASE MOODLE
             const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
                 method: 'POST',
@@ -886,8 +790,6 @@ function Configurazione({ sesskey, wwwroot }) {
                 body: JSON.stringify(requestBody)
             });
 
-            console.log('📡 Response status:', response.status);
-
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Response error text:', errorText);
@@ -895,7 +797,6 @@ function Configurazione({ sesskey, wwwroot }) {
             }
 
             const json = await response.json();
-            console.log('📦 Response JSON:', json);
 
             if (json[0] && json[0].error) {
                 console.error('❌ Server error details:', json[0].exception);
@@ -903,12 +804,8 @@ function Configurazione({ sesskey, wwwroot }) {
             }
 
             if (json[0] && json[0].data && json[0].data.success) {
-                console.log('✅ Aggiornamento Moodle riuscito!');
-
                 // 2. AGGIORNA FIRESTORE
                 try {
-                    console.log('🔄 Aggiornamento Firestore in corso...');
-
                     // Ottieni l'userId per Firestore
                     const userId = await getUserIdFromMoodle();
                     if (!userId) {
@@ -925,15 +822,10 @@ function Configurazione({ sesskey, wwwroot }) {
                         dataFine: formState.dataFine
                     };
 
-                    console.log('📦 Dati Firestore preparati:', firestoreData);
-
                     // Aggiorna il documento su Firestore
                     // Assumi che il documento abbia l'ID uguale al configId
-                    console.log('COURSEIDDD', originalData.courseId)
                     const courseDocRef = doc(db, 'users', userId, 'courses', originalData.courseId);
                     await updateDoc(courseDocRef, firestoreData);
-
-                    console.log('✅ Aggiornamento Firestore riuscito!');
 
                 } catch (firestoreError) {
                     console.warn('⚠️ Errore aggiornamento Firestore (ma Moodle è stato salvato):', firestoreError);
@@ -971,7 +863,6 @@ function Configurazione({ sesskey, wwwroot }) {
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
 
                 // 7. NAVIGA ALLA SEZIONE ARGOMENTI
-                console.log('🔄 Navigating to arguments section...');
                 navigate("/argomentiRiferimenti");
 
             } else {
@@ -995,8 +886,6 @@ function Configurazione({ sesskey, wwwroot }) {
         try {
             // Debug: verifica se la chiave API è caricata
             const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-            console.log('API Key disponibile:', apiKey ? 'Sì' : 'No');
-            console.log('Primi caratteri della chiave:', apiKey ? apiKey.substring(0, 10) + '...' : 'Nessuna chiave');
 
             if (!apiKey) {
                 throw new Error('Chiave API OpenAI non trovata. Verifica il file .env');
@@ -1022,7 +911,6 @@ function Configurazione({ sesskey, wwwroot }) {
                 })
             });
 
-            console.log('Risposta API status:', response.status);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -1058,8 +946,6 @@ function Configurazione({ sesskey, wwwroot }) {
             }
 
             const courseName = formState.corsoChatbot || 'il corso';
-
-            console.log('Generazione nome assistente per il corso:', courseName);
 
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
@@ -1162,7 +1048,6 @@ function Configurazione({ sesskey, wwwroot }) {
     // Funzione per ripristinare ai valori originali
     const resetToOriginalValues = () => {
         if (originalData) {
-            console.log('🔄 Ripristinando ai valori originali:', originalData);
             dispatch(updateForm(originalData));
             setHasUnsavedChanges(false);
             setHasUnsavedChangesPianoLavoro(false);
@@ -1188,7 +1073,6 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Funzione per salvare la bozza (modalità CREATE)
     const saveAsDraft = async () => {
-        console.log('💾 Salvataggio bozza in corso...');
         // TODO: Implementare il salvataggio della bozza
         // Qui andrà la logica per salvare i dati come bozza
 
@@ -1213,23 +1097,15 @@ function Configurazione({ sesskey, wwwroot }) {
     useEffect(() => {
 
         const handlePopState = (event) => {
-            console.log('🔙 Navigazione indietro rilevata');
-            console.log('📝 Campi compilati:', hasFieldsCompiled());
-
             if (hasFieldsCompiled()) {
-                console.log('⚠️ Mostro alert per modifiche non salvate');
                 const confirmLeave = window.confirm('Hai modifiche non salvate. Vuoi davvero uscire?');
                 if (!confirmLeave) {
-                    console.log('❌ Utente ha cancellato, rimango sulla pagina');
                     // Se l'utente cancella, rimani sulla pagina attuale
                     window.history.pushState(null, '', window.location.href);
                     return;
                 }
-                console.log('✅ Utente ha confermato, esco dalla pagina');
-
             }
             // Reindirizza alla pagina onboarding usando il parametro wwwroot
-            console.log('🔄 Reindirizzo a onboarding');
             window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
         };        // Aggiungi un entry nella cronologia per intercettare il back
         window.history.pushState(null, '', window.location.href);
@@ -1660,7 +1536,6 @@ function Configurazione({ sesskey, wwwroot }) {
                                     {/* Visivo */}
                                     <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
-                                            console.log('Selected: Apprendimento Visivo');
                                             setSelectedVarkButton('visual');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'visual'
@@ -1681,7 +1556,6 @@ function Configurazione({ sesskey, wwwroot }) {
                                     {/* Uditivo */}
                                     <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
-                                            console.log('Selected: Apprendimento Uditivo');
                                             setSelectedVarkButton('auditory');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'auditory'
@@ -1702,7 +1576,6 @@ function Configurazione({ sesskey, wwwroot }) {
                                     {/* Lettura/Scrittura */}
                                     <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
-                                            console.log('Selected: Apprendimento Lettura/Scrittura');
                                             setSelectedVarkButton('reading');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'reading'
@@ -1723,7 +1596,6 @@ function Configurazione({ sesskey, wwwroot }) {
                                     {/* Cinestetico */}
                                     <div className="w-[40%] min-w-[120px] h-12 relative flex justify-center items-center cursor-pointer hover:scale-105 transition-transform duration-200"
                                         onClick={() => {
-                                            console.log('Selected: Apprendimento Cinestetico');
                                             setSelectedVarkButton('kinesthetic');
                                         }}>
                                         <div className={`w-full h-full rounded-[15px] border-[2px] transition-all duration-200 flex justify-center items-center relative ${selectedVarkButton === 'kinesthetic'

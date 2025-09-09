@@ -8,11 +8,7 @@ export const loadArgomentiForEdit = async (configId, sesskey, wwwroot) => {
             throw new Error('Config ID non fornito');
         }
 
-        console.log('🔥 loadArgomentiForEdit chiamata con:', {
-            configId,
-            sesskey: sesskey ? 'OK' : 'MISSING',
-            wwwroot
-        });
+
 
         const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
             method: 'POST',
@@ -27,7 +23,6 @@ export const loadArgomentiForEdit = async (configId, sesskey, wwwroot) => {
             }])
         });
 
-        console.log('📡 Response status:', response.status);
 
         if (!response.ok) {
             throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
@@ -35,7 +30,6 @@ export const loadArgomentiForEdit = async (configId, sesskey, wwwroot) => {
 
         const json = await response.json();
 
-        console.log('📦 Raw response from Moodle:', json);
 
         if (json[0] && json[0].error) {
             console.error('🚨 Moodle error:', json[0].exception);
@@ -57,7 +51,6 @@ export const loadArgomentiForEdit = async (configId, sesskey, wwwroot) => {
             // Ordina gli argomenti per ID crescente
             const argomentiOrdered = argomentiFormatted.sort((a, b) => a.id - b.id);
 
-            console.log('✨ Argomenti formattati e ordinati per Redux:', argomentiOrdered);
 
             return {
                 success: true,
@@ -93,7 +86,6 @@ export const getMoodleSesskey = () => {
     // Cerca sesskey nei meta tag
     const metaSesskey = document.querySelector('meta[name="sesskey"]')?.content;
     if (metaSesskey) {
-        console.log('🔑 Sesskey trovata nei meta tag');
         return metaSesskey;
     }
 
@@ -101,7 +93,6 @@ export const getMoodleSesskey = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlSesskey = urlParams.get('sesskey');
     if (urlSesskey) {
-        console.log('🔑 Sesskey trovata nell\'URL');
         return urlSesskey;
     }
 
@@ -111,7 +102,6 @@ export const getMoodleSesskey = () => {
         if (script.innerHTML.includes('sesskey')) {
             const match = script.innerHTML.match(/sesskey['"]\s*:\s*['"]([^'"]+)['"]/);
             if (match) {
-                console.log('🔑 Sesskey trovata negli script');
                 return match[1];
             }
         }

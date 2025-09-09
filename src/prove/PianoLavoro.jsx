@@ -1,4 +1,4 @@
-Date
+
 import domandaIcon from '../img/domandaIcon.svg';
 import frecciaDestra from '../img/frecciaDestra.svg';
 import { useSelector, useDispatch } from 'react-redux';
@@ -9,7 +9,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Giorno from '../components/giorno.jsx';
 import { useEffect, useMemo } from 'react';
-import { data, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useGenerateJson } from '../utils/generateJson';
 import { useState } from 'react';
 import closeAiutoIcon from '../img/closeAiutoIcon.svg';
@@ -17,15 +17,15 @@ import obiettivoIcon from '../img/obiettivoIcon.svg';
 import studentIcon from '../img/studentIcon.svg';
 import fileStorage from '../utils/fileStorage'; // Importa fileStorage
 import { useStepContext } from '../context/StepContext';
-import { selectInitialStateSnapshot } from '../store/formSlice';
-
 
 import { db } from '../firebase';
 import { doc, setDoc, collection } from "firebase/firestore";
 import { uploadFilesAndGetData } from '../utils/api';
 
 
-let shouldRedistributeDate = false;
+let dataInizioGlobal = null;
+let dataFineGlobal = null;
+let shouldRedistribute = false;
 
 
 function PianoLavoro({ sesskey, wwwroot }) {
@@ -48,12 +48,6 @@ function PianoLavoro({ sesskey, wwwroot }) {
     const [isLoading, setIsLoading] = useState(false); // Stato per il loading del pulsante
     const dataInizioDate = new Date(dataInizio);
 
-
-    const initialStateSnapshot = useSelector(selectInitialStateSnapshot);
-    let dataInizioOriginal = initialStateSnapshot ? new Date(initialStateSnapshot.dataInizio) : null;
-    let dataFineOriginal = initialStateSnapshot ? new Date(initialStateSnapshot.dataFine) : null;
-
-
     // Funzione per determinare se un giorno è passato
     const isDayPast = (giorno, mese, anno) => {
         if (!isEditMode) return false; // Se non siamo in modalità edit, nessun giorno è "passato"
@@ -64,7 +58,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
         const dayDate = new Date(anno, mese, giorno);
         dayDate.setHours(0, 0, 0, 0);
 
-        return dayDate <= today;
+        return dayDate < today;
     };
 
 
@@ -153,11 +147,13 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
 
     useEffect(() => {
-
-        if (dataInizioOriginal !== dataInizio || dataFineOriginal !== dataFine) {
-            shouldRedistributeDate = true;
-            dataInizioOriginal = dataInizio;
-            dataFineOriginal = dataFine;
+        if (dataInizioGlobal === null || dataFineGlobal === null) {
+            dataInizioGlobal = dataInizio;
+            dataFineGlobal = dataFine;
+        } else if (dataInizioGlobal !== dataInizio || dataFineGlobal !== dataFine) {
+            shouldRedistribute = true;
+            dataInizioGlobal = dataInizio;
+            dataFineGlobal = dataFine;
         }
     }, []);
 
@@ -166,25 +162,29 @@ function PianoLavoro({ sesskey, wwwroot }) {
     useEffect(() => {
         dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
 
-
-
-        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
-        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
-        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
-
-
-        // Se le date sono cambiate oppure il numero di argomenti è cambiato, ridistribuisci
-        if (argomentiIds !== distribuitiIds || shouldRedistributeDate) {
+        if (shouldRedistribute) {
             dispatch(distribuisciArgomentiGiorniCorso({
                 argomenti,
                 dataInizio,
                 dataFine,
                 isEditMode, // Passa la modalità edit per filtrare i giorni passati
             }));
-            shouldRedistributeDate = false; // Resetta il flag dopo la ridistribuzione
+            shouldRedistribute = false;
+        }
+
+        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
+        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
+        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
+        if (argomentiIds !== distribuitiIds) {
+            dispatch(distribuisciArgomentiGiorniCorso({
+                argomenti,
+                dataInizio,
+                dataFine,
+                isEditMode, // Passa la modalità edit per filtrare i giorni passati
+            }));
         }
         // eslint-disable-next-line
-    }, [dispatch, argomenti, giorniCorso, argomentiDistribuiti, isEditMode]);
+    }, [dispatch, argomenti, shouldRedistribute, giorniCorso, argomentiDistribuiti, isEditMode]);
 
 
 

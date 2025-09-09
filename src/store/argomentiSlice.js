@@ -98,7 +98,6 @@ const argomentiSlice = createSlice({
         },
 
         loadArgomentiSuccess: (state, action) => {
-            console.log('🎯 Redux: loadArgomentiSuccess chiamata con:', action.payload);
 
             state.loading = false;
             state.error = null;
@@ -117,12 +116,7 @@ const argomentiSlice = createSlice({
                 nextId = maxId + 1;
             }
 
-            console.log('✅ Redux: Argomenti caricati, nuovo state:', {
-                argomenti: state.argomenti,
-                count: state.argomenti.length,
-                nextId: nextId,
-                editMode: state.editMode
-            });
+
         },
 
         loadArgomentiError: (state, action) => {
@@ -135,21 +129,17 @@ const argomentiSlice = createSlice({
 
         // Imposta lo snapshot iniziale degli argomenti per il ripristino
         setInitialArgomentiSnapshot: (state) => {
-            console.log('📸 Redux: Salvando snapshot iniziale degli argomenti');
             state.initialArgomenti = JSON.parse(JSON.stringify(state.argomenti)); // Deep copy
         },
 
         resetArgomenti: (state) => {
-            console.log('🔄 Redux: Ripristinando argomenti allo stato iniziale');
 
             if (state.initialArgomenti.length > 0) {
                 // Ripristina agli argomenti iniziali memorizzati
                 state.argomenti = JSON.parse(JSON.stringify(state.initialArgomenti)); // Deep copy
-                console.log('✅ Redux: Argomenti ripristinati:', state.argomenti);
             } else {
                 // Fallback: reset completo se non c'è snapshot
                 state.argomenti = [];
-                console.log('⚠️ Redux: Nessuno snapshot disponibile, reset completo');
                 nextId = 1;
                 colorIndex = 0;
             }

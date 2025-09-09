@@ -33,13 +33,7 @@ export async function uploadFilesAndGetData(filesToUpload, generatedJsonData, mo
             formData.append('repo_id', repo_id);
             formData.append('sesskey', sesskey);
 
-            console.log('Uploading with params:', {
-                fileName: file.name,
-                itemid,
-                repo_id,
-                sesskey,
-                formKeys: Array.from(formData.keys())
-            });
+
 
             const response = await fetch(
                 `${wwwroot}/repository/repository_ajax.php?action=upload`,
@@ -53,7 +47,6 @@ export async function uploadFilesAndGetData(filesToUpload, generatedJsonData, mo
             if (!response.ok) throw new Error('Upload file fallito!');
             const data = await response.json();
 
-            console.log("Risposta Moodle upload:", data);
 
             if (!data || !data['file']) throw new Error('Risposta upload errata');
 

@@ -48,7 +48,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     useEffect(() => {
         // Imposta lo snapshot iniziale degli argomenti nel Redux store dopo il caricamento completo
         if (argomenti.length > 0 && initialArgomenti.length === 0) {
-            console.log('📸 Impostazione snapshot iniziale degli argomenti in Redux');
             dispatch(setInitialArgomentiSnapshot());
         }
     }, [argomenti, initialArgomenti.length, dispatch]); // Esegui ogni volta che gli argomenti o initialArgomenti cambiano
@@ -96,7 +95,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
     // Funzione per salvare la bozza e uscire
     const saveAsDraft = async () => {
-        console.log('💾 Salvataggio bozza argomenti in corso...');
         // TODO: Implementare il salvataggio della bozza con argomenti
         // Qui andrà la logica per salvare gli argomenti come bozza
 
@@ -114,7 +112,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
     // Funzione per ripristinare gli argomenti allo stato iniziale
     const resetArgomentiToInitial = () => {
-        console.log('🔄 Ripristinando argomenti allo stato iniziale...');
         dispatch(resetArgomenti());
     };    // Funzione per tornare alla dashboard
     const goBackToCourses = () => {
@@ -123,7 +120,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     };
 
     const handleSalvaEContinua = async () => {
-        console.log('💾 handleSalvaEContinua chiamato...');
 
         // Previeni esecuzioni multiple
         if (isSaving) {
@@ -141,34 +137,16 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             return; // Blocca l'azione se ci sono argomenti non validi
         }
 
-        console.log('🔍 Parametri:', {
-            formStateConfigId: formState.configId,
-            argomentiCount: argomenti.length,
-            sesskey: sesskey,
-            wwwroot: wwwroot
-        });
+
 
         try {
             // Ottieni sesskey dinamicamente
             const currentSesskey = sesskey;
             const currentWwwroot = window.location.origin + '/moodle/moodle';
 
-            console.log('📤 Parametri inviati al web service:', {
-                chatbotid: formState.configId,
-                argomenti: argomenti.map(argomento => ({
-                    id: argomento.isNew ? null : argomento.id,
-                    titolo: argomento.titolo,
-                    isNew: argomento.isNew || false
-                }))
-            });
 
 
 
-            console.log('argomentoID e titolo', argomenti.map(argomento => ({
-                id: argomento.id,
-                titolo: argomento.titolo,
-                isNew: argomento.isNew
-            })));
 
             const requestData = {
                 chatbotid: formState.configId,
@@ -186,7 +164,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                 }
             }];
 
-            console.log('📤 Request body completo:', JSON.stringify(requestBody, null, 2));
 
             const response = await fetch(`${currentWwwroot}/lib/ajax/service.php?sesskey=${currentSesskey}`, {
                 method: 'POST',
@@ -197,8 +174,6 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                 body: JSON.stringify(requestBody)
             });
 
-            console.log('📥 Response status:', response.status);
-            console.log('📥 Response statusText:', response.statusText);
 
             if (!response.ok) {
                 console.error('❌ HTTP Error:', response.status, response.statusText);
@@ -209,10 +184,8 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             }
 
             const result = await response.json();
-            console.log('📥 Risultato completo dal web service:', JSON.stringify(result, null, 2));
 
             if (result[0]?.data?.success) {
-                console.log('✅ Salvataggio completato con successo!');
 
                 // Aggiorna lo snapshot iniziale in Redux dopo il salvataggio
                 dispatch(setInitialArgomentiSnapshot());
@@ -240,6 +213,12 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
         // Confronta lo stato attuale con gli argomenti iniziali dal Redux store
         return JSON.stringify(argomenti) !== JSON.stringify(initialArgomenti);
     };
+
+
+
+
+
+
 
     return (
         <div className="w-full flex flex-col items-center justify-center">

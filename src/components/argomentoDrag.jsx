@@ -22,8 +22,8 @@ export default function Argomento({ argomento, giornoOrigine, isPast }) {
         <div
             ref={!isPast ? drag : null} // Applica il drag solo se il giorno non è passato
             className={`mt-[7px] mb-1 mx-auto w-[90%] h-6 text-[#1D2125]/83 rounded-[7px] bg-white relative transition-transform duration-350 ease-in-out ${isPast
-                    ? 'cursor-not-allowed' // Cursor non permesso per giorni passati
-                    : 'cursor-pointer hover:scale-102' // Cursor pointer e hover per giorni attivi
+                ? 'cursor-not-allowed' // Cursor non permesso per giorni passati
+                : 'cursor-pointer hover:scale-102' // Cursor pointer e hover per giorni attivi
                 }`}
             style={{
                 border: `1px solid ${argomento.colore}`,
@@ -37,8 +37,8 @@ export default function Argomento({ argomento, giornoOrigine, isPast }) {
                 className="w-6 h-full absolute left-0 rounded-l flex items-center justify-center"
                 style={{ backgroundColor: argomento.colore }}
             >
-                {isHovered && !isPast && ( // Mostra l'icona drag solo se non è un giorno passato
-                    <img src={dragIcon} className="w-6 h-6 p-[3px] opacity-80" />
+                {!isPast && ( // Mostra l'icona drag solo se non è un giorno passato
+                    <img src={dragIcon} className={`w-6 h-6 p-[3px] ${isHovered ? "opacity-80" : "opacity-20"}`} />
                 )}
             </div>
 

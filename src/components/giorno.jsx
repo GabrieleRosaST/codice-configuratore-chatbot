@@ -39,7 +39,7 @@ export default function Giorno({ giorno, isInCorso, isAltroMese, isPast, spostaA
             ref={drop}
             className={`text-center h-25 2xl:h-25 p-1 ${giornoClasse} ${opacitaGiorno} transition duration-10`}
         >
-            <p className={`text-[10px] mt-[3px] text-[#1D2125] ${!isInCorso && giorno.tipo !== "corrente" ? "opacity-30" : "opacity-90"}`}>
+            <p className={`text-[10px] mt-[3px] text-[#1D2125] ${isPast ? "opacity-30" : (!isInCorso && giorno.tipo !== "corrente" ? "opacity-30" : "opacity-90")}`}>
                 {giorno.giorno}
             </p>
             <div
