@@ -201,6 +201,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
     useEffect(() => {
 
         if (primaVisita) {
+
             dispatch(aggiornaTitoliGiorni({ argomenti }));
         }
     }, [dispatch, cambiatoTitolo]);

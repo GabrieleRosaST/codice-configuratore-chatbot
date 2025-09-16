@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
-import { aggiungiArgomento, resetArgomenti, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
+import { aggiungiArgomento, resetArgomenti, setInitialArgomentiSnapshot, aggiornaIdArgomenti } from '../store/argomentiSlice';
 import CardArgomento from '../components/cardArgomento';
 import domandaIcon from '../img/domandaIcon.svg';
 import plusArgomentoCard from '../img/plusArgomentoCard.svg';
@@ -26,15 +26,16 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const initialArgomenti = useSelector((state) => state.argomenti.initialArgomenti);
     const formState = useSelector((state) => state.form); // Per accedere a configId
     const isLoadingArgomenti = useSelector((state) => state.argomenti.loading);
-    const editMode = useSelector((state) => state.argomenti.editMode);
 
-    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2, setHasUnsavedChangesPianoLavoro, setHasUnsavedChangesConfigurazione, isEditMode } = useStepContext();
+    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2, isEditMode } = useStepContext();
 
     // Component state
     const [mostraAiuto, setMostraAiuto] = useState(false);
     const [isSalvaEContinua, setIsSalvaEContinua] = useState(false); // Stato per gestire il pulsante
     const [isSaving, setIsSaving] = useState(false); // Stato per il caricamento del salvataggio
     const [initialArgomentiCount, setInitialArgomentiCount] = useState(0); // Stato per il numero iniziale di argomenti
+    //const [shouldNavigate, setShouldNavigate] = useState(false); // Flag per navigazione dopo aggiornamento Redux
+
 
 
 
@@ -45,21 +46,34 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
         }
     }, [argomenti]); // Esegui ogni volta che gli argomenti cambiano
 
+
     useEffect(() => {
         // Imposta lo snapshot iniziale degli argomenti nel Redux store dopo il caricamento completo
         if (argomenti.length > 0 && initialArgomenti.length === 0) {
             dispatch(setInitialArgomentiSnapshot());
         }
-    }, [argomenti, initialArgomenti.length, dispatch]); // Esegui ogni volta che gli argomenti o initialArgomenti cambiano
+    }, [argomenti, dispatch]); // Esegui ogni volta che gli argomenti o initialArgomenti cambiano
+
 
     // useEffect per gestire hasUnsavedChanges in modalità edit
     useEffect(() => {
         if (isEditMode && initialArgomenti.length > 0) {
             const hasChanges = hasArgomentiChanged();
-            setHasUnsavedChangesPianoLavoro(hasChanges);
-            setHasUnsavedChangesConfigurazione(hasChanges);
+            setCompletedSteps((prev) => ({ ...prev, step2: !hasChanges })); // Aggiorna lo stato di step2
+
         }
-    }, [argomenti, initialArgomenti, isEditMode, setHasUnsavedChangesPianoLavoro, setHasUnsavedChangesConfigurazione]);
+    }, [argomenti, initialArgomenti, isEditMode]);
+
+
+    // useEffect per navigare quando gli ID sono aggiornati
+    {/* 
+    useEffect(() => {
+        if (shouldNavigate) {
+            navigate("/pianoLavoro");
+            setShouldNavigate(false);
+        }
+    }, [argomenti, navigate]);
+    */}
 
     const handleAggiungiArgomento = () => {
 
@@ -72,6 +86,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
         dispatch(aggiungiArgomento(nuovoArgomento));
     };
 
+
     useEffect(() => {
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
 
@@ -80,6 +95,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             setCompletedSteps((prev) => ({ ...prev, step2: tuttiArgomentiValidi }));
         }
     }, [argomenti, primaVisitaStep2, setCompletedSteps]);
+
 
     const handleStepSuccessivo = () => {
         const tuttiArgomentiValidi = argomenti.length > 0 && argomenti.every((argomento) => argomento.titolo.trim() !== '');
@@ -92,6 +108,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
             alert('Assicurati di aver aggiunto almeno un argomento e che tutti gli argomenti abbiano un titolo.');
         }
     };
+
 
     // Funzione per salvare la bozza e uscire
     const saveAsDraft = async () => {
@@ -110,10 +127,13 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
         }
     };
 
+
     // Funzione per ripristinare gli argomenti allo stato iniziale
     const resetArgomentiToInitial = () => {
         dispatch(resetArgomenti());
     };    // Funzione per tornare alla dashboard
+
+
     const goBackToCourses = () => {
         // Torna alla dashboard dei corsi
         window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
@@ -185,14 +205,35 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
             const result = await response.json();
 
+
             if (result[0]?.data?.success) {
+
+                // Se ci sono mappature ID, aggiorna il Redux store con gli ID reali
+                if (result[0]?.data?.id_mapping) {
+                    const idMappingString = result[0].data.id_mapping;
+
+                    // Parsa la stringa JSON
+                    const idMapping = JSON.parse(idMappingString);
+
+                    // Aggiorna gli ID degli argomenti nel Redux store
+                    dispatch(aggiornaIdArgomenti(idMapping));
+
+
+                    // Aspetta un tick per permettere al Redux store di aggiornarsi
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                } else {
+                    console.warn("⚠️ Nessuna mappatura ID ricevuta dal backend!");
+                }
 
                 // Aggiorna lo snapshot iniziale in Redux dopo il salvataggio
                 dispatch(setInitialArgomentiSnapshot());
-                // Reset hasUnsavedChanges dopo il salvataggio
-                setHasUnsavedChangesPianoLavoro(false);
-                setHasUnsavedChangesConfigurazione(false);
 
+                // Aggiorna lo stato di completamento per il passo 2
+                setCompletedSteps((prev) => ({ ...prev, step2: true }));
+
+                // Invece di navigate() diretto, imposta il flag per navigare dopo l'aggiornamento Redux
+                //setShouldNavigate(true);
                 navigate("/pianoLavoro");
             } else {
                 console.error('❌ Errore nel salvataggio:', result[0]?.data?.message || 'Messaggio non disponibile');
@@ -208,10 +249,24 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
         }
     };
 
+
+
     // Funzione per verificare se gli argomenti sono cambiati rispetto allo snapshot iniziale
     const hasArgomentiChanged = () => {
-        // Confronta lo stato attuale con gli argomenti iniziali dal Redux store
-        return JSON.stringify(argomenti) !== JSON.stringify(initialArgomenti);
+        // Rimuovi il campo "giorno" da ogni argomento per il confronto
+        const normalizeArgomenti = (argomenti) =>
+            argomenti.map(({ giorno, ...rest }) => rest);
+
+        const normalizedArgomenti = normalizeArgomenti(argomenti);
+        const normalizedInitialArgomenti = normalizeArgomenti(initialArgomenti);
+
+        console.log("🔍 Controllo cambiamenti argomenti (escludendo 'giorno')", {
+            normalizedArgomenti,
+            normalizedInitialArgomenti,
+        });
+
+        // Confronta gli argomenti normalizzati
+        return JSON.stringify(normalizedArgomenti) !== JSON.stringify(normalizedInitialArgomenti);
     };
 
 
@@ -327,7 +382,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                                     colore={argomento.colore}
                                     file={argomento.file}
                                     giorno={argomento.giorno} // Passa il giorno dell'argomento
-                                    editMode={editMode} // Passa lo stato di editMode
+                                    editMode={isEditMode} // Passa lo stato di editMode
                                 />
                             ))}
 
@@ -356,7 +411,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                     <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-between items-center">
 
                         {/* Pulsante Sinistro - DINAMICO */}
-                        {editMode && hasArgomentiChanged() ? (
+                        {isEditMode && hasArgomentiChanged() ? (
                             // CASO 1: MODALITÀ EDIT CON MODIFICHE - Mostra "Ripristina argomenti"
                             <button
                                 type="button"
@@ -377,7 +432,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                                     </div>
                                 </div>
                             </button>
-                        ) : !editMode && argomenti.length > 0 ? (
+                        ) : !isEditMode && argomenti.length > 0 ? (
                             // CASO 2: MODALITÀ CREATE CON ARGOMENTI - Mostra "Esci e salva bozza"
                             <button
                                 type="button"
@@ -424,20 +479,20 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                         {/* Pulsante Step Successivo */}
                         <button
                             className={`w-35 h-11 right-0 cursor-pointer transform transition-transform duration-200 ${isSaving ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'}`}
-                            onClick={editMode && hasArgomentiChanged() ? handleSalvaEContinua : handleStepSuccessivo}
+                            onClick={isEditMode && hasArgomentiChanged() ? handleSalvaEContinua : handleStepSuccessivo}
                             disabled={isSaving}
                         >
                             <div
                                 className="w-full h-full rounded-[10px] bg-[#fcc63d] flex justify-center items-center"
                                 style={{ boxShadow: "0px 0px 8.5px 3px rgba(0,0,0,0.02)" }}
                             >
-                                {isSaving && (editMode && hasArgomentiChanged()) ? (
+                                {isSaving && (isEditMode && hasArgomentiChanged()) ? (
                                     <div className="w-4 h-4 border-2 border-[#1d2125] border-t-transparent rounded-full animate-spin"></div>
                                 ) : (
                                     <>
                                         <div className="h-full flex items-center justify-end w-full">
                                             <p className="text-[13px] text-[#1d2125] flex items-center justify-center">
-                                                {editMode && hasArgomentiChanged() ? 'Salva e continua' : 'Step successivo'}
+                                                {isEditMode && hasArgomentiChanged() ? 'Salva e continua' : 'Step successivo'}
                                             </p>
                                         </div>
                                         <div className="h-full w-12 flex items-center justify-center">

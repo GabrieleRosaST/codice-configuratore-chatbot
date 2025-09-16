@@ -20,11 +20,13 @@ const formSlice = createSlice({
             return { ...state, ...action.payload }; // Aggiorna lo stato con i nuovi dati
         },
         setInitialStateSnapshot: (state, action) => {
+            console.log("Setting initial state snapshotTT:", action.payload);
             if (!state.initialStateSnapshot) {
                 state.initialStateSnapshot = { ...action.payload }; // Memorizza il payload come stato iniziale
             }
         },
-    },
+
+    }
 });
 
 export const { updateForm, setInitialStateSnapshot } = formSlice.actions; // Esporta l'azione per aggiornare lo stato

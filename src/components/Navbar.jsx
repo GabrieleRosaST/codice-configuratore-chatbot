@@ -12,8 +12,7 @@ import { useStepContext } from '../context/StepContext';
 function Navbar() {
     const location = useLocation();
     const currentPage = location.pathname.slice(1);
-    const { completedSteps, isEditMode, hasUnsavedChanges, hasUnsavedChangesPianoLavoro, hasUnsavedChangesConfigurazione } = useStepContext(); // Usa il contesto per accedere allo stato
-
+    const { completedSteps, isEditMode } = useStepContext(); // Usa il contesto per accedere allo stato
 
     const navItems = [
         {
@@ -22,7 +21,7 @@ function Navbar() {
             icon: configurazioneIcon,
             iconActive: configurazioneIconActive,
             link: '/configurazione',
-            disabled: hasUnsavedChangesConfigurazione ? hasUnsavedChangesConfigurazione : false,
+            disabled: isEditMode ? !completedSteps.step2 : false,
         },
         {
             id: 'argomentiRiferimenti',
@@ -30,9 +29,8 @@ function Navbar() {
             icon: argomentiIcon,
             iconActive: argomentiIconActive,
             link: '/argomentiRiferimenti',
-            // In modalità edit: abilitato se non ci sono modifiche non salvate
-            // In modalità create: abilitato solo se step1 è completato
-            disabled: isEditMode ? hasUnsavedChanges : !completedSteps.step1,
+            // Abilitato solo se step1 è completato
+            disabled: !completedSteps.step1,
         },
         {
             id: 'pianoLavoro',
@@ -42,7 +40,7 @@ function Navbar() {
             link: '/pianoLavoro',
             // In modalità edit: abilitato se non ci sono modifiche non salvate
             // In modalità create: abilitato solo se step1 e step2 sono completati
-            disabled: isEditMode ? hasUnsavedChangesPianoLavoro : (!completedSteps.step2 || !completedSteps.step1),
+            disabled: !completedSteps.step2 || !completedSteps.step1,
         },
     ];
 

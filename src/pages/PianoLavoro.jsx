@@ -1,14 +1,15 @@
-Date
 import domandaIcon from '../img/domandaIcon.svg';
 import frecciaDestra from '../img/frecciaDestra.svg';
-import { useSelector, useDispatch } from 'react-redux';
-import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso, aggiornaTitoliGiorni } from '../store/calendarioSlice';
+import { useSelector, useDispatch, useStore } from 'react-redux';
+import { aggiornaSelezionato, inizializzaCalendario, spostaArgomento, distribuisciArgomentiGiorniCorso, distribuisciArgomentiGiorniCorsoEdit, aggiornaTitoliGiorni, setPrimaDistribuzioneEffettuata, aggiornaDataInizioOriginal, aggiornaDataFineOriginal, selectDataInizioOriginal, selectDataFineOriginal } from '../store/calendarioSlice';
+import { aggiornaGiornoArgomento } from '../store/argomentiSlice';
+import timestampUtils from '../utils/timestampUtils';
 import terminaConfigIcon from '../img/terminaConfigIcon.svg';
 import esciSalvaIcon from '../img/esciSalvaIcon.svg';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import Giorno from '../components/giorno.jsx';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { data, useNavigate } from 'react-router-dom';
 import { useGenerateJson } from '../utils/generateJson';
 import { useState } from 'react';
@@ -25,15 +26,14 @@ import { doc, setDoc, collection } from "firebase/firestore";
 import { uploadFilesAndGetData } from '../utils/api';
 
 
-let shouldRedistributeDate = false;
 
 
 function PianoLavoro({ sesskey, wwwroot }) {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
+    const store = useStore(); // Aggiungi questo per accedere direttamente allo store
     const generateJson = useGenerateJson(); // Usa il custom hook
     const { isEditMode } = useStepContext(); // Recupera la modalità edit
-    const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti, primaVisita } = useSelector((state) => state.calendario);
+    const { selezionato, giorniCorrenti, giorniCorso, argomentiDistribuiti, primaDistribuzioneEffettuata, primaVisita, argomentiAggiornamenti } = useSelector((state) => state.calendario);
     const { dataInizio, dataFine } = useSelector((state) => state.form);
 
     // Ordina gli argomenti per ID crescente usando useMemo per evitare ricreare l'array ad ogni render
@@ -48,32 +48,21 @@ function PianoLavoro({ sesskey, wwwroot }) {
     const [isLoading, setIsLoading] = useState(false); // Stato per il loading del pulsante
     const dataInizioDate = new Date(dataInizio);
 
-
     const initialStateSnapshot = useSelector(selectInitialStateSnapshot);
-    let dataInizioOriginal = initialStateSnapshot ? new Date(initialStateSnapshot.dataInizio) : null;
-    let dataFineOriginal = initialStateSnapshot ? new Date(initialStateSnapshot.dataFine) : null;
+
+    const shouldRedistributeDate = useRef(false);
 
 
-    // Funzione per determinare se un giorno è passato
-    const isDayPast = (giorno, mese, anno) => {
-        if (!isEditMode) return false; // Se non siamo in modalità edit, nessun giorno è "passato"
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Imposta l'ora a mezzanotte per confronto solo per data
-
-        const dayDate = new Date(anno, mese, giorno);
-        dayDate.setHours(0, 0, 0, 0);
-
-        return dayDate <= today;
-    };
-
-
+    const dataInizioOriginal = useSelector(selectDataInizioOriginal);
+    const dataFineOriginal = useSelector(selectDataFineOriginal);
 
     const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
     const giorniSettimana = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
 
 
+
+    // Funzione per cambiare mese 
     const cambiaMese = (direzione) => {
         let nuovoMese = selezionato.mese;
         let nuovoAnno = selezionato.anno;
@@ -96,6 +85,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
         dispatch(aggiornaSelezionato({ mese: nuovoMese, anno: nuovoAnno }));
     };
+
 
 
     // Funzione per costruire il calendario
@@ -147,45 +137,9 @@ function PianoLavoro({ sesskey, wwwroot }) {
             righe.pop();
         }
 
+
         return righe.flat(); // Appiattisci l'array per restituire i giorni
     };
-
-
-
-    useEffect(() => {
-
-        if (dataInizioOriginal !== dataInizio || dataFineOriginal !== dataFine) {
-            shouldRedistributeDate = true;
-            dataInizioOriginal = dataInizio;
-            dataFineOriginal = dataFine;
-        }
-    }, []);
-
-
-
-    useEffect(() => {
-        dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
-
-
-
-        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
-        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
-        const distribuitiIds = (argomentiDistribuiti || []).slice().sort().join(',');
-
-
-        // Se le date sono cambiate oppure il numero di argomenti è cambiato, ridistribuisci
-        if (argomentiIds !== distribuitiIds || shouldRedistributeDate) {
-            dispatch(distribuisciArgomentiGiorniCorso({
-                argomenti,
-                dataInizio,
-                dataFine,
-                isEditMode, // Passa la modalità edit per filtrare i giorni passati
-            }));
-            shouldRedistributeDate = false; // Resetta il flag dopo la ridistribuzione
-        }
-        // eslint-disable-next-line
-    }, [dispatch, argomenti, giorniCorso, argomentiDistribuiti, isEditMode]);
-
 
 
 
@@ -194,22 +148,249 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
         const giorniCorrenti = costruisciCalendario();
 
+
         dispatch(inizializzaCalendario({ giorniCorrenti }));
+
+
 
     }, [dispatch, selezionato]);
 
+
+
+
+
+    // Funzione per determinare se un giorno è passato
+    const isDayPast = (giorno, mese, anno) => {
+        if (!isEditMode) return false; // Se non siamo in modalità edit, nessun giorno è "passato"
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Imposta l'ora a mezzanotte per confronto solo per data
+
+        const dayDate = new Date(anno, mese, giorno);
+        dayDate.setHours(0, 0, 0, 0);
+
+        return dayDate <= today;
+    };
+
+
+    const goBackToCourses = () => {
+        // Torna alla dashboard dei corsi
+        window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+    };
+
+
+
+
+
+    ////////    IMPOSTAE VARIABILE PER RIDISTRIBUIRE ARGOMENTI SE PRIMA DI ACCEDERE AL PIANO LAVORO SONO STATE CAMBIATE LE DATE DI INIZIO O FINE  ////////////////
+
+    // memorizza le date originali al primo accesso, cioè quelle originali
+    //ricontrollaaa
     useEffect(() => {
 
-        if (primaVisita) {
-            dispatch(aggiornaTitoliGiorni({ argomenti }));
+        if (primaDistribuzioneEffettuata && initialStateSnapshot && isEditMode) {
+            console.log("✅ Primo accesso a Piano Lavoro MOD EDIT, imposto date originali se prima distribuzione già effettuata", primaDistribuzioneEffettuata, initialStateSnapshot);
+
+            dispatch(aggiornaDataInizioOriginal(initialStateSnapshot?.dataInizio || ''));
+            dispatch(aggiornaDataFineOriginal(initialStateSnapshot?.dataFine || ''));
+            //console.log("Data inizio original da snapshot ", initialStateSnapshot.dataInizio)
+            //console.log("dataInizioOriginal aggiornata :", dataInizioOriginal);
         }
-    }, [dispatch, cambiatoTitolo]);
+    }, []);
 
 
+    // se le date di inizio o fine cambiano rispetto alle originali, imposta il flag per ridistribuire rispetto alle nuove date
+    useEffect(() => {
+
+        console.log("✅ Controllo cambio date 1, ", { dataInizioOriginal, dataInizio, dataFineOriginal, dataFine });
+        // const state = store.getState();
+
+        if (
+            (dataInizioOriginal !== null && dataInizioOriginal !== undefined && dataInizio !== null && dataInizio !== undefined && dataInizioOriginal !== dataInizio) ||
+            (dataFineOriginal !== null && dataFineOriginal !== undefined && dataFine !== null && dataFine !== undefined && dataFineOriginal !== dataFine)
+        ) {
+            //console.log("Le date di inizio o fine sono cambiate rispetto alle originali, imposta il flag per ridistribuire");
+            shouldRedistributeDate.current = true;
+            dispatch(aggiornaDataInizioOriginal(dataInizio));
+            dispatch(aggiornaDataFineOriginal(dataFine));
+        }
+
+        let valoreRedistribuzione = shouldRedistributeDate.current;
+        console.log("Controllo cambio dateeeeeee 1.2, ", { dataInizioOriginal, dataInizio, dataFineOriginal, dataFine, valoreRedistribuzione });
+    }, [dataInizioOriginal, dataFineOriginal, dataInizio, dataFine, dispatch]);
+
+
+
+
+    ////   🔄📚  RIDISTRIBUZIONI argomenti se cambiano gli argomenti o le date di inizio/fine
+
+    useEffect(() => {
+
+        const valoreRedistribuzione = shouldRedistributeDate.current;
+
+        dispatch(aggiornaSelezionato({ mese: dataInizioDate.getMonth(), anno: dataInizioDate.getFullYear() }));
+
+        // Se il numero o gli id degli argomenti sono cambiati, ridistribuisci
+        const argomentiIds = argomenti.map(a => a.id).slice().sort().join(',');
+
+        const distribuitiIds = isEditMode && !primaVisita
+            ? argomentiIds // Se in modalità edit, usa argomentiIds
+            : (argomentiDistribuiti || []).slice().sort().join(','); // Altrimenti usa il valore originale
+
+
+        // Controlla se la data di inizio è attuale o passata
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Imposta l'ora a mezzanotte per confronto solo per data
+        const isDataInizioAttualeOPassata = new Date(dataInizio) <= today;
+
+
+        //console.log("Controllo distribuzione normale", primaDistribuzioneEffettuata, argomentiIds, distribuitiIds, valoreRedistribuzione);
+
+        console.log("  Stato Redux aggiornato PRIMAA:", store.getState().calendario);
+
+
+        //se modalità create -> distribuzione normale
+        if (!isEditMode) {
+
+            let distribuzioneFatta = false;
+
+            if (!primaDistribuzioneEffettuata) {
+                console.log('Modalità CREATE: prima distribuzione normale');
+                dispatch(distribuisciArgomentiGiorniCorso({
+                    argomenti,
+                    dataInizio,
+                    dataFine,
+                    isEditMode: false, // Sempre false per modalità create
+                }));
+                dispatch(setPrimaDistribuzioneEffettuata()); // Aggiorna lo stato globale
+                console.log("Stato Redux aggiornato:", store.getState().calendario);
+                distribuzioneFatta = true;
+            } else if (argomentiIds !== distribuitiIds || valoreRedistribuzione) {
+                console.log('Modalità CREATE: ridistribuzione normale', { argomentiIds, distribuitiIds, valoreRedistribuzione, argomenti });
+
+                dispatch(distribuisciArgomentiGiorniCorso({
+                    argomenti,
+                    dataInizio,
+                    dataFine,
+                    isEditMode: false, // Sempre false per modalità create
+                }));
+
+                // Recupera lo stato aggiornato dal Redux store
+                shouldRedistributeDate.current = false;
+                distribuzioneFatta = true;
+            }
+
+            if (distribuzioneFatta) {
+                const stateAggiornato = store.getState();
+                const giorniCorsoAggiornati = stateAggiornato.calendario.giorniCorso;
+
+                console.log("📚 Giorni corso aggiornati dopo ridistribuzione:", giorniCorsoAggiornati);
+                console.log("📚 Argomenti:", argomenti);
+
+
+                // Aggiorna gli argomenti con i giorni assegnati
+                argomenti.forEach((argomento) => {
+                    const giornoAssegnato = giorniCorsoAggiornati.find((giorno) =>
+                        giorno.argomenti.some((a) => a.id === argomento.id)
+                    );
+
+                    if (giornoAssegnato) {
+
+                        const argomentoAssegnato = giornoAssegnato.argomenti.find(a => a.id === argomento.id);
+                        let timestampGiorno = null;
+
+                        if (argomentoAssegnato) {
+                            timestampGiorno = argomentoAssegnato.giorno;
+                            console.log(`Timestamp assegnato per l'argomento ${argomento.id}:`, timestampGiorno);
+                        } else {
+                            console.warn(`❌ Argomento con ID ${argomento.id} non trovato nei giorni assegnati.`);
+                        }
+
+                        dispatch(aggiornaGiornoArgomento({ id: argomento.id, giorno: timestampGiorno }));
+                    } else {
+                        console.warn(`❌ Giorno non trovato per argomento ${argomento.id}`);
+                    }
+                });
+                distribuzioneFatta = false;
+            }
+
+            console.log("📚 Argomenti dopo aggiornamento:", argomenti);
+
+
+        } else {
+
+            console.log('Modalità EDIT: controllo modifiche', argomentiIds, distribuitiIds);
+
+            if (argomentiIds !== distribuitiIds || valoreRedistribuzione) {   //se sono cambiati gli argomenti o le date
+
+                if (isDataInizioAttualeOPassata) {         //se la data di inizio è attuale o passata
+                    console.log('Modalità EDIT: corso già iniziato, modifiche apportate, distribuzione edit');
+                    dispatch(distribuisciArgomentiGiorniCorsoEdit({
+                        argomenti,
+                        dataInizio,
+                        dataFine,
+                        isEditMode,
+                    }));
+
+                    // Recupera gli aggiornamenti dal nuovo stato calendario
+                    const aggiornamenti = store.getState().calendario.argomentiAggiornamenti;
+                    aggiornamenti.forEach(agg => {
+                        dispatch(aggiornaGiornoArgomento({ id: agg.id, giorno: agg.giorno }));
+                    });
+
+                } else {
+                    console.log('Modalità EDIT: corso non ancora iniziat, modifiche, ridistribuisci normalmente');
+
+                    // differenza è che passo "daRidistribuire = true"
+                    dispatch(distribuisciArgomentiGiorniCorso({
+                        argomenti,
+                        dataInizio,
+                        dataFine,
+                        isEditMode: true,
+                        daRidistribuire: true,
+                    }));
+
+                    const giorniCorsoAggiornati = store.getState().calendario.giorniCorso;
+
+                    console.log("🔻 giorniCorsoAggiornati da applicare agli argomenti:", giorniCorsoAggiornati);
+
+                    // Aggiorna gli argomenti con i giorni assegnati
+                    giorniCorsoAggiornati.forEach((giorno) => {
+                        giorno.argomenti.forEach((argomento) => {
+                            dispatch(aggiornaGiornoArgomento({ id: argomento.id, giorno: argomento.giorno }));
+                        });
+                    });
+                }
+                shouldRedistributeDate.current = false;
+
+            } else {
+                console.log('Modalità EDIT: corso non ancora iniziato, niente modifiche, carica da timestamp esistenti');
+                dispatch(distribuisciArgomentiGiorniCorso({
+                    argomenti,
+                    dataInizio,
+                    dataFine,
+                    isEditMode: true,
+                    daRidistribuire: false,
+                }));
+            }
+        }
+
+
+    }, [shouldRedistributeDate.current]);
+
+
+
+
+
+
+
+    // Unifico le chiamate a aggiornaTitoliGiorni in un unico useEffect
+    useEffect(() => {
+        console.log("💬 Richiamo aggiornamento giorni", cambiatoTitolo, primaVisita, argomenti);
+        dispatch(aggiornaTitoliGiorni({ argomenti }));
+    }, [argomenti, cambiatoTitolo, primaVisita, dispatch]);
 
     //Funzione per inviare i dati al backend e creare FORMDATA
-
-    //BRANCH FINALE
 
     const handleTerminaConfigurazione = async () => {
         // Attiva il loading
@@ -393,6 +574,115 @@ function PianoLavoro({ sesskey, wwwroot }) {
         } catch (err) {
             console.error('Errore imprevisto:', err);
             alert('Errore imprevisto: ' + (err?.message || err));
+            setIsLoading(false);
+        }
+    };
+
+    // Funzione per salvare il piano lavoro in modalità edit
+    const handleSalvaPianoLavoro = async () => {
+        setIsLoading(true);
+
+        try {
+            // Applica gli aggiornamenti dei giorni agli argomenti nel Redux store
+
+            const stateAggiornato = store.getState();
+            const argomentiAggiornati = [...stateAggiornato.argomenti.argomenti].sort((a, b) => a.id - b.id);
+
+            console.log("Argomenti dal Redux store DOPO aggiornamenti (da store direttoooo):", argomentiAggiornati);
+
+            // Debug: mostra tutti gli argomenti e i loro timestamp
+            console.log("🔍 DEBUG - Tutti gli argomenti con timestamp:");
+            argomentiAggiornati.forEach((arg, index) => {
+                console.log(`Argomento ${index + 1}:`, {
+                    id: arg.id,
+                    titolo: arg.titolo,
+                    giorno: arg.giorno,
+                    timestamp_readable: arg.giorno ? new Date(arg.giorno * 1000).toLocaleDateString() : 'N/A',
+                    isNew: arg.isNew
+                });
+            });
+
+            // Filtra argomenti: devono avere ID valido e titolo
+            // Per argomenti nuovi senza timestamp, permettiamo il salvataggio con giorno: 0
+            const argomentiValidi = argomentiAggiornati.filter(argomento => {
+                const hasId = argomento && argomento.id !== undefined && argomento.id !== null;
+                const hasTitle = argomento && argomento.titolo && argomento.titolo.trim() !== '';
+
+                if (!hasId || !hasTitle) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            if (argomentiValidi.length === 0) {
+                alert("Errore: Nessun argomento valido trovato per il salvataggio");
+                setIsLoading(false);
+                return;
+            }
+
+            // Prepara i dati degli argomenti per l'API
+            const argomentiFormatted = argomentiValidi.map(argomento => {
+                return {
+                    argomento_id: parseInt(argomento.id),
+                    nuovo_giorno: argomento.giorno || 0, // Usa 0 per argomenti senza timestamp
+                    titolo: argomento.titolo || 'Senza titolo'
+                };
+            });
+
+            console.log("argomenti formattati per API: ", argomentiFormatted);
+
+            // Chiama la nuova funzione nell'externallib per aggiornare la ridistribuzione
+            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify([{
+                    methodname: 'local_configuratore_update_piano_lavoro',
+                    args: {
+                        argomenti_ridistribuiti: JSON.stringify(argomentiFormatted)
+                    }
+                }])
+            });
+
+            const resp = await response.json();
+            const envelope = resp?.[0];
+
+
+            if (envelope?.exception || envelope?.error) {
+                console.error('WS Error:', envelope);
+                const errorMessage = envelope?.exception?.message || envelope?.error || envelope?.message || 'Errore durante il salvataggio del piano lavoro';
+                alert('Errore dettagliato: ' + errorMessage);
+                setIsLoading(false);
+                return;
+            }
+
+            const data = envelope?.data;
+
+            if (!data?.success) {
+                const errorMessage = data?.message || 'Errore durante il salvataggio del piano lavoro - dati mancanti';
+                console.error('Errore nei dati:', errorMessage);
+                alert('Errore: ' + errorMessage);
+                setIsLoading(false);
+                return;
+            }
+
+            // Redirect alla pagina dei corsi
+            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+
+            {/* Aggiungi qui eventuali log o messaggi di conferma 
+            // E aggiungi questo:
+            console.log("🎯 SALVATAGGIO COMPLETATO - CONTROLLA I LOG!");
+            console.log("Redirect disabilitato per debug");
+            setIsLoading(false);
+            alert("Salvataggio completato! Controlla i log del browser e del debug.log");
+            */}
+
+        } catch (error) {
+            console.error('Errore durante il salvataggio del piano lavoro:', error);
+            alert('Errore durante il salvataggio del piano lavoro: ' + error.message);
             setIsLoading(false);
         }
     };
@@ -630,6 +920,25 @@ function PianoLavoro({ sesskey, wwwroot }) {
                                                     giornoOrigine,
                                                     giornoDestinazione,
                                                 }));
+
+                                                // Calcola il timestamp per il giorno di destinazione usando le utility
+                                                const timestampDestinazione = timestampUtils.componentsToUnix(
+                                                    giornoDestinazione.anno,
+                                                    giornoDestinazione.mese,
+                                                    giornoDestinazione.giorno
+                                                );
+
+                                                console.log("Argomento spostato - Debug timestamp:", {
+                                                    giorno_destinazione: giornoDestinazione,
+                                                    timestamp_generato: timestampDestinazione,
+                                                    data_converted_back: timestampUtils.unixToJsDate(timestampDestinazione).toDateString()
+                                                });
+
+                                                // Dispatch per aggiornare il giorno nell'argomento
+                                                dispatch(aggiornaGiornoArgomento({
+                                                    id: argomento.id,
+                                                    giorno: timestampDestinazione
+                                                }));
                                             }}
                                         />
                                     );
@@ -641,15 +950,11 @@ function PianoLavoro({ sesskey, wwwroot }) {
                         {/* Pulsanti Esci e salva bozza e Termina configurazione */}
                         <div className="w-[100%] xl:w-[86%] h-30 2xl:mt-4 mt-1 flex justify-between items-center">
 
-                            {/* Pulsante Esci e salva bozza */}
+                            {/* Pulsante Torna ai corsi */}
                             <button
                                 type="button"
-                                onClick={saveAsDraft}
-                                disabled={isLoading}
-                                className={`w-40 h-11 transform rounded-[10px] transition-transform duration-200 ${isLoading
-                                    ? 'cursor-not-allowed opacity-50'
-                                    : 'cursor-pointer hover:scale-103 hover:bg-[#f2f3f7]'
-                                    }`}
+                                onClick={goBackToCourses}
+                                className="w-34 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
                             >
                                 <div
                                     className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
@@ -660,7 +965,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
                                     </div>
                                     <div className="h-full flex items-center w-full">
                                         <p className="text-[13px] text-left text-[#1d2125]">
-                                            Esci e salva bozza
+                                            Torna ai corsi
                                         </p>
                                     </div>
                                 </div>
@@ -672,7 +977,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
                                     ? 'cursor-not-allowed opacity-50'
                                     : 'cursor-pointer hover:scale-103'
                                     }`}
-                                onClick={isLoading ? undefined : handleTerminaConfigurazione}
+                                onClick={isLoading ? undefined : (isEditMode ? handleSalvaPianoLavoro : handleTerminaConfigurazione)}
                                 disabled={isLoading}
                             >
 
@@ -688,7 +993,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
                                         <>
                                             <div className="h-full flex items-center w-full pl-5">
                                                 <p className="text-[13px] text-left text-[#1d2125]">
-                                                    Termina configurazione
+                                                    {isEditMode ? 'Salva e torna ai corsi' : 'Termina configurazione'}
                                                 </p>
                                             </div>
 

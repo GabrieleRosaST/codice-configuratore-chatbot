@@ -17,8 +17,8 @@ import aitext from '../img/aitext.svg';
 
 import { useSelector, useDispatch } from 'react-redux';
 import { updateForm, setInitialStateSnapshot, selectInitialStateSnapshot } from '../store/formSlice';
-import { setLoadingArgomenti, setEditMode, loadArgomentiSuccess, loadArgomentiError, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
-import { distribuisciArgomentiGiorniCorso } from '../store/calendarioSlice';
+import { setLoadingArgomenti, loadArgomentiSuccess, loadArgomentiError, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
+import { distribuisciArgomentiGiorniCorso, setPrimaDistribuzioneEffettuata, distribuisciArgomentiGiorniCorsoEdit, aggiornaDataInizioOriginal, aggiornaDataFineOriginal } from '../store/calendarioSlice';
 import { loadArgomentiForEdit, getMoodleSesskey } from '../utils/loadUtils';
 import { useStepContext } from '../context/StepContext.jsx';
 import { db } from '../firebase';
@@ -35,15 +35,14 @@ function Configurazione({ sesskey, wwwroot }) {
     const formState = useSelector((state) => state.form);
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
+
     const {
+        completedSteps,
         setCompletedSteps,
         primaVisitaStep1,
         setPrimaVisitaStep1,
         isEditMode,
         setIsEditMode,
-        hasUnsavedChanges,
-        setHasUnsavedChanges,
-        setHasUnsavedChangesPianoLavoro
     } = useStepContext(); // Usa il contesto per aggiornare lo stato
 
 
@@ -54,6 +53,11 @@ function Configurazione({ sesskey, wwwroot }) {
         dataInizio: false,
         dataFine: false,
     });
+
+
+
+    const [distribuzioneEseguita, setDistribuzioneEseguita] = useState(false);
+
 
     // Stato per controllare il caricamento durante la verifica
     const [isCheckingCourse, setIsCheckingCourse] = useState(false);
@@ -80,15 +84,24 @@ function Configurazione({ sesskey, wwwroot }) {
     const [filesLoaded, setFilesLoaded] = useState(false);
 
     // Redux state per gli argomenti ordinati per ID
-    const argomentiRaw = useSelector((state) => state.argomenti.argomenti);
-    const argomenti = useMemo(() => {
+    let argomentiRaw = useSelector((state) => state.argomenti.argomenti);
+    let argomenti = useMemo(() => {
         return [...argomentiRaw].sort((a, b) => a.id - b.id);
     }, [argomentiRaw]);
-    const editModeArgomenti = useSelector((state) => state.argomenti.editMode);
+    const areArgomentiLoaded = useSelector((state) => state.argomenti.areArgomentiLoaded);
+
+    const primaDistribuzioneEffettuata = useSelector((state) => state.calendario.primaDistribuzioneEffettuata);
+
+    const [argomentiCaricati, setArgomentiCaricati] = useState(false);
+
+    const MIN_DATE = new Date("2024-01-01");
+    const MAX_DATE = new Date("2030-12-31");
 
 
 
-    // Funzione per verificare se ci sono campi compilati (modalità CREATE)
+
+
+    // Funzione per verificare se ci sono campi compilati (modalità CREATE ✏️)
     const hasFieldsCompiled = () => {
         return (
             formState.corsoChatbot.trim() !== '' ||
@@ -100,9 +113,252 @@ function Configurazione({ sesskey, wwwroot }) {
         );
     };
 
-    // =====================================================
-    // FUNZIONE: Determina se la data di inizio può essere modificata
-    // =====================================================
+
+
+
+
+    ////////////////////////////////////////////////////////////////////
+    ////////////////      🔄 MODALITA' EDIT 🔄    ////////////////////
+    ///////////////////////////////////////////////////////////////////
+
+
+
+    //    🔄  STEP 1     /////////////////////////////
+    // Effetto per leggere i parametri URL, popolare il form e settare originalData per reset form
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+
+        // CASO 1: (mode=edit + parametri URL)
+        if (mode === 'edit' && urlParams.get('configId') && !formState.configId) {
+
+            // metto modalità edit nel step context
+            setIsEditMode(true);
+
+            setCompletedSteps((prev) => ({ ...prev, step1: true, step2: true }));
+
+            // Leggi tutti i parametri della configurazione dall'url
+            const configData = {
+                corsoChatbot: urlParams.get('corsoChatbot') || '',
+                nomeChatbot: urlParams.get('nomeChatbot') || '',
+                descrizioneChatbot: urlParams.get('descrizioneChatbot') || '',
+                istruzioniChatbot: urlParams.get('istruzioniChatbot') || '',
+                dataInizio: urlParams.get('dataInizio') || '',
+                dataFine: urlParams.get('dataFine') || '',
+                configId: urlParams.get('configId') || '',
+                courseId: urlParams.get('courseId') || '',
+                userId: urlParams.get('userId') || ''
+            };
+
+            // Salva nello stato locale i dati attuali del form per fare il reset in caso di modifiche 
+            setOriginalData(configData);
+
+            // Popola il Redux store con i dati della configurazione
+            dispatch(updateForm(configData));
+
+            // Nella slice redux impost lo snapshot iniziale del form
+            dispatch(setInitialStateSnapshot(configData));
+
+        }
+
+        // CASO 2: Ritorno dalla navigazione (Redux ha già i dati)
+        else if (mode === 'edit' && urlParams.get('configId') && formState.configId) {
+
+            setIsEditMode(true);
+
+            // ✅ IMPOSTA originalData con i valori attuali del Redux
+            // Questi sono i valori "salvati" che diventano il nuovo punto di riferimento
+            const currentDataAsOriginal = {
+                corsoChatbot: formState.corsoChatbot,
+                nomeChatbot: formState.nomeChatbot,
+                descrizioneChatbot: formState.descrizioneChatbot,
+                istruzioniChatbot: formState.istruzioniChatbot,
+                dataInizio: formState.dataInizio,
+                dataFine: formState.dataFine,
+                configId: formState.configId,
+                courseId: formState.courseId,
+                userId: formState.userId
+            };
+
+            setOriginalData(currentDataAsOriginal);
+
+            // ovviamente salverò nel redux solamente quando l'utente preme salva
+
+        }
+        // CASO 3: Mode edit ma senza configId
+        else if (mode === 'edit') {
+            setIsEditMode(true);
+        }
+    }, []); // Esegui solo al mount del componente
+
+
+
+    //    🔄  STEP 2     /////////////////////////////
+    // RECUPERO ARGOMENTI DAL DATABASE e SALVATAGGIO IN ARGOMENTI SLICE
+
+    useEffect(() => {
+
+        const loadArgomentiIfEdit = async () => {
+
+            // Se siamo in modalità edit e abbiamo un configId e non abbiamo già caricato
+            if (isEditMode && formState.configId && !initialLoadComplete && !areArgomentiLoaded) {
+
+                try {
+                    dispatch(setLoadingArgomenti(true));
+
+                    // Ottieni sesskey e wwwroot
+                    const sessionKey = getMoodleSesskey();
+                    // Usa l'URL corrente completo invece di window.location.origin
+                    const currentWwwroot = window.location.origin + '/moodle/moodle';
+
+
+                    // Carica argomenti dal database Moodle
+                    const result = await loadArgomentiForEdit(formState.configId, sessionKey, currentWwwroot);
+
+
+                    if (result.success) {
+
+                        // Carica gli argomenti in Redux
+                        dispatch(loadArgomentiSuccess({
+                            argomenti: result.argomenti,
+                            count: result.count
+                        }));
+
+                        setArgomentiCaricati(true);
+
+                        console.log("Argomenti caricati con successo:", argomentiCaricati);
+                    } else {
+                        console.warn('⚠️ Nessun argomento trovato o errore:', result.message);
+                        dispatch(loadArgomentiError(result.message || 'Errore nel caricamento argomenti'));
+                    }
+
+                } catch (error) {
+                    console.error('❌ Errore caricamento argomenti:', error);
+                    console.error('❌ Stack trace:', error.stack);
+                    dispatch(loadArgomentiError(error.message));
+                } finally {
+                    dispatch(setLoadingArgomenti(false));
+                    setInitialLoadComplete(true);
+                }
+            }
+        };
+
+        loadArgomentiIfEdit();
+    }, [isEditMode, formState.configId, initialLoadComplete, areArgomentiLoaded, argomentiCaricati, dispatch]);
+
+
+
+    //    🔄  STEP 3     /////////////////////////////
+    // RECUPERO FILES DAL DATABASE DEGLI ARGOMENTI RECUPERATI e AGGIORNAMENTO ARGOMENTI SLICE 
+
+    useEffect(() => {
+        const loadFilesForArgomenti = async () => {
+
+
+            // Carica file solo se abbiamo argomenti e non li abbiamo già caricati
+            if (areArgomentiLoaded && formState.configId && !filesLoaded && argomenti.length > 0) {
+
+                console.log("CARICAMENTOOOOo file per argomenti...");
+
+
+                try {
+                    const updatedArgomenti = await Promise.all(argomenti.map(async (argomento) => {
+                        if (!argomento.id) return argomento; // Salta argomenti senza ID
+
+                        const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'same-origin',
+                            body: JSON.stringify([
+                                {
+                                    methodname: 'local_configuratore_get_files_by_argomento',
+                                    args: { argomentoid: argomento.id }
+                                }
+                            ])
+                        });
+
+                        if (!response.ok) {
+                            console.error(`Errore nel caricamento dei file per l'argomento ${argomento.id}`);
+                            return argomento;
+                        }
+
+                        const result = await response.json();
+                        const files = result[0]?.data || [];
+
+
+
+                        return {
+                            ...argomento,
+                            file: files.map(file => ({ id: file.id, fileName: file.filename }))
+                        };
+                    }));
+
+                    // Aggiorna gli stato reudx argomenti con i file caricati
+                    dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
+
+                    // Imposta lo snapshot iniziale degli argomenti per il ripristino
+                    dispatch(setInitialArgomentiSnapshot());
+
+                    setFilesLoaded(true); // Imposta lo stato per evitare ricaricamenti
+                } catch (error) {
+                    console.error('Errore nel caricamento dei file per gli argomenti:', error);
+                }
+            } else {
+
+            }
+        };
+
+        loadFilesForArgomenti();
+    }, [areArgomentiLoaded, formState.configId, argomenti.length, filesLoaded, sesskey, wwwroot]);
+
+
+
+    //    🔄  STEP 4     /////////////////////////////
+    // Effetto per distribuire gli argomenti recuperati sui giorni del corso recuperati, solo la prima volta appena entrati nella configurazione
+
+    useEffect(() => {
+
+        console.log("Sta per fare distribuzione: ", isEditMode, primaDistribuzioneEffettuata, argomentiCaricati, distribuzioneEseguita)
+        if (isEditMode && !primaDistribuzioneEffettuata && argomentiCaricati && !distribuzioneEseguita) {
+
+            console.log("Prima distribuzione fatta, argomenti: ", argomentiRaw);
+
+            dispatch(
+                distribuisciArgomentiGiorniCorso({
+                    argomenti: argomentiRaw,
+                    dataInizio: formState.dataInizio,
+                    dataFine: formState.dataFine,
+                    isEditMode: true,
+                })
+            );
+
+            dispatch(setPrimaDistribuzioneEffettuata());
+            setDistribuzioneEseguita(true); // Imposta il flag per evitare esecuzioni multiple
+            console.log("vediamo prima distribuzione", isEditMode, primaDistribuzioneEffettuata, argomentiCaricati);
+
+        }
+
+    }, [dispatch, argomentiCaricati]);
+
+
+
+
+
+
+
+
+
+    /////////////////////////////////////////////////////
+    //    🔄  CONTROLLI     /////////////////////////////
+    /////////////////////////////////////////////////////
+
+
+
+
+    //    🔄  DATA DI INIZIO      /////////////////////////////
+    // Determina se può essere modificata in base al suo valore recuperato
+
     const canEditStartDate = () => {
         // MODALITÀ CREATE: Sempre modificabile
         if (!isEditMode) {
@@ -139,7 +395,11 @@ function Configurazione({ sesskey, wwwroot }) {
         return originalStartDate > today;
     };
 
-    // Funzione per determinare se la data di fine può essere modificata liberamente
+
+
+    //    🔄  DATA DI FINE      /////////////////////////////
+    // Determina se può essere modificata in base al suo valore recuperato
+
     const canEditEndDate = () => {
         // MODALITÀ CREATE: Sempre modificabile
         if (!isEditMode) {
@@ -176,72 +436,11 @@ function Configurazione({ sesskey, wwwroot }) {
         return originalEndDate > today;
     };
 
-    // Effetto per leggere i parametri URL e popolare il form in modalità edit
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('mode');
-
-        // CASO 1: Primo accesso da card (mode=edit + parametri URL)
-        // Ma solo se Redux non ha già i dati!
-        if (mode === 'edit' && urlParams.get('configId') && !formState.configId) {
-            setIsEditMode(true);
-
-            // Leggi tutti i parametri della configurazione
-            const configData = {
-                corsoChatbot: urlParams.get('corsoChatbot') || '',
-                nomeChatbot: urlParams.get('nomeChatbot') || '',
-                descrizioneChatbot: urlParams.get('descrizioneChatbot') || '',
-                istruzioniChatbot: urlParams.get('istruzioniChatbot') || '',
-                dataInizio: urlParams.get('dataInizio') || '',
-                dataFine: urlParams.get('dataFine') || '',
-                configId: urlParams.get('configId') || '',
-                courseId: urlParams.get('courseId') || '',
-                userId: urlParams.get('userId') || ''
-            };
-
-            // Salva i dati originali per il confronto
-            setOriginalData(configData);
-
-            // Popola il Redux store con i dati della configurazione
-            dispatch(updateForm(configData));
-            dispatch(setInitialStateSnapshot(configData));
-
-        }
-        // CASO 2: Ritorno dalla navigazione (Redux ha già i dati)
-        else if (mode === 'edit' && urlParams.get('configId') && formState.configId) {
-            setIsEditMode(true);
-
-            // ✅ IMPOSTA originalData con i valori attuali del Redux
-            // Questi sono i valori "salvati" che diventano il nuovo punto di riferimento
-            const currentDataAsOriginal = {
-                corsoChatbot: formState.corsoChatbot,
-                nomeChatbot: formState.nomeChatbot,
-                descrizioneChatbot: formState.descrizioneChatbot,
-                istruzioniChatbot: formState.istruzioniChatbot,
-                dataInizio: formState.dataInizio,
-                dataFine: formState.dataFine,
-                configId: formState.configId,
-                courseId: formState.courseId,
-                userId: formState.userId
-            };
-
-            setOriginalData(currentDataAsOriginal);
-
-            // Ora l'useEffect per monitorare le modifiche funzionerà correttamente
-        }
-        // CASO 3: Mode edit ma senza configId
-        else if (mode === 'edit') {
-            setIsEditMode(true);
-        }
-    }, []); // Esegui solo al mount del componente
-
-    // 🐛 DEBUG: Monitora i cambiamenti dei valori critici
-    useEffect(() => {
-
-    }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, argomenti.length, filesLoaded]);
 
 
-    // Effetto per monitorare le modifiche ai campi del form (modalità EDIT) e modificare pulsante in "Salva e continua"
+    //    🔄  PULSANTE -> SALVA E CONTINUA       /////////////////////////////
+    // Effetto per monitorare le modifiche ai campi del form e modificare pulsante in "Salva e continua" 
+
     useEffect(() => {
         if (isEditMode && originalData) {
             // Controlla se ci sono modifiche rispetto ai dati originali
@@ -254,13 +453,15 @@ function Configurazione({ sesskey, wwwroot }) {
                 formState.dataFine !== originalData.dataFine
             );
 
-            setHasUnsavedChanges(hasFormChanges);
-            setHasUnsavedChangesPianoLavoro(hasFormChanges);
+            setCompletedSteps((prev) => ({ ...prev, step1: !hasFormChanges }));
         }
     }, [formState, originalData, isEditMode]);
 
 
+
+    //    🔄✏️  PULSANTE -> SALVA E CONTINUA       /////////////////////////////
     // Effetto per monitorare i campi del form e abilitare o disabilitare voci navbar
+
     useEffect(() => {
         const today = new Date();
         const startDate = new Date(formState.dataInizio);
@@ -273,6 +474,7 @@ function Configurazione({ sesskey, wwwroot }) {
         // Per la data di inizio:
         // - In modalità CREATE: deve essere futura
         // - In modalità EDIT: sempre valida se presente (anche se passata)
+
         const isDataInizioValid = formState.dataInizio && (
             !isEditMode ? startDate > today : true
         );
@@ -285,151 +487,77 @@ function Configurazione({ sesskey, wwwroot }) {
         if (!primaVisitaStep1 && !courseNameChanged) {
             setCompletedSteps((prev) => ({ ...prev, step1: isStep1Valid }));
         }
-        // Aggiorna lo stato step1
 
     }, [formState, setCompletedSteps, primaVisitaStep1, courseNameChanged, isEditMode]);
 
-    // 🔄 CARICAMENTO ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO configId È DISPONIBILE
-    useEffect(() => {
 
 
-        const loadArgomentiIfEdit = async () => {
+    //    🔄✏️  CONTROLLO NOME ESISTENTE CORSO?       /////////////////////////////
+    // Funzione per verificare se esiste già un corso con lo stesso nome
 
-
-            // Se siamo in modalità edit e abbiamo un configId e non abbiamo già caricato
-            if (isEditMode && formState.configId && !initialLoadComplete && !editModeArgomenti) {
-
-                try {
-                    dispatch(setLoadingArgomenti(true));
-
-                    // Ottieni sesskey e wwwroot
-                    const sessionKey = getMoodleSesskey();
-                    // Usa l'URL corrente completo invece di window.location.origin
-                    const currentWwwroot = window.location.origin + '/moodle/moodle';
-
-
-                    // Carica argomenti dal database Moodle
-                    const result = await loadArgomentiForEdit(formState.configId, sessionKey, currentWwwroot);
-
-
-                    if (result.success) {
-
-                        // Carica gli argomenti in Redux
-                        dispatch(loadArgomentiSuccess({
-                            argomenti: result.argomenti,
-                            count: result.count
-                        }));
-
-
-
-                        // Imposta la modalità edit per gli argomenti
-                        dispatch(setEditMode(true));
-                    } else {
-                        console.warn('⚠️ Nessun argomento trovato o errore:', result.message);
-                        dispatch(loadArgomentiError(result.message || 'Errore nel caricamento argomenti'));
+    const checkCourseExists = async (courseName, excludeConfigId = null) => {
+        try {
+            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify([{
+                    methodname: 'local_configuratore_check_course_name_exists',
+                    args: {
+                        coursename: courseName,
+                        excludeid: excludeConfigId
                     }
+                }])
+            });
 
-                } catch (error) {
-                    console.error('❌ Errore caricamento argomenti:', error);
-                    console.error('❌ Stack trace:', error.stack);
-                    dispatch(loadArgomentiError(error.message));
-                } finally {
-                    dispatch(setLoadingArgomenti(false));
-                    setInitialLoadComplete(true);
-                }
+            if (!response.ok) {
+                throw new Error(`HTTP Error ${response.status}`);
             }
-        };
 
-        loadArgomentiIfEdit();
-    }, [isEditMode, formState.configId, initialLoadComplete, editModeArgomenti, dispatch]); // ✅ SI ATTIVA quando questi valori cambiano   
+            const json = await response.json();
 
-
-
-    // 📂 CARICAMENTO FILES PER ARGOMENTI IN MODALITÀ EDIT - ATTIVATO QUANDO editModeArgomenti È TRUE
-    useEffect(() => {
-        const loadFilesForArgomenti = async () => {
-
-
-            // Carica file solo se abbiamo argomenti e non li abbiamo già caricati
-            if (editModeArgomenti && formState.configId && !filesLoaded && argomenti.length > 0) {
-
-
-                try {
-                    const updatedArgomenti = await Promise.all(argomenti.map(async (argomento) => {
-                        if (!argomento.id) return argomento; // Salta argomenti senza ID
-
-                        const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            credentials: 'same-origin',
-                            body: JSON.stringify([
-                                {
-                                    methodname: 'local_configuratore_get_files_by_argomento',
-                                    args: { argomentoid: argomento.id }
-                                }
-                            ])
-                        });
-
-                        if (!response.ok) {
-                            console.error(`Errore nel caricamento dei file per l'argomento ${argomento.id}`);
-                            return argomento;
-                        }
-
-                        const result = await response.json();
-                        const files = result[0]?.data || [];
-
-
-
-                        return {
-                            ...argomento,
-                            file: files.map(file => ({ id: file.id, fileName: file.filename }))
-                        };
-                    }));
-
-                    dispatch(loadArgomentiSuccess({ argomenti: updatedArgomenti, count: updatedArgomenti.length }));
-
-                    // Imposta lo snapshot iniziale per il ripristino
-                    dispatch(setInitialArgomentiSnapshot());
-
-                    setFilesLoaded(true); // Imposta lo stato per evitare ricaricamenti
-                } catch (error) {
-                    console.error('Errore nel caricamento dei file per gli argomenti:', error);
-                }
-            } else {
-
+            if (json[0] && json[0].error) {
+                throw new Error(json[0].exception?.message || 'Errore nel controllo duplicati');
             }
-        };
 
-        loadFilesForArgomenti();
-    }, [editModeArgomenti, formState.configId, argomenti.length, filesLoaded, sesskey, wwwroot]); // ✅ SI ATTIVA quando editModeArgomenti diventa true e ci sono argomenti
+            const result = json[0]?.data;
+
+            return result?.exists || false;
+        } catch (error) {
+            console.error('❌ Errore controllo duplicati:', error);
+            throw error;
+        }
+    };
 
 
-
-    useEffect(() => {
-        // Chiamare la funzione di distribuzione con i dati iniziali
-        if (isEditMode) {
-            dispatch(
-                distribuisciArgomentiGiorniCorso({
-                    argomenti: argomenti,
-                    dataInizio: formState.dataInizio,
-                    dataFine: formState.dataFine,
-                })
-            );
+    //     🔄  Funzione che rimanda alla dashboard dei corsi      ////////////////
+    const goBackToCourses = () => {
+        if (!completedSteps.step1) {
+            const confirmLeave = window.confirm("Hai modifiche non salvate. Vuoi davvero uscire senza salvare?");
+            if (!confirmLeave) return;
         }
 
-    }, [dispatch, argomenti, isEditMode]);
+        // Torna alla dashboard dei corsi
+        window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+    };
 
 
+    //     🔄  Funzione per resettare i valori ai dati originali      ////////////////
+    const resetToOriginalValues = () => {
+        if (originalData) {
+            dispatch(updateForm(originalData));
+            setCompletedSteps((prev) => ({ ...prev, step1: false }));
+            setErrors({
+                nomeChatbot: false,
+                corsoChatbot: false,
+                dataInizio: false,
+                dataFine: false,
+            });
+        }
+    };
 
 
-
-
-
-    const MIN_DATE = new Date("2024-01-01");
-    const MAX_DATE = new Date("2030-12-31");
-
-
-    // Funzione per ottenere l'userId dalle API di Moodle
+    //   🔄✏️  Funzione per ottenere l'userId dalle API di Moodle      ////////////////
     const getUserIdFromMoodle = async () => {
         try {
             if (!sesskey || !wwwroot) {
@@ -533,351 +661,61 @@ function Configurazione({ sesskey, wwwroot }) {
     };
 
 
-    // Funzione per verificare se esiste già un corso con lo stesso nome
-    const checkCourseExists = async (courseName, excludeConfigId = null) => {
+    //   ✏️  Funzione per salvare BOZZA - attualmente non implementata      ////////////////
+    const saveAsDraft = async () => {
+        // TODO: Implementare il salvataggio della bozza
+        // Qui andrà la logica per salvare i dati come bozza
+
         try {
-            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify([{
-                    methodname: 'local_configuratore_check_course_name_exists',
-                    args: {
-                        coursename: courseName,
-                        excludeid: excludeConfigId
-                    }
-                }])
-            });
+            // Per ora mostra un messaggio
+            alert("Funzione salvataggio bozza - da implementare");
 
-            if (!response.ok) {
-                throw new Error(`HTTP Error ${response.status}`);
-            }
-
-            const json = await response.json();
-
-            if (json[0] && json[0].error) {
-                throw new Error(json[0].exception?.message || 'Errore nel controllo duplicati');
-            }
-
-            const result = json[0]?.data;
-
-            return result?.exists || false;
+            // Dopo il salvataggio, torna alla dashboard
+            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
         } catch (error) {
-            console.error('❌ Errore controllo duplicati:', error);
-            throw error;
+            console.error('❌ Errore nel salvataggio bozza:', error);
+            alert(`Errore nel salvataggio: ${error.message}`);
         }
     };
 
 
-    // Funzione per gestire il submit del form
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    //    🔄  Effetto per gestire l'alert di navigazione in caso di uscita modifiche non salvate    //////////
+    useEffect(() => {
 
-        // Impedisci il submit multiplo durante la verifica
-        if (isCheckingCourse) {
-            return;
-        }
-
-        const today = new Date();
-        const startDate = new Date(formState.dataInizio);
-        const endDate = new Date(formState.dataFine);
-
-        let hasError = false;
-        const newErrors = { nomeChatbot: false, corsoChatbot: false, dataInizio: false, dataFine: false };
-
-        // Controllo del nome del chatbot
-        if (!formState.nomeChatbot.trim()) {
-            newErrors.nomeChatbot = true;
-            hasError = true;
-        }
-
-        // Controllo del nome del corso
-        if (!formState.corsoChatbot.trim()) {
-            newErrors.corsoChatbot = true;
-            hasError = true;
-        }
-
-        // =====================================================
-        // CONTROLLO DATA DI INIZIO - Logica basata sulla modalità
-        // =====================================================
-        if (!formState.dataInizio) {
-            // Data di inizio mancante - sempre errore
-            newErrors.dataInizio = true;
-            hasError = true;
-        } else if (isEditMode) {
-            // *** MODALITÀ EDIT ***
-            const canModifyStartDate = canEditStartDate(); // true se data futura, false se passata
-
-            if (!canModifyStartDate) {
-                // CASO 1: Data inizio PASSATA/UGUALE a oggi
-                // → NON modificabile → NON controllata → Passa sempre
-                // Nessun errore, procedi
-            } else {
-                // CASO 2: Data inizio FUTURA
-                // → Modificabile → Deve essere controllata
-                if (startDate <= today) {
-                    // Data modificata ma ora è passata/uguale a oggi
-                    newErrors.dataInizio = true;
-                    hasError = true;
-                    alert("La data di inizio deve essere successiva al giorno attuale.");
-                } else if (startDate < MIN_DATE || startDate > MAX_DATE) {
-                    // Data fuori range consentito
-                    newErrors.dataInizio = true;
-                    hasError = true;
-                    alert("La data di inizio deve essere compresa tra il 2024 e il 2030.");
-                }
-                // Se passa tutti i controlli, è valida
-            }
-        } else {
-            // *** MODALITÀ CREAZIONE ***
-            if (startDate <= today) {
-                // Data uguale o precedente a oggi
-                newErrors.dataInizio = true;
-                hasError = true;
-                alert("La data di inizio deve essere successiva al giorno attuale.");
-            } else if (startDate < MIN_DATE || startDate > MAX_DATE) {
-                // Data fuori range consentito
-                newErrors.dataInizio = true;
-                hasError = true;
-                alert("La data di inizio deve essere compresa tra il 2024 e il 2030.");
-            }
-            // Se passa tutti i controlli, è valida
-        }
-
-        // =====================================================
-        // CONTROLLO DATA DI FINE
-        // =====================================================
-        if (!formState.dataFine) {
-            // Data di fine mancante - sempre errore
-            newErrors.dataFine = true;
-            hasError = true;
-        } else {
-            // Controlli comuni per entrambe le modalità
-            if (endDate <= startDate) {
-                // Data fine deve essere successiva alla data inizio
-                newErrors.dataFine = true;
-                hasError = true;
-                alert("La data di fine deve essere successiva di almeno un giorno alla data di inizio.");
-            } else if (endDate < MIN_DATE || endDate > MAX_DATE) {
-                // Data fuori range consentito
-                newErrors.dataFine = true;
-                hasError = true;
-                alert("La data di fine deve essere compresa tra il 2024 e il 2030.");
-            } else if (isEditMode) {
-                // *** MODALITÀ EDIT - CONTROLLI AGGIUNTIVI ***
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const endDateCheck = new Date(formState.dataFine);
-                endDateCheck.setHours(0, 0, 0, 0);
-
-                // Controlla se la data di fine originale era futura
-                const originalEndDate = originalData ? new Date(originalData.dataFine) : null;
-                if (originalEndDate) {
-                    originalEndDate.setHours(0, 0, 0, 0);
-                }
-
-                // Se la data originale era futura e ora si tenta di metterla passata/oggi, blocca
-                if (originalEndDate && originalEndDate > today && endDateCheck <= today) {
-                    newErrors.dataFine = true;
-                    hasError = true;
-                    alert("Non è possibile impostare una data di fine passata o uguale a oggi quando la data originale era futura.");
-                } else {
-                    // Data fine valida
-                }
-            } else {
-                // *** MODALITÀ CREAZIONE ***
-                // Data fine valida
-            }
-        }
-
-        // Aggiorna lo stato degli errori
-        setErrors(newErrors);
-
-        // Se ci sono errori, interrompi l'invio del form
-        if (hasError) {
-            return;
-        }
-
-        try {
-            // Imposta lo stato di caricamento
-            setIsCheckingCourse(true);
-
-            // Ottieni l'userId dalle API di Moodle
-            const userId = await getUserIdFromMoodle();
-
-            if (!userId) {
-                alert("Errore nel recupero dell'identificativo utente. Riprova.");
-                return;
-            }
-
-            if (isEditMode && hasUnsavedChanges) {
-                // CASO 1: MODALITÀ EDIT CON MODIFICHE - Salva le modifiche
-                // VERIFICA DUPLICATI SOLO SE IL NOME DEL CORSO È CAMBIATO
-                if (formState.corsoChatbot !== originalData.corsoChatbot) {
-                    // Passa l'ID della configurazione corrente per escluderla dal controllo
-                    const courseExists = await checkCourseExists(formState.corsoChatbot, originalData.configId);
-
-                    if (courseExists) {
-                        alert(`Esiste già un corso con il nome "${formState.corsoChatbot}". Scegli un nome diverso.`);
-                        setErrors(prev => ({ ...prev, corsoChatbot: true }));
-                        return;
-                    }
-                }
-
-                // Solo se il controllo duplicati passa, salva
-                await updateExistingConfiguration();
-            } else if (isEditMode && !hasUnsavedChanges) {
-                // CASO 2: MODALITÀ EDIT SENZA MODIFICHE - Vai direttamente al prossimo step
-                setCompletedSteps((prev) => ({ ...prev, step1: true }));
-                setCourseNameChanged(false);
-                setPrimaVisitaStep1(false);
-                navigate("/argomentiRiferimenti");
-            } else {
-                // CASO 3: MODALITÀ CREATE - Verifica duplicati e procedi al prossimo step
-                // Non passare excludeId perché stiamo creando un nuovo corso
-                const courseExists = await checkCourseExists(formState.corsoChatbot, null);
-
-                if (courseExists) {
-                    alert(`Esiste già un corso con il nome "${formState.corsoChatbot}". Scegli un nome diverso.`);
-                    setErrors(prev => ({ ...prev, corsoChatbot: true }));
+        const handlePopState = (event) => {
+            if (hasFieldsCompiled()) {
+                const confirmLeave = window.confirm('Hai modifiche non salvate. Vuoi davvero uscire?');
+                if (!confirmLeave) {
+                    // Se l'utente cancella, rimani sulla pagina attuale
+                    window.history.pushState(null, '', window.location.href);
                     return;
                 }
-
-                // Se tutto è ok, procedi al prossimo step
-                setCompletedSteps((prev) => ({ ...prev, step1: true }));
-                setCourseNameChanged(false);
-                setPrimaVisitaStep1(false);
-                setHasUnsavedChanges(false);
-                setHasUnsavedChangesPianoLavoro(false);
-                navigate("/argomentiRiferimenti");
             }
-        } catch (error) {
-            alert(`Errore: ${error.message}`);
-        } finally {
-            setIsCheckingCourse(false);
-        }
-    };
+            // Reindirizza alla pagina onboarding usando il parametro wwwroot
+            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+        };        // Aggiungi un entry nella cronologia per intercettare il back
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [formState, wwwroot]);
 
 
 
 
-    // Funzione per aggiornare la configurazione esistente
-    const updateExistingConfiguration = async () => {
-        try {
-            const configData = {
-                corsoChatbot: formState.corsoChatbot,
-                nomeChatbot: formState.nomeChatbot,
-                descrizioneChatbot: formState.descrizioneChatbot,
-                istruzioniChatbot: formState.istruzioniChatbot,
-                dataInizio: formState.dataInizio,
-                dataFine: formState.dataFine
-            };
-
-            const requestBody = [{
-                methodname: 'local_configuratore_update_chatbot_basic',
-                args: {
-                    chatbotid: originalData.configId,
-                    data: JSON.stringify(configData),
-                    filedata: []
-                }
-            }];
-
-            // 1. AGGIORNA IL DATABASE MOODLE
-            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Response error text:', errorText);
-                throw new Error(`HTTP Error ${response.status}: ${errorText}`);
-            }
-
-            const json = await response.json();
-
-            if (json[0] && json[0].error) {
-                console.error('❌ Server error details:', json[0].exception);
-                throw new Error(`Server Error: ${json[0].exception?.message || 'Errore sconosciuto dal server'}`);
-            }
-
-            if (json[0] && json[0].data && json[0].data.success) {
-                // 2. AGGIORNA FIRESTORE
-                try {
-                    // Ottieni l'userId per Firestore
-                    const userId = await getUserIdFromMoodle();
-                    if (!userId) {
-                        throw new Error('UserId non trovato per Firestore');
-                    }
-
-                    // Prepara i dati per Firestore (stesso formato di quando viene creato)
-                    const firestoreData = {
-                        courseName: formState.corsoChatbot,
-                        nomeChatbot: formState.nomeChatbot,
-                        descrizioneChatbot: formState.descrizioneChatbot,
-                        istruzioniChatbot: formState.istruzioniChatbot,
-                        dataInizio: formState.dataInizio,
-                        dataFine: formState.dataFine
-                    };
-
-                    // Aggiorna il documento su Firestore
-                    // Assumi che il documento abbia l'ID uguale al configId
-                    const courseDocRef = doc(db, 'users', userId, 'courses', originalData.courseId);
-                    await updateDoc(courseDocRef, firestoreData);
-
-                } catch (firestoreError) {
-                    console.warn('⚠️ Errore aggiornamento Firestore (ma Moodle è stato salvato):', firestoreError);
-                    // Non bloccare il flusso se Firestore fallisce, dato che Moodle è già salvato
-                    // Potresti mostrare un warning all'utente o logare per debug
-                }
-
-                // 3. AGGIORNA I DATI REDUX CON I NUOVI VALORI
-                dispatch(updateForm({
-                    corsoChatbot: formState.corsoChatbot,
-                    nomeChatbot: formState.nomeChatbot,
-                    descrizioneChatbot: formState.descrizioneChatbot,
-                    istruzioniChatbot: formState.istruzioniChatbot,
-                    dataInizio: formState.dataInizio,
-                    dataFine: formState.dataFine,
-                    configId: originalData.configId
-                }));
-
-                // 4. AGGIORNA I DATI ORIGINALI PER IL CONFRONTO FUTURO
-                setOriginalData({
-                    ...originalData,
-                    corsoChatbot: formState.corsoChatbot,
-                    nomeChatbot: formState.nomeChatbot,
-                    descrizioneChatbot: formState.descrizioneChatbot,
-                    istruzioniChatbot: formState.istruzioniChatbot,
-                    dataInizio: formState.dataInizio,
-                    dataFine: formState.dataFine
-                });
-
-                // 5. RESET DELLO STATO MODIFICHE
-                setHasUnsavedChanges(false);
-                setHasUnsavedChangesPianoLavoro(false);
-
-                // 6. COMPLETA LO STEP 1 NEL CONTESTO
-                setCompletedSteps((prev) => ({ ...prev, step1: true }));
-
-                // 7. NAVIGA ALLA SEZIONE ARGOMENTI
-                navigate("/argomentiRiferimenti");
-
-            } else {
-                console.error('❌ Errore nella risposta:', json[0]);
-                throw new Error(json[0]?.data?.message || json[0]?.error || 'Errore durante il salvataggio');
-            }
-        } catch (error) {
-            console.error('💥 Errore completo:', error);
-            throw new Error(`Errore durante il salvataggio: ${error.message}`);
-        }
-    };
 
 
 
-    // Funzione per generare suggerimenti AI
+    /////////////////////////////////////////////////////
+    //     ✨ GENERAZIONE INPUT AI     //////////////////
+    /////////////////////////////////////////////////////
+
+
+
+
+    // Funzione per generare le istruzioni
     const generateInstructions = async () => {
         if (isGenerating) return;
 
@@ -1045,76 +883,363 @@ function Configurazione({ sesskey, wwwroot }) {
         }
     };
 
-    // Funzione per ripristinare ai valori originali
-    const resetToOriginalValues = () => {
-        if (originalData) {
-            dispatch(updateForm(originalData));
-            setHasUnsavedChanges(false);
-            setHasUnsavedChangesPianoLavoro(false);
-            setErrors({
-                nomeChatbot: false,
-                corsoChatbot: false,
-                dataInizio: false,
-                dataFine: false,
-            });
+
+
+
+
+
+
+    /////////////////////////////////////////////////////
+    //    ✅   FUNZIONE CONTROLLA E TERMINA STEP     ///
+    /////////////////////////////////////////////////////
+
+
+
+
+    // Funzione per gestire il submit del form
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // Impedisci il submit multiplo durante la verifica
+        if (isCheckingCourse) {
+            return;
         }
-    };
 
-    // Funzione per tornare alla dashboard
-    const goBackToCourses = () => {
-        if (hasUnsavedChanges) {
-            const confirmLeave = window.confirm("Hai modifiche non salvate. Vuoi davvero uscire senza salvare?");
-            if (!confirmLeave) return;
+        const today = new Date();
+        const startDate = new Date(formState.dataInizio);
+        const endDate = new Date(formState.dataFine);
+
+        let hasError = false;
+        const newErrors = { nomeChatbot: false, corsoChatbot: false, dataInizio: false, dataFine: false };
+
+        // Controllo del nome del chatbot
+        if (!formState.nomeChatbot.trim()) {
+            newErrors.nomeChatbot = true;
+            hasError = true;
         }
 
-        // Torna alla dashboard dei corsi
-        window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
-    };
-
-    // Funzione per salvare la bozza (modalità CREATE)
-    const saveAsDraft = async () => {
-        // TODO: Implementare il salvataggio della bozza
-        // Qui andrà la logica per salvare i dati come bozza
-
-        try {
-            // Per ora mostra un messaggio
-            alert("Funzione salvataggio bozza - da implementare");
-
-            // Dopo il salvataggio, torna alla dashboard
-            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
-        } catch (error) {
-            console.error('❌ Errore nel salvataggio bozza:', error);
-            alert(`Errore nel salvataggio: ${error.message}`);
+        // Controllo del nome del corso
+        if (!formState.corsoChatbot.trim()) {
+            newErrors.corsoChatbot = true;
+            hasError = true;
         }
-    };
-
-    // Stato per gestire il blocco della navigazione
 
 
 
 
-    // Effetto per gestire l'alert di navigazione
-    useEffect(() => {
+        // ============================
+        // CONTROLLO DATA DI INIZIO
+        // ============================
 
-        const handlePopState = (event) => {
-            if (hasFieldsCompiled()) {
-                const confirmLeave = window.confirm('Hai modifiche non salvate. Vuoi davvero uscire?');
-                if (!confirmLeave) {
-                    // Se l'utente cancella, rimani sulla pagina attuale
-                    window.history.pushState(null, '', window.location.href);
-                    return;
+
+        if (!formState.dataInizio) {
+            // Data di inizio mancante - sempre errore
+            newErrors.dataInizio = true;
+            hasError = true;
+        } else if (isEditMode) {
+
+            // Controllo in MODALITÀ EDIT della DATA DI FINE se la DATA DI INIZIO è presente
+
+            const canModifyStartDate = canEditStartDate(); // true se data futura, false se passata
+
+            if (!canModifyStartDate) {
+                // CASO 1: Data inizio PASSATA/UGUALE a oggi
+                // → NON modificabile → NON controllata → Passa sempre
+                // Nessun errore, procedi
+            } else {
+                // Data inizio FUTURA
+                // → Modificabile → Deve essere controllata
+                if (startDate <= today) {
+                    // Data modificata ma ora è passata/uguale a oggi
+                    newErrors.dataInizio = true;
+                    hasError = true;
+                    alert("La data di inizio deve essere successiva al giorno attuale.");
+                } else if (startDate < MIN_DATE || startDate > MAX_DATE) {
+                    // Data fuori range consentito
+                    newErrors.dataInizio = true;
+                    hasError = true;
+                    alert("La data di inizio deve essere compresa tra il 2024 e il 2030.");
+                }
+                // Se passa tutti i controlli, è valida
+            }
+
+        } else {
+
+            // Se siamo in MODALITÀ CREAZIONE controlliamo i valori delle date inseriti
+
+            if (startDate <= today) {
+                // Data uguale o precedente a oggi
+                newErrors.dataInizio = true;
+                hasError = true;
+                alert("La data di inizio deve essere successiva al giorno attuale.");
+            } else if (startDate < MIN_DATE || startDate > MAX_DATE) {
+                // Data fuori range consentito
+                newErrors.dataInizio = true;
+                hasError = true;
+                alert("La data di inizio deve essere compresa tra il 2024 e il 2030.");
+            }
+
+        }
+
+
+
+        // ============================
+        // CONTROLLO DATA DI FINE
+        // ============================
+
+        if (!formState.dataFine) {
+            // Data di fine mancante - sempre errore
+            newErrors.dataFine = true;
+            hasError = true;
+        } else {
+            // Controlli comuni per entrambe le modalità
+            if (endDate <= startDate) {
+                // Data fine deve essere successiva alla data inizio
+                newErrors.dataFine = true;
+                hasError = true;
+                alert("La data di fine deve essere successiva di almeno un giorno alla data di inizio.");
+            } else if (endDate < MIN_DATE || endDate > MAX_DATE) {
+                // Data fuori range consentito
+                newErrors.dataFine = true;
+                hasError = true;
+                alert("La data di fine deve essere compresa tra il 2024 e il 2030.");
+            } else if (isEditMode) {
+                // *** MODALITÀ EDIT - CONTROLLI AGGIUNTIVI ***
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const endDateCheck = new Date(formState.dataFine);
+                endDateCheck.setHours(0, 0, 0, 0);
+
+                // Controlla se la data di fine originale era futura
+                const originalEndDate = originalData ? new Date(originalData.dataFine) : null;
+                if (originalEndDate) {
+                    originalEndDate.setHours(0, 0, 0, 0);
+                }
+
+                // Se la data originale era futura e ora si tenta di metterla passata/oggi, blocca
+                if (originalEndDate && originalEndDate > today && endDateCheck <= today) {
+                    newErrors.dataFine = true;
+                    hasError = true;
+                    alert("Non è possibile impostare una data di fine passata o uguale a oggi quando la data originale era futura.");
+                } else {
+                    // Data fine valida
                 }
             }
-            // Reindirizza alla pagina onboarding usando il parametro wwwroot
-            window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
-        };        // Aggiungi un entry nella cronologia per intercettare il back
-        window.history.pushState(null, '', window.location.href);
-        window.addEventListener('popstate', handlePopState);
+        }
 
-        return () => {
-            window.removeEventListener('popstate', handlePopState);
-        };
-    }, [formState, wwwroot]); // Aggiunte le dipendenze per rilevare i cambiamenti
+        // Aggiorna lo stato degli errori
+        setErrors(newErrors);
+
+        // Se ci sono errori, interrompi l'invio del form
+        if (hasError) {
+            return;
+        }
+
+        try {
+            // Imposta lo stato di caricamento
+            setIsCheckingCourse(true);
+
+            // Ottieni l'userId dalle API di Moodle
+            const userId = await getUserIdFromMoodle();
+
+            if (!userId) {
+                alert("Errore nel recupero dell'identificativo utente. Riprova.");
+                return;
+            }
+
+
+
+            // controlli degli altri campi in modalità EDIT
+
+            if (isEditMode && !completedSteps.step1) {
+
+                // CASO 1: MODALITÀ EDIT CON MODIFICHE - Salva le modifiche
+                // VERIFICA DUPLICATI SOLO SE IL NOME DEL CORSO È CAMBIATO
+                if (formState.corsoChatbot !== originalData.corsoChatbot) {
+                    // Passa l'ID della configurazione corrente per escluderla dal controllo
+                    const courseExists = await checkCourseExists(formState.corsoChatbot, originalData.configId);
+
+                    if (courseExists) {
+                        alert(`Esiste già un corso con il nome "${formState.corsoChatbot}". Scegli un nome diverso.`);
+                        setErrors(prev => ({ ...prev, corsoChatbot: true }));
+                        return;
+                    }
+                }
+
+
+                // Solo se il controllo duplicati passa, salva
+                await updateExistingConfiguration();
+
+            } else if (isEditMode && completedSteps.step1) {
+
+                // CASO 2: MODALITÀ EDIT SENZA MODIFICHE - Vai direttamente al prossimo step
+                setCompletedSteps((prev) => ({ ...prev, step1: true }));
+                setCourseNameChanged(false);
+                setPrimaVisitaStep1(false);
+                navigate("/argomentiRiferimenti");
+
+            } else {
+
+                // CASO 3: MODALITÀ CREATE - Verifica duplicati e procedi al prossimo step
+                const courseExists = await checkCourseExists(formState.corsoChatbot, null);
+
+                if (courseExists) {
+                    alert(`Esiste già un corso con il nome "${formState.corsoChatbot}". Scegli un nome diverso.`);
+                    setErrors(prev => ({ ...prev, corsoChatbot: true }));
+                    return;
+                }
+
+                // Se tutto è ok, procedi al prossimo step
+                setCompletedSteps((prev) => ({ ...prev, step1: true }));
+                setCourseNameChanged(false);
+
+                // in teoria in modalità create non serve, ma lascio lo stesso non dovrebbe influire
+                dispatch(setInitialStateSnapshot({
+                    corsoChatbot: formState.corsoChatbot,
+                    nomeChatbot: formState.nomeChatbot,
+                    descrizioneChatbot: formState.descrizioneChatbot,
+                    istruzioniChatbot: formState.istruzioniChatbot,
+                    dataInizio: formState.dataInizio,
+                    dataFine: formState.dataFine,
+                    configId: formState.configId,
+                    courseId: formState.courseId,
+                    userId: userId
+                }));
+
+                if (primaVisitaStep1) {
+                    console.log("✅ Prima visita step 1 - salvo DATE originali");
+                    dispatch(aggiornaDataInizioOriginal(formState.dataInizio));
+                    dispatch(aggiornaDataFineOriginal(formState.dataFine));
+                }
+
+                setPrimaVisitaStep1(false);
+
+                navigate("/argomentiRiferimenti");
+            }
+        } catch (error) {
+            alert(`Errore: ${error.message}`);
+        } finally {
+            setIsCheckingCourse(false);
+        }
+    };
+
+
+    // Funzione per aggiornare la configurazione esistente
+    // Aggiorna DATABASE MOODLE e AGGIORNA FIRESTORE
+    // Aggiorna REDUX FORM SLICE e valori originali per reset
+    const updateExistingConfiguration = async () => {
+        try {
+            const configData = {
+                corsoChatbot: formState.corsoChatbot,
+                nomeChatbot: formState.nomeChatbot,
+                descrizioneChatbot: formState.descrizioneChatbot,
+                istruzioniChatbot: formState.istruzioniChatbot,
+                dataInizio: formState.dataInizio,
+                dataFine: formState.dataFine
+            };
+
+            const requestBody = [{
+                methodname: 'local_configuratore_update_chatbot_basic',
+                args: {
+                    chatbotid: originalData.configId,
+                    data: JSON.stringify(configData),
+                    filedata: []
+                }
+            }];
+
+            // 1. AGGIORNA IL DATABASE MOODLE
+            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Response error text:', errorText);
+                throw new Error(`HTTP Error ${response.status}: ${errorText}`);
+            }
+
+            const json = await response.json();
+
+            if (json[0] && json[0].error) {
+                console.error('❌ Server error details:', json[0].exception);
+                throw new Error(`Server Error: ${json[0].exception?.message || 'Errore sconosciuto dal server'}`);
+            }
+
+            if (json[0] && json[0].data && json[0].data.success) {
+
+
+                // 2. AGGIORNA FIRESTORE
+                try {
+                    // Ottieni l'userId per Firestore
+                    const userId = await getUserIdFromMoodle();
+                    if (!userId) {
+                        throw new Error('UserId non trovato per Firestore');
+                    }
+
+                    // Prepara i dati per Firestore (stesso formato di quando viene creato)
+                    const firestoreData = {
+                        courseName: formState.corsoChatbot,
+                        nomeChatbot: formState.nomeChatbot,
+                        descrizioneChatbot: formState.descrizioneChatbot,
+                        istruzioniChatbot: formState.istruzioniChatbot,
+                        dataInizio: formState.dataInizio,
+                        dataFine: formState.dataFine
+                    };
+
+                    // Aggiorna il documento su Firestore
+                    // Assumi che il documento abbia l'ID uguale al configId
+                    const courseDocRef = doc(db, 'users', userId, 'courses', originalData.courseId);
+                    await updateDoc(courseDocRef, firestoreData);
+
+                } catch (firestoreError) {
+                    console.warn('⚠️ Errore aggiornamento Firestore (ma Moodle è stato salvato):', firestoreError);
+                    // Non bloccare il flusso se Firestore fallisce, dato che Moodle è già salvato
+                    // Potresti mostrare un warning all'utente o logare per debug
+                }
+
+                // 3. AGGIORNA I DATI REDUX CON I NUOVI VALORI
+                dispatch(updateForm({
+                    corsoChatbot: formState.corsoChatbot,
+                    nomeChatbot: formState.nomeChatbot,
+                    descrizioneChatbot: formState.descrizioneChatbot,
+                    istruzioniChatbot: formState.istruzioniChatbot,
+                    dataInizio: formState.dataInizio,
+                    dataFine: formState.dataFine,
+                    configId: originalData.configId
+                }));
+
+                // 4. AGGIORNA I DATI ORIGINALI PER IL CONFRONTO FUTURO
+                setOriginalData({
+                    ...originalData,
+                    corsoChatbot: formState.corsoChatbot,
+                    nomeChatbot: formState.nomeChatbot,
+                    descrizioneChatbot: formState.descrizioneChatbot,
+                    istruzioniChatbot: formState.istruzioniChatbot,
+                    dataInizio: formState.dataInizio,
+                    dataFine: formState.dataFine
+                });
+
+
+                // 5. COMPLETA LO STEP 1 NEL CONTESTO
+                setCompletedSteps((prev) => ({ ...prev, step1: true }));
+
+                // 6. NAVIGA ALLA SEZIONE ARGOMENTI
+                navigate("/argomentiRiferimenti");
+
+            } else {
+                console.error('❌ Errore nella risposta:', json[0]);
+                throw new Error(json[0]?.data?.message || json[0]?.error || 'Errore durante il salvataggio');
+            }
+        } catch (error) {
+            console.error('💥 Errore completo:', error);
+            throw new Error(`Errore durante il salvataggio: ${error.message}`);
+        }
+    };
+
+
 
 
 
@@ -1640,7 +1765,7 @@ function Configurazione({ sesskey, wwwroot }) {
                     <div className="w-[100%] xl:w-[86%] h-30 mx-auto mt-2 flex justify-between items-center">
 
                         {/* Pulsante Sinistro - DINAMICO */}
-                        {isEditMode && hasUnsavedChanges ? (
+                        {isEditMode && !completedSteps.step1 ? (
                             // CASO 1: MODALITÀ EDIT CON MODIFICHE - Mostra "Ripristina campi"
                             <button
                                 type="button"
@@ -1708,7 +1833,7 @@ function Configurazione({ sesskey, wwwroot }) {
                         {/* Pulsante Destro - STEP SUCCESSIVO */}
                         <button
                             type="button"
-                            className={`${isEditMode && hasUnsavedChanges ? 'w-37' : 'w-35'} h-11 cursor-pointer transform transition-transform duration-200 ${isCheckingCourse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'
+                            className={`${isEditMode && !completedSteps.step1 ? 'w-37' : 'w-35'} h-11 cursor-pointer transform transition-transform duration-200 ${isCheckingCourse ? 'opacity-50 cursor-not-allowed' : 'hover:scale-103'
                                 }`}
                             onClick={handleSubmit}
                             disabled={isCheckingCourse}
@@ -1723,7 +1848,7 @@ function Configurazione({ sesskey, wwwroot }) {
                                     <>
                                         <div className="h-full flex items-center justify-end w-full">
                                             <p className="text-[13px] text-[#1d2125] flex items-center justify-center">
-                                                {isEditMode && hasUnsavedChanges ? 'Salva e continua' : 'Step successivo'}
+                                                {isEditMode && !completedSteps.step1 ? 'Salva e continua' : 'Step successivo'}
                                             </p>
                                         </div>
                                         <div className="h-full w-12 flex items-center justify-center">

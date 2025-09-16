@@ -21,13 +21,17 @@ function CardArgomento({ id, titolo, colore, file, giorno, editMode }) {
 
     // Calcola se l'argomento è già passato (solo in modalità edit)
     const oggi = new Date();
-    const giornoSuccessivo = new Date(oggi);
-    giornoSuccessivo.setDate(oggi.getDate() + 1); // Calcola il giorno successivo considerando i cambi di mese
+    const inizioOggi = new Date();
+    inizioOggi.setHours(0, 0, 0, 0);
 
     // Converti il timestamp di 'giorno' in un oggetto Date
     const giornoDate = giorno ? new Date(giorno * 1000) : null;
 
-    const isArgomentoPassato = editMode && giornoDate && giornoDate.getDate() <= giornoSuccessivo.getDate();
+    console.log("📅 Controllo se argomento è passato:", { titolo, giorno, giornoDate, oggi, inizioOggi, editMode });
+
+    const isArgomentoPassato = editMode && giornoDate && giornoDate.getTime() < inizioOggi.getTime();
+
+    console.log("📅 Risultato controllo argomento passato:", { titolo, isArgomentoPassato });
 
 
 
