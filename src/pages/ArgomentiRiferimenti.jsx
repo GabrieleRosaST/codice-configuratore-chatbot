@@ -432,29 +432,8 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                                     </div>
                                 </div>
                             </button>
-                        ) : !isEditMode && argomenti.length > 0 ? (
-                            // CASO 2: MODALITÀ CREATE CON ARGOMENTI - Mostra "Esci e salva bozza"
-                            <button
-                                type="button"
-                                onClick={saveAsDraft}
-                                className="w-40 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
-                            >
-                                <div
-                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
-                                    style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
-                                >
-                                    <div className="h-full w-16 flex items-center justify-center">
-                                        <img src={esciSalvaIcon} alt="" className="w-3.5" />
-                                    </div>
-                                    <div className="h-full flex items-center w-full">
-                                        <p className="text-[13px] text-left text-[#1d2125]">
-                                            Esci e salva bozza
-                                        </p>
-                                    </div>
-                                </div>
-                            </button>
                         ) : (
-                            // CASO 3: MODALITÀ CREATE SENZA ARGOMENTI O EDIT SENZA MODIFICHE - Mostra "Torna ai corsi"
+                            // CASO 2: MODALITÀ CREATE O EDIT SENZA MODIFICHE - Mostra "Torna ai corsi"
                             <button
                                 type="button"
                                 onClick={goBackToCourses}
@@ -475,6 +454,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                                 </div>
                             </button>
                         )}
+
 
                         {/* Pulsante Step Successivo */}
                         <button
