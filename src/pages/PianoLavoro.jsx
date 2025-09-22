@@ -323,6 +323,8 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
             if (argomentiIds !== distribuitiIds || valoreRedistribuzione) {   //se sono cambiati gli argomenti o le date
 
+
+
                 if (isDataInizioAttualeOPassata) {         //se la data di inizio è attuale o passata
                     console.log('Modalità EDIT: corso già iniziato, modifiche apportate, distribuzione edit');
                     dispatch(distribuisciArgomentiGiorniCorsoEdit({
@@ -337,6 +339,16 @@ function PianoLavoro({ sesskey, wwwroot }) {
                     aggiornamenti.forEach(agg => {
                         dispatch(aggiornaGiornoArgomento({ id: agg.id, giorno: agg.giorno }));
                     });
+
+
+                    // Salva gli argomenti nel database
+                    salvaArgomentiDb(argomenti)
+                        .then(resp => {
+                            console.log("✅ Risposta dal salvataggio degli argomenti:", resp);
+                        })
+                        .catch(error => {
+                            console.error("❌ Errore durante il salvataggio degli argomenti:", error);
+                        });
 
                 } else {
                     console.log('Modalità EDIT: corso non ancora iniziat, modifiche, ridistribuisci normalmente');
@@ -360,7 +372,20 @@ function PianoLavoro({ sesskey, wwwroot }) {
                             dispatch(aggiornaGiornoArgomento({ id: argomento.id, giorno: argomento.giorno }));
                         });
                     });
+
+
+                    salvaArgomentiDb(argomenti)
+                        .then(resp => {
+                            console.log("✅ Risposta dal salvataggio degli argomenti:", resp);
+                        })
+                        .catch(error => {
+                            console.error("❌ Errore durante il salvataggio degli argomenti:", error);
+                        });
+
+
+                    console.log("📚 Argomenti dopo aggiornamento:", argomenti);
                 }
+
                 shouldRedistributeDate.current = false;
 
             } else {
@@ -578,6 +603,44 @@ function PianoLavoro({ sesskey, wwwroot }) {
         }
     };
 
+
+
+    const salvaArgomentiDb = async (argomentiValidi) => {
+        try {
+            // Prepara i dati degli argomenti per l'API
+            const argomentiFormatted = argomentiValidi.map(argomento => ({
+                argomento_id: parseInt(argomento.id),
+                nuovo_giorno: argomento.giorno || 0, // Usa 0 per argomenti senza timestamp
+                titolo: argomento.titolo || 'Senza titolo'
+            }));
+
+            console.log("argomenti formattati per API: ", argomentiFormatted);
+
+            // Invia la richiesta al server
+            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify([{
+                    methodname: 'local_configuratore_update_piano_lavoro',
+                    args: {
+                        argomenti_ridistribuiti: JSON.stringify(argomentiFormatted)
+                    }
+                }])
+            });
+
+            // Restituisci la risposta
+            return await response.json();
+        } catch (error) {
+            console.error('Errore durante il salvataggio degli argomenti:', error);
+            throw error; // Propaga l'errore per gestirlo nel chiamante
+        }
+    };
+
+
+
     // Funzione per salvare il piano lavoro in modalità edit
     const handleSalvaPianoLavoro = async () => {
         setIsLoading(true);
@@ -621,33 +684,10 @@ function PianoLavoro({ sesskey, wwwroot }) {
                 return;
             }
 
-            // Prepara i dati degli argomenti per l'API
-            const argomentiFormatted = argomentiValidi.map(argomento => {
-                return {
-                    argomento_id: parseInt(argomento.id),
-                    nuovo_giorno: argomento.giorno || 0, // Usa 0 per argomenti senza timestamp
-                    titolo: argomento.titolo || 'Senza titolo'
-                };
-            });
+            // Chiama la funzione per salvare gli argomenti
+            const resp = await salvaArgomentiDb(argomentiValidi);
 
-            console.log("argomenti formattati per API: ", argomentiFormatted);
 
-            // Chiama la nuova funzione nell'externallib per aggiornare la ridistribuzione
-            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify([{
-                    methodname: 'local_configuratore_update_piano_lavoro',
-                    args: {
-                        argomenti_ridistribuiti: JSON.stringify(argomentiFormatted)
-                    }
-                }])
-            });
-
-            const resp = await response.json();
             const envelope = resp?.[0];
 
 
