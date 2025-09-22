@@ -103,6 +103,7 @@ function Configurazione({ sesskey, wwwroot }) {
 
     // Funzione per verificare se ci sono campi compilati (modalità CREATE ✏️)
     const hasFieldsCompiled = () => {
+        console.log("Checking if fields are compiled:", formState.dataInizio, formState.dataFine);
         return (
             formState.corsoChatbot.trim() !== '' ||
             formState.nomeChatbot.trim() !== '' ||
@@ -532,7 +533,7 @@ function Configurazione({ sesskey, wwwroot }) {
 
     //     🔄  Funzione che rimanda alla dashboard dei corsi      ////////////////
     const goBackToCourses = () => {
-        if (!completedSteps.step1) {
+        if (hasFieldsCompiled()) {
             const confirmLeave = window.confirm("Hai modifiche non salvate. Vuoi davvero uscire senza salvare?");
             if (!confirmLeave) return;
         }

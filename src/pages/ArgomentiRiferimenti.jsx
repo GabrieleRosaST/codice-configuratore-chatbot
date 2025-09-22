@@ -134,9 +134,8 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     };    // Funzione per tornare alla dashboard
 
 
-    const goBackToCourses = () => {
-        // Torna alla dashboard dei corsi
-        window.parent.location.href = `${wwwroot}/local/configuratore/onboarding.php`;
+    const goToPreviousStep = () => {
+        navigate('/configurazione');
     };
 
     const handleSalvaEContinua = async () => {
@@ -436,19 +435,19 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                             // CASO 2: MODALITÀ CREATE O EDIT SENZA MODIFICHE - Mostra "Torna ai corsi"
                             <button
                                 type="button"
-                                onClick={goBackToCourses}
-                                className="w-34 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
+                                onClick={() => goToPreviousStep()}
+                                className="w-35 h-11 cursor-pointer transform rounded-[10px] transition-transform duration-200 hover:scale-103 hover:bg-[#f2f3f7]"
                             >
                                 <div
-                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch"
+                                    className="w-full h-full rounded-[10px] border-[0.7px] border-[#1d2125]/20 flex justify-stretch "
                                     style={{ filter: "drop-shadow(0px 2px 8.5px rgba(0,0,0,0.05))" }}
                                 >
-                                    <div className="h-full w-16 flex items-center justify-center">
-                                        <img src={esciSalvaIcon} alt="" className="w-3.5" />
+                                    <div className="h-full w-12 flex items-center justify-center">
+                                        <img src={frecciaDestraButton} alt="" className="w-2 ml-1" style={{ transform: "rotate(180deg)" }} />
                                     </div>
-                                    <div className="h-full flex items-center w-full">
+                                    <div className="h-full flex items-center w-full mr-4">
                                         <p className="text-[13px] text-left text-[#1d2125]">
-                                            Torna ai corsi
+                                            Step precedente
                                         </p>
                                     </div>
                                 </div>
