@@ -29,7 +29,7 @@ function CardArgomento({ id, titolo, colore, file, giorno, editMode }) {
 
     console.log("📅 Controllo se argomento è passato:", { titolo, giorno, giornoDate, oggi, inizioOggi, editMode });
 
-    const isArgomentoPassato = editMode && giornoDate && giornoDate.getTime() < inizioOggi.getTime();
+    const isArgomentoPassato = editMode && giornoDate && giornoDate.getTime() <= inizioOggi.getTime();
 
     console.log("📅 Risultato controllo argomento passato:", { titolo, isArgomentoPassato });
 

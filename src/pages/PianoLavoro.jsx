@@ -181,6 +181,42 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
 
 
+    const salvaArgomentiDb = async (argomentiValidi) => {
+        try {
+            // Prepara i dati degli argomenti per l'API
+            const argomentiFormatted = argomentiValidi.map(argomento => ({
+                argomento_id: parseInt(argomento.id),
+                nuovo_giorno: argomento.giorno || 0, // Usa 0 per argomenti senza timestamp
+                titolo: argomento.titolo || 'Senza titolo'
+            }));
+
+            console.log("argomenti formattati per API: ", argomentiFormatted);
+
+            // Invia la richiesta al server
+            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify([{
+                    methodname: 'local_configuratore_update_piano_lavoro',
+                    args: {
+                        argomenti_ridistribuiti: JSON.stringify(argomentiFormatted)
+                    }
+                }])
+            });
+
+            // Restituisci la risposta
+            return await response.json();
+        } catch (error) {
+            console.error('Errore durante il salvataggio degli argomenti:', error);
+            throw error; // Propaga l'errore per gestirlo nel chiamante
+        }
+    };
+
+
+
 
     ////////    IMPOSTAE VARIABILE PER RIDISTRIBUIRE ARGOMENTI SE PRIMA DI ACCEDERE AL PIANO LAVORO SONO STATE CAMBIATE LE DATE DI INIZIO O FINE  ////////////////
 
@@ -340,9 +376,11 @@ function PianoLavoro({ sesskey, wwwroot }) {
                         dispatch(aggiornaGiornoArgomento({ id: agg.id, giorno: agg.giorno }));
                     });
 
+                    const argomentiStore = store.getState().argomenti.argomenti;
+                    console.log("📚 Argomenti dopo aggiornamento:", argomentiStore);
 
                     // Salva gli argomenti nel database
-                    salvaArgomentiDb(argomenti)
+                    salvaArgomentiDb(argomentiStore)
                         .then(resp => {
                             console.log("✅ Risposta dal salvataggio degli argomenti:", resp);
                         })
@@ -373,8 +411,12 @@ function PianoLavoro({ sesskey, wwwroot }) {
                         });
                     });
 
+                    console.log("📚 AGGIORNAAAAAAAA 2:");
 
-                    salvaArgomentiDb(argomenti)
+                    const argomentiStore = store.getState().argomenti.argomenti;
+                    console.log("📚 Argomenti dopo aggiornamento:", argomentiStore);
+
+                    salvaArgomentiDb(argomentiStore)
                         .then(resp => {
                             console.log("✅ Risposta dal salvataggio degli argomenti:", resp);
                         })
@@ -605,39 +647,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
 
 
-    const salvaArgomentiDb = async (argomentiValidi) => {
-        try {
-            // Prepara i dati degli argomenti per l'API
-            const argomentiFormatted = argomentiValidi.map(argomento => ({
-                argomento_id: parseInt(argomento.id),
-                nuovo_giorno: argomento.giorno || 0, // Usa 0 per argomenti senza timestamp
-                titolo: argomento.titolo || 'Senza titolo'
-            }));
 
-            console.log("argomenti formattati per API: ", argomentiFormatted);
-
-            // Invia la richiesta al server
-            const response = await fetch(`${wwwroot}/lib/ajax/service.php?sesskey=${sesskey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify([{
-                    methodname: 'local_configuratore_update_piano_lavoro',
-                    args: {
-                        argomenti_ridistribuiti: JSON.stringify(argomentiFormatted)
-                    }
-                }])
-            });
-
-            // Restituisci la risposta
-            return await response.json();
-        } catch (error) {
-            console.error('Errore durante il salvataggio degli argomenti:', error);
-            throw error; // Propaga l'errore per gestirlo nel chiamante
-        }
-    };
 
 
 
