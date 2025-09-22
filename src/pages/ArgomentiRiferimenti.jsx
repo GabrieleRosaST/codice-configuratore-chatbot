@@ -18,6 +18,8 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
+
+
     // Redux state con ordinamento automatico per ID
     const argomentiRaw = useSelector((state) => state.argomenti.argomenti);
     const argomenti = useMemo(() => {
@@ -27,16 +29,19 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
     const formState = useSelector((state) => state.form); // Per accedere a configId
     const isLoadingArgomenti = useSelector((state) => state.argomenti.loading);
 
-    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2, isEditMode } = useStepContext();
+    const { setCompletedSteps, primaVisitaStep2, setPrimaVisitaStep2, isEditMode, setShowCheckConfigurazione } = useStepContext();
 
     // Component state
     const [mostraAiuto, setMostraAiuto] = useState(false);
     const [isSalvaEContinua, setIsSalvaEContinua] = useState(false); // Stato per gestire il pulsante
     const [isSaving, setIsSaving] = useState(false); // Stato per il caricamento del salvataggio
     const [initialArgomentiCount, setInitialArgomentiCount] = useState(0); // Stato per il numero iniziale di argomenti
-    //const [shouldNavigate, setShouldNavigate] = useState(false); // Flag per navigazione dopo aggiornamento Redux
 
 
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
 
     useEffect(() => {
@@ -234,6 +239,9 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
                 // Invece di navigate() diretto, imposta il flag per navigare dopo l'aggiornamento Redux
                 //setShouldNavigate(true);
                 navigate("/pianoLavoro");
+
+                setShowCheckArgomenti(true);
+                setTimeout(() => setShowCheckArgomenti(false), 2500);
             } else {
                 console.error('❌ Errore nel salvataggio:', result[0]?.data?.message || 'Messaggio non disponibile');
                 console.error('❌ Risultato completo:', result[0]);
@@ -275,7 +283,7 @@ function ArgomentiRiferimenti({ sesskey, wwwroot }) {
 
 
     return (
-        <div className="w-full flex flex-col items-center justify-center">
+        <div className="w-full flex flex-col items-center justify-center ">
 
 
             {mostraAiuto ? (

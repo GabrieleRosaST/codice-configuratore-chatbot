@@ -8,17 +8,21 @@ import pianoIcon from '../img/pianoIcon.svg';
 import pianoIconActive from '../img/pianoIconActive.svg';
 import { useLocation } from 'react-router-dom';
 import { useStepContext } from '../context/StepContext';
+import checkIcon from '../img/check.svg';
+import { useState } from 'react';
+
 
 function Navbar() {
     const location = useLocation();
     const currentPage = location.pathname.slice(1);
-    const { completedSteps, isEditMode } = useStepContext(); // Usa il contesto per accedere allo stato
+    const { completedSteps, isEditMode, showCheckArgomenti, showCheckConfigurazione } = useStepContext(); // Usa il contesto per accedere allo stato
+
 
     const navItems = [
         {
             id: 'configurazione',
-            label: 'Impostazioni iniziali',
-            icon: configurazioneIcon,
+            label: showCheckConfigurazione ? 'Modifiche salvate' : 'Impostazioni iniziali',
+            icon: showCheckConfigurazione ? checkIcon : configurazioneIcon,
             iconActive: configurazioneIconActive,
             link: '/configurazione',
             disabled: isEditMode ? !completedSteps.step2 : false,
@@ -26,10 +30,9 @@ function Navbar() {
         {
             id: 'argomentiRiferimenti',
             label: 'Argomenti e Riferimenti',
-            icon: argomentiIcon,
+            icon: showCheckArgomenti ? checkIcon : argomentiIcon,
             iconActive: argomentiIconActive,
             link: '/argomentiRiferimenti',
-            // Abilitato solo se step1 è completato
             disabled: !completedSteps.step1,
         },
         {
@@ -38,8 +41,6 @@ function Navbar() {
             icon: pianoIcon,
             iconActive: pianoIconActive,
             link: '/pianoLavoro',
-            // In modalità edit: abilitato se non ci sono modifiche non salvate
-            // In modalità create: abilitato solo se step1 e step2 sono completati
             disabled: !completedSteps.step2 || !completedSteps.step1,
         },
     ];

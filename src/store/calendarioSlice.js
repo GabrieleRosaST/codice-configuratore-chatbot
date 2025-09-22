@@ -344,6 +344,9 @@ const calendarioSlice = createSlice({
         },
 
         spostaArgomento: (state, action) => {
+
+            console.log("Azione spostaArgomento ricevuta:", action.payload);
+
             const { argomento, giornoOrigine, giornoDestinazione } = action.payload;
 
 
@@ -374,6 +377,8 @@ const calendarioSlice = createSlice({
             if (giornoDestinazioneIndex !== -1) {
                 state.giorniCorso[giornoDestinazioneIndex].argomenti.unshift({ ...argomento });
             }
+
+            console.log("Stato giorniCorso dopo spostamento:", state.giorniCorso);
         }
 
     }

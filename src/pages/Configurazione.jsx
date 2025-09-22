@@ -14,7 +14,6 @@ import cinesteticoIcon from '../img/cinestetico.svg';
 import visivoIcon from '../img/visivo.svg';
 import frecciaDestraButton from '../img/frecciaDestraButton.svg';
 import aitext from '../img/aitext.svg';
-
 import { useSelector, useDispatch } from 'react-redux';
 import { updateForm, setInitialStateSnapshot, selectInitialStateSnapshot } from '../store/formSlice';
 import { setLoadingArgomenti, loadArgomentiSuccess, loadArgomentiError, setInitialArgomentiSnapshot } from '../store/argomentiSlice';
@@ -41,6 +40,7 @@ function Configurazione({ sesskey, wwwroot }) {
         setCompletedSteps,
         primaVisitaStep1,
         setPrimaVisitaStep1,
+        setShowCheckConfigurazione,
         isEditMode,
         setIsEditMode,
     } = useStepContext(); // Usa il contesto per aggiornare lo stato
@@ -1139,6 +1139,8 @@ function Configurazione({ sesskey, wwwroot }) {
                 dataFine: formState.dataFine
             };
 
+            console.log("🔄 Aggiorno configurazione esistente con ID:", originalData.configId);
+
             const requestBody = [{
                 methodname: 'local_configuratore_update_chatbot_basic',
                 args: {
@@ -1227,8 +1229,12 @@ function Configurazione({ sesskey, wwwroot }) {
                 // 5. COMPLETA LO STEP 1 NEL CONTESTO
                 setCompletedSteps((prev) => ({ ...prev, step1: true }));
 
+
                 // 6. NAVIGA ALLA SEZIONE ARGOMENTI
                 navigate("/argomentiRiferimenti");
+
+                setShowCheckConfigurazione(true);
+                setTimeout(() => setShowCheckConfigurazione(false), 2500);
 
             } else {
                 console.error('❌ Errore nella risposta:', json[0]);

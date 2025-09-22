@@ -1022,7 +1022,7 @@ function PianoLavoro({ sesskey, wwwroot }) {
 
                             {/* Pulsante Step Successivo */}
                             <button
-                                className={`w-48 h-11 right-0 transform transition-transform duration-200 ${isLoading
+                                className={`${isEditMode ? 'w-43' : 'w-48'} h-11 right-0 transform transition-transform duration-200 ${isLoading
                                     ? 'cursor-not-allowed opacity-50'
                                     : 'cursor-pointer hover:scale-103'
                                     }`}

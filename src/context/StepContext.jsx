@@ -13,12 +13,17 @@ export const StepProvider = ({ children }) => {
     const [primaVisitaStep2, setPrimaVisitaStep2] = useState(true); // Stato per tracciare la prima visita allo step 2
     const [primaVisitaStep1, setPrimaVisitaStep1] = useState(true); // Stato per tracciare la prima visita allo step 1
     const [isEditMode, setIsEditMode] = useState(false); // Stato per tracciare se siamo in modalità edit
-
+    const [showCheckArgomenti, setShowCheckArgomenti] = useState(false);
+    const [showCheckConfigurazione, setShowCheckConfigurazione] = useState(false);
 
     return (
         <StepContext.Provider value={{
             completedSteps,
             setCompletedSteps,
+            showCheckArgomenti,
+            setShowCheckArgomenti,
+            showCheckConfigurazione,
+            setShowCheckConfigurazione,
             primaVisitaStep2,
             setPrimaVisitaStep2,
             primaVisitaStep1,
