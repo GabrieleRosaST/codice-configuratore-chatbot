@@ -534,7 +534,7 @@ function Configurazione({ sesskey, wwwroot }) {
     //     🔄  Funzione che rimanda alla dashboard dei corsi      ////////////////
     const goBackToCourses = () => {
         if (hasFieldsCompiled()) {
-            const confirmLeave = window.confirm("Hai modifiche non salvate. Vuoi davvero uscire senza salvare?");
+            const confirmLeave = window.confirm("Hai modifiche non SALVATE!! Vuoi davvero uscire senza salvare?");
             if (!confirmLeave) return;
         }
 
